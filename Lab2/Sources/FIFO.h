@@ -8,7 +8,7 @@
 #define FIFO_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 // Number of bytes in a FIFO
 #define FIFO_SIZE 256
@@ -17,8 +17,8 @@
 // FIFO structure
 typedef struct
 {
-  UINT16 Start, End;
-  UINT16 volatile NbBytes;
+  UINT8 Start, End;
+  UINT8 volatile NbBytes;
   UINT8 Buffer[FIFO_SIZE];
 } TFIFO;
 
