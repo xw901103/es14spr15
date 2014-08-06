@@ -8,7 +8,7 @@
 #ifndef PACKET_H
 #define PACKET_H
 
-// new types
+/* global.h includes defs.h and types.h */
 #include "global.h"
 
 // Packet structure

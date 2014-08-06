@@ -16,7 +16,9 @@
 TUINT16 ModConNumber;
 
 void LogDebug(const UINT16 lineNumber, const UINT16 err) {
-    /* need to handle logs */
+    /* break point here */
+    UNUSED(lineNumber);
+    UNUSED(err);
 }
 
 void Initialize(void) {
@@ -37,8 +39,8 @@ void Routine(void) {
         Packet_Command &= ~MODCON_COMMAND_ACK_MASK;     /* clear ACK mask from command */
         switch(Packet_Command) {
             case MODCON_COMMAND_STARTUP:
-                if (!Packet_Setup(BAUDRATE, BUSCLK)) {
-                    LogDebug(__LINE__, ERR_PACKET_PUT);
+                if (!Packet_Setup(BAUDRATE, BUSCLK)) { /* calibrate SCI configs and push first three packets */
+                    LogDebug(__LINE__, ERR_PACKET_SETUP);
                 }
                 break;
             case MODCON_COMMAND_VERSION:

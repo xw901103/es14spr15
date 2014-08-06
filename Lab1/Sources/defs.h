@@ -22,9 +22,14 @@
 #define MODCON_COMMAND_ACK_MASK 0x80
 #endif
 
-#if !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
-#define ERR_PACKET_SETUP 0xBAD1
-#define ERR_PACKET_PUT   0xBAD2
+#if !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
+#define ERR_FIFO_PUT     0xBAD1
+#define ERR_PACKET_SETUP 0xBAD2
+#define ERR_PACKET_PUT   0xBAD3
+#endif
+
+#ifndef UNUSED /* macro to avoid compiler issues */
+#define UNUSED(VAR) (void)VAR
 #endif
 
 #ifndef BAUDRATE

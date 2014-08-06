@@ -2,7 +2,7 @@
 #include "FIFO.h"
 #include <mc9s12a512.h>
 
-TFIFO RxFIFO, TxFIFO;
+TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk) {
     /*
@@ -26,6 +26,7 @@ void SCI_Poll() {
     if (SCI0SR1_RDRF) {
         Cache = SCI0DRL;
         if (!FIFO_Put(&RxFIFO, Cache)) { /* TODO: CHECK ERROR e.g. Start == End when NbBytes != 0 */
+            LogDebug(__LINE__, ERR_FIFO_PUT);
         }                                    
     }
     if (SCI0SR1_TDRE) {

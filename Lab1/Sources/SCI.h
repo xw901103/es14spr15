@@ -8,7 +8,7 @@
 #ifndef SCI_H
 #define SCI_H
 
-// new types
+/* global.h includes defs.h and types.h */
 #include "global.h"
 
 // ----------------------------------------
