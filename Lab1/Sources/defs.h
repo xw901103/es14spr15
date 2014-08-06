@@ -13,15 +13,18 @@
 #define MODCON_VERSION_MINOR    0
 #endif
 
+#if !defined(MODCON_NUMBER_GET) && !defined(MODCON_NUMBER_SET)
+#define MODCON_NUMBER_GET 1
+#define MODCON_NUMBER_SET 2
+#endif
+
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80
 #endif
 
-/* quick fix */
-#if !defined(MODCON_STARTUP_ACK) && !defined(MODCON_NUMBER_ACK) && !defined(MODCON_VERSION_ACK)
-#define MODCON_STARTUP_ACK 0x84
-#define MODCON_NUMBER_ACK  0x8B
-#define MODCON_VERSION_ACK 0x89
+#if !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
+#define ERR_PACKET_SETUP 0xBAD1
+#define ERR_PACKET_PUT   0xBAD2
 #endif
 
 #ifndef BAUDRATE

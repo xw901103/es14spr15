@@ -6,7 +6,9 @@ UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_P
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
     SCI_Setup(baudRate, busClk);
-    return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) && Packet_Put(MODCON_COMMAND_VERSION, MODCON_VERSION_INITIAL, MODCON_VERSION_MAJOR, MODCON_VERSION_MINOR);
+    return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
+           Packet_Put(MODCON_COMMAND_VERSION, MODCON_VERSION_INITIAL, MODCON_VERSION_MAJOR, MODCON_VERSION_MINOR) &&
+           Packet_Put(MODCON_COMMAND_NUMBER, MODCON_NUMBER_GET, ModConNumberLSB, ModConNumberMSB);
 }
 
 BOOL Packet_Get() {
