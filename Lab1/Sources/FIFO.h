@@ -8,7 +8,7 @@
 #define FIFO_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 // Number of bytes in a FIFO
 #define FIFO_SIZE 256

@@ -9,7 +9,7 @@
 #define SCI_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 // ----------------------------------------
 // SCI_Setup

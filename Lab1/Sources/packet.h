@@ -9,9 +9,10 @@
 #define PACKET_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 // Packet structure
+// TODO: replace it with struct
 extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
 
 // ----------------------------------------
