@@ -11,8 +11,8 @@
 		 
 #pragma LINK_INFO DERIVATIVE "mc9s12a512"
 
-// new types
-#include "types.h"
+// global.h includes defs.h and types.h
+#include "global.h"
 
 // Serial Communication Interface
 #include "SCI.h"
@@ -26,10 +26,6 @@
 // Clocks and Reset Generator
 #include "CRG.h"
 
-// Version number
-const UINT8 MAJOR_VERSION = 1;
-const UINT8 MINOR_VERSION = 0;
-
 // ----------------------------------------
 // Packet_Commands
 
@@ -40,6 +36,18 @@ const UINT8 CMD_SPECIAL     = 0x09;
 const UINT8 CMD_MODCON_NB   = 0x0b;
 const UINT8 CMD_MODCON_MODE = 0x0d;
 
+void LogDebug(const UINT16 lineNumber, const UINT16 err) {
+    /* break point here */
+    UNUSED(lineNumber);
+    UNUSED(err);
+}
+
+void Initialize(void) {
+}
+
+void Routine(void) {
+}
+
 // ----------------------------------------
 // main
 //
@@ -48,9 +56,8 @@ const UINT8 CMD_MODCON_MODE = 0x0d;
 
 void main(void)
 {
-  // Your setup code goe here
-  for (;;)
-  {
-    // Your background loop goes here
-  }
+    Initialize();
+    for (;;) {
+        Routine();
+    }
 }
