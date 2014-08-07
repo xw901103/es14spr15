@@ -9,7 +9,11 @@ void FIFO_Init(TFIFO * const FIFO) {
         FIFO->Start = 0;
         FIFO->End = 0;
         FIFO->NbBytes = 0;
+        return;
     }
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
 }
 
 BOOL FIFO_Put(TFIFO * const FIFO, const UINT8 data) {
@@ -18,6 +22,9 @@ BOOL FIFO_Put(TFIFO * const FIFO, const UINT8 data) {
         ++FIFO->NbBytes;
         return bTRUE;
     }
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
     return bFALSE;
 }
 
@@ -27,5 +34,8 @@ BOOL FIFO_Get(TFIFO * const FIFO, UINT8 * const dataPtr) {
         --FIFO->NbBytes;
         return bTRUE;
     }
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
     return bFALSE;
 }
