@@ -1,8 +1,21 @@
+/**
+ * \author Xu Waycell
+ * \date
+ */
 #include "packet.h"
 #include "SCI.h"
 
 UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
 
+UINT8 Packet_Checksum(const TPACKET* const PACKET) {
+    if (PACKET) {
+        return (PACKET->Command ^ PACKET->Parameter1 ^ PACKET->Parameter2 ^ PACKET->Parameter3); 
+    }
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);    
+#endif
+    return 0;
+}
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
     SCI_Setup(baudRate, busClk);

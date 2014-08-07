@@ -1,3 +1,7 @@
+/**
+ * \author Xu Waycell
+ * \date
+ */
 #include "FIFO.h"
 
 void FIFO_Init(TFIFO * const FIFO) {

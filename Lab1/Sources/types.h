@@ -1,23 +1,29 @@
-// ----------------------------------------
-// Filename: types.h
-// Description: Declares new type definitions
-// Author: PMcL
-// Date: 03-Apr-06
-
+/**
+ * \file types.h
+ * \brief Declares new type definitions
+ * \author Peter McLean
+ * \date 03-Apr-06
+ */
 #ifndef TYPES_H
 #define TYPES_H
 
-// Signed types
+/**
+ * Signed types
+ */
 typedef char INT8;
 typedef int INT16;
 typedef long INT32;
 
-// Unsigned types
+/**
+ * Unsigned types
+ */
 typedef unsigned char UINT8;
 typedef unsigned int UINT16;
 typedef unsigned long UINT32;
 
-// Unions to efficiently access hi and lo parts of integers and words
+/**
+ * Unions to efficiently access hi and lo parts of integers and words
+ */
 typedef union
 {
   INT16 l;
@@ -38,7 +44,9 @@ typedef union
   } s;
 } TUINT16;
 
-// Union to efficiently access hi and lo parts of a long integer
+/**
+ * Union to efficiently access hi and lo parts of a long integer
+ */
 typedef union
 {
   UINT32 l;
@@ -49,7 +57,9 @@ typedef union
   } s;
 } TUINT32;
 
-// Union to efficiently access individual bytes of a float
+/** 
+ * Union to efficiently access individual bytes of a float
+ */
 typedef union
 {
   float d;
@@ -60,11 +70,15 @@ typedef union
   } dParts;
 } TFloat;
 
-// Macros for critical sections
+/**
+ * Macros for critical sections
+ */
 #define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
 #define ExitCritical()  { asm leas -1,sp; asm pulc; }
 
-// Boolean definition that includes type and value
+/**
+ * Boolean definition that includes type and value
+ */
 typedef enum
 {
   bFALSE = 0,

@@ -1,3 +1,9 @@
+/**
+ * \file defs.h
+ * \brief Defines common macros
+ * \author Xu Waycell
+ * \date
+ */
 #ifndef DEFS_H
 #define DEFS_H
 
@@ -22,26 +28,15 @@
 #define MODCON_COMMAND_ACK_MASK 0x80
 #endif
 
-#if !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
-#define ERR_FIFO_PUT     0xBAD1
-#define ERR_PACKET_SETUP 0xBAD2
-#define ERR_PACKET_PUT   0xBAD3
+#if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
+#define ERR_INVALID_POINTER 0xBAD1
+#define ERR_FIFO_PUT        0xBAD2
+#define ERR_PACKET_SETUP    0xBAD3
+#define ERR_PACKET_PUT      0xBAD4
 #endif
 
 #ifndef UNUSED /* macro to avoid compiler issues */
 #define UNUSED(VAR) (void)VAR
-#endif
-
-#ifndef BAUDRATE
-#define BAUDRATE 38400
-#else
-#warning "Baudrate override detected!"
-#endif
-
-#ifndef BUSCLK
-#define BUSCLK 8000000
-#else
-#warning "Bus clock override detected!"
 #endif
 
 #endif

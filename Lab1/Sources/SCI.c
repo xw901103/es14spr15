@@ -1,3 +1,7 @@
+/**
+ * \author Xu Waycell
+ * \date
+ */
 #include "SCI.h"
 #include "FIFO.h"
 #include <mc9s12a512.h>
@@ -26,7 +30,9 @@ void SCI_Poll() {
     if (SCI0SR1_RDRF) {
         Cache = SCI0DRL;
         if (!FIFO_Put(&RxFIFO, Cache)) { /* TODO: CHECK ERROR e.g. Start == End when NbBytes != 0 */
-            LogDebug(__LINE__, ERR_FIFO_PUT);
+#ifndef NO_DEBUG
+            DEBUG(__LINE__, ERR_FIFO_PUT);
+#endif
         }                                    
     }
     if (SCI0SR1_TDRE) {
