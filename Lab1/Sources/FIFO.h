@@ -26,8 +26,8 @@
  */
 typedef struct
 {
-  UINT8 Start, End;
-  UINT8 volatile NbBytes;
+  UINT16 Start, End;
+  UINT16 volatile NbBytes;
   UINT8 Buffer[FIFO_SIZE];
 } TFIFO;
 

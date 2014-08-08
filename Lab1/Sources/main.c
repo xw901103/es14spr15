@@ -90,11 +90,10 @@ void Routine(void) {
 }
 
 void main(void)
-{			
-  Initialize();
+{			  
+    Initialize();
   
-  for (;;)
-  {
-    Routine();
-  }
+    for (;;) {
+        Routine();
+    }
 }

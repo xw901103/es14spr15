@@ -17,10 +17,15 @@ void FIFO_Init(TFIFO * const FIFO) {
 }
 
 BOOL FIFO_Put(TFIFO * const FIFO, const UINT8 data) {
-    if (FIFO) { /* TODO: ERROR CHECK e.g. Start == End when NbBytes != 0 */
-        FIFO->Buffer[FIFO->End++] = data;
-        ++FIFO->NbBytes;
-        return bTRUE;
+    if (FIFO) {
+        if (FIFO->NbBytes < FIFO_SIZE) {          
+            FIFO->Buffer[FIFO->End++] = data;
+            if (FIFO->End == FIFO_SIZE) /* Once End reaches boundry, go back to zero */
+                FIFO->End = 0;            
+            ++FIFO->NbBytes;
+            return bTRUE;
+        }
+        return bFALSE;
     }
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_INVALID_POINTER);
@@ -29,10 +34,15 @@ BOOL FIFO_Put(TFIFO * const FIFO, const UINT8 data) {
 }
 
 BOOL FIFO_Get(TFIFO * const FIFO, UINT8 * const dataPtr) {
-    if (FIFO && dataPtr && FIFO->NbBytes != 0) { /* TODO: ERROR CHECK e.g. NbBytes == 0 */
-        *dataPtr = FIFO->Buffer[FIFO->Start++];
-        --FIFO->NbBytes;
-        return bTRUE;
+    if (FIFO && dataPtr) {
+        if (FIFO->NbBytes != 0) {          
+            *dataPtr = FIFO->Buffer[FIFO->Start++];
+            if (FIFO->Start == FIFO_SIZE) /* Once Start reaches boundry, go back to zero */
+                FIFO->Start = 0;            
+            --FIFO->NbBytes;
+            return bTRUE;
+        }
+        return bFALSE;
     }
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_INVALID_POINTER);
