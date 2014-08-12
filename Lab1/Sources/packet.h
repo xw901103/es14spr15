@@ -12,20 +12,24 @@
 
 /**
  * Packet structure
- * TODO: replace it with struct
  */
 extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
-typedef struct {
-    UINT8 Command;
-    UINT8 Parameter1;
-    UINT8 Parameter2;
-    UINT8 Parameter3;  
-} TPACKET;
+
+/**
+ */
+extern TUINT16 ModConNumber;
+
+#if !defined(ModConNumberLSB) && !defined(ModConNumberMSB)
+#define ModConNumberLSB ModConNumber.s.Lo
+#define ModConNumberMSB ModConNumber.s.Hi
+#endif
+
 
 /**
  * Packet_Checksum
  */
-UINT8 Packet_Checksum(const TPACKET* const PACKET);
+UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
+  const UINT8 parameter2, const UINT8 parameter3);
 
 /**
  * Packet_Setup
@@ -60,5 +64,9 @@ BOOL Packet_Get(void);
  */
 BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3);
+  
+BOOL Packet_Put_ModCon_Startup(void);
+BOOL Packet_Put_ModCon_Version(void);
+BOOL Packet_Put_ModCon_Number_Get(void);
 
 #endif

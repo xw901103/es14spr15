@@ -6,7 +6,7 @@
 #include "FIFO.h"
 #include <mc9s12a512.h>
 
-TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
+static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk) {
     /*
@@ -24,20 +24,20 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk) {
      FIFO_Init(&TxFIFO);    
 }
 
-void SCI_Poll() {
-    UINT8 Cache = 0;
+void SCI_Poll(void) {
+    UINT8 temp = 0;
     
     if (SCI0SR1_RDRF) {
-        Cache = SCI0DRL;
-        if (!FIFO_Put(&RxFIFO, Cache)) { /* TODO: CHECK ERROR e.g. Start == End when NbBytes != 0 */
+        temp = SCI0DRL;
+        if (!FIFO_Put(&RxFIFO, temp)) { /* TODO: CHECK ERROR e.g. Start == End when NbBytes != 0 */
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_FIFO_PUT);
 #endif
         }                                    
     }
     if (SCI0SR1_TDRE) {
-        if (FIFO_Get(&TxFIFO, &Cache)) {
-            SCI0DRL = Cache;            
+        if (FIFO_Get(&TxFIFO, &temp)) {
+            SCI0DRL = temp;            
         }
     }
     
@@ -47,6 +47,9 @@ BOOL SCI_InChar(UINT8 * const dataPtr) {
     if (dataPtr) {
         return FIFO_Get(&RxFIFO, dataPtr);   
     }
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif    
     return bFALSE;
 }
 
