@@ -1,8 +1,8 @@
 /**
  * \file FIFO.h
- * \brief Routines to implement a first in first out buffer. 
+ * \brief Routines to implement a first in first out byte buffer. 
  * \author Xu Waycell
- * \date
+ * \date 05-August-2014
  */
 #ifndef FIFO_H
 #define FIFO_H
@@ -10,7 +10,7 @@
 #include "global.h"
 
 /**
- * Number of bytes in a FIFO
+ * FIFO buffer capacity
  */
 #ifndef CONFIG_FIFO_SIZE
 #define FIFO_SIZE 256 /* fallback plan */
@@ -20,13 +20,13 @@
 #endif
 
 /**
- * FIFO structure
+ * \brief FIFO buffer structure
  */
 typedef struct
 {
-  UINT16 Start, End;
-  UINT16 volatile NbBytes;
-  UINT8 Buffer[FIFO_SIZE];
+  UINT16 Start, End;        /* \brief iterator, it should be from 0 to FIFO_SIZE - 1. */
+  UINT16 volatile NbBytes;  /* \brief count of bytes inside the buffer */
+  UINT8 Buffer[FIFO_SIZE];  /* \brief byte array serving as container */
 } TFIFO;
 
 /**

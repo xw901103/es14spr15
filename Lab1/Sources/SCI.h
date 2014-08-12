@@ -2,7 +2,7 @@
  * \file SCI.h
  * \brief I/O routines for MC9S12 serial communication interface 
  * \author Xu Waycell
- * \date
+ * \date 06-August-2014
  */
 #ifndef SCI_H
 #define SCI_H
@@ -31,7 +31,7 @@ BOOL SCI_InChar(UINT8 * const dataPtr);
  * \fn BOOL SCI_OutChar(const UINT8 data)
  * \see FIFO_Put
  * \brief Put a byte in the transmit FIFO if it is not full.
- * \param data is a byte to be placed in the transmit FIFO
+ * \param data a byte to be placed in the transmit FIFO
  * \return TRUE if the data was placed in the transmit FIFO
  * \warning Assumes the transmit FIFO has been initialized.
  */

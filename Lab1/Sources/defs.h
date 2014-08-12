@@ -2,24 +2,24 @@
  * \file defs.h
  * \brief Defines common macros
  * \author Xu Waycell
- * \date
+ * \date 06-August-2014
  */
 #ifndef DEFS_H
 #define DEFS_H
 
 #if !defined(CONTROL_CR)
-#define CONTROL_CR 0x0D
+#define CONTROL_CR 0x0D /* control character carriage return */
 #endif
 
 #if !defined(MODCON_COMMAND_STARTUP) && !defined(MODCON_COMMAND_NUMBER) && !defined(MODCON_COMMAND_VERSION)
-#define MODCON_COMMAND_STARTUP 0x04
-#define MODCON_COMMAND_NUMBER  0x0B
-#define MODCON_COMMAND_SPECIAL 0x09
+#define MODCON_COMMAND_STARTUP 0x04 /* ModCon protocol startup command */
+#define MODCON_COMMAND_NUMBER  0x0B /* ModCon protocol number command */
+#define MODCON_COMMAND_SPECIAL 0x09 /* ModCon protocol special command */
 #endif
 
 #if !defined(MODCON_VERSION_INITIAL) && !defined(MODCON_VERSION_TOKEN) && !defined(MODCON_VERSION_MAJOR) && !defined(MODCON_VERSION_MINOR)
 #define MODCON_VERSION_INITIAL 'v'
-#define MODCON_VERSION_TOKEN   'x'
+#define MODCON_VERSION_TOKEN   'x' /* TODO: rename it for better functionality reflection */
 #define MODCON_VERSION_MAJOR    1
 #define MODCON_VERSION_MINOR    0
 #endif
@@ -30,18 +30,19 @@
 #endif
 
 #if !defined(MODCON_COMMAND_ACK_MASK)
-#define MODCON_COMMAND_ACK_MASK 0x80
+#define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
 #endif
 
 #if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
-#define ERR_INVALID_POINTER 0xBAD1
-#define ERR_FIFO_PUT        0xBAD2
-#define ERR_PACKET_SETUP    0xBAD3
-#define ERR_PACKET_PUT      0xBAD4
+#define ERR_INVALID_POINTER 0xBAD1 /* given pointer is not valid */
+#define ERR_FIFO_PUT        0xBAD2 /* cannot put a byte into FIFO buffer */
+#define ERR_PACKET_SETUP    0xBAD3 /* packet initialization failure */
+#define ERR_PACKET_PUT      0xBAD4 /* cannot put a packet into transmission queue */
+#define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 
-#ifndef UNUSED /* macro to avoid compiler issues */
-#define UNUSED(VAR) (void)VAR
+#ifndef UNUSED
+#define UNUSED(VAR) (void)VAR /* macro to avoid compiler issue */
 #endif
 
 #endif

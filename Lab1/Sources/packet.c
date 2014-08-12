@@ -1,6 +1,6 @@
 /**
  * \author Xu Waycell
- * \date
+ * \date 06-August-2014
  */
 #include "packet.h"
 #include "SCI.h"
@@ -31,7 +31,7 @@ BOOL Packet_Get(void) {
             SCI_Poll();
         while(!SCI_InChar(&checksum))
             SCI_Poll();    
-        if (checksum == (Packet_Command ^ Packet_Parameter1 ^ Packet_Parameter2 ^ Packet_Parameter3)) {
+        if (checksum == Packet_Checksum(Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3)) {
             return bTRUE;
         }
     }

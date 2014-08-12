@@ -1,12 +1,14 @@
 /**
  * \mainpage Xu's Embedded Software Lab 1
+ *
  * \section intro_sec Introduction
  * Lab 1 is to implement a program that responds ModCon protocol via Serial Communication Interface
  * on ModCon board running at bus clock 8 Mhz with 38400 baud rate.
+ *
  * \file main.c
- * \brief Program main entry
+ * \brief Program main entry file.
  * \author Xu Waycell
- * \date
+ * \date 05-August-2014
  */
 #include <hidef.h>      /* common defines and macros */		 
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
@@ -15,11 +17,30 @@
 #include "packet.h"
 
 /**
- * 
+ * \fn void Initialize(void)
+ * \brief Initializes hardware and software parameters that required for this program.
  */
 void Initialize(void);
+
+/**
+ * \fn void Routine(void)
+ * \brief Retrieves ModCon packets and sends back packets if it is necessary.
+ */
 void Routine(void);
+
+/**
+ * \fn void main(void)
+ * \brief The main entry of the program will initialize runtime parameters and keep looping routine.
+ */
 void main(void);
+
+#ifndef NO_DEBUG
+void LogDebug(const UINT16 lineNumber, const UINT16 err) {
+    /* break point here */
+    UNUSED(lineNumber);
+    UNUSED(err);
+}
+#endif
 
 void Initialize(void) {
     ModConNumber.l = 7229;
@@ -101,11 +122,3 @@ void main(void)
         Routine();
     }
 }
-
-#ifndef NO_DEBUG
-void LogDebug(const UINT16 lineNumber, const UINT16 err) {
-    /* break point here */
-    UNUSED(lineNumber);
-    UNUSED(err);
-}
-#endif
