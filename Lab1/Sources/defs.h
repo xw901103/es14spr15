@@ -11,10 +11,10 @@
 #define CONTROL_CR 0x0D /* control character carriage return */
 #endif
 
-#if !defined(MODCON_COMMAND_STARTUP) && !defined(MODCON_COMMAND_NUMBER) && !defined(MODCON_COMMAND_VERSION)
+#if !defined(MODCON_COMMAND_STARTUP) && !defined(MODCON_COMMAND_SPECIAL) && !defined(MODCON_COMMAND_NUMBER)
 #define MODCON_COMMAND_STARTUP 0x04 /* ModCon protocol startup command */
-#define MODCON_COMMAND_NUMBER  0x0B /* ModCon protocol number command */
 #define MODCON_COMMAND_SPECIAL 0x09 /* ModCon protocol special command */
+#define MODCON_COMMAND_NUMBER  0x0B /* ModCon protocol number command */
 #endif
 
 #if !defined(MODCON_VERSION_INITIAL) && !defined(MODCON_VERSION_TOKEN) && !defined(MODCON_VERSION_MAJOR) && !defined(MODCON_VERSION_MINOR)
