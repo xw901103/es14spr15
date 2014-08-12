@@ -1,23 +1,41 @@
-// ----------------------------------------
-// Filename: types.h
-// Description: Declares new type definitions
-// Author: PMcL
-// Date: 03-Apr-06
-
+/**
+ * \file types.h
+ * \brief Declares new type definitions
+ * \author Peter McLean
+ * \date 03-April-2006
+ */
 #ifndef TYPES_H
 #define TYPES_H
 
-// Signed types
+/**
+ * \brief Signed 8 bits integer
+ */
 typedef char INT8;
+/**
+ * \brief Signed 16 bits integer
+ */
 typedef int INT16;
+/**
+ * \brief Signed 32 bits integer
+ */
 typedef long INT32;
 
-// Unsigned types
+/**
+ * \brief Unsigned 8 bits integer
+ */
 typedef unsigned char UINT8;
+/**
+ * \brief Unsigned 16 bits integer
+ */
 typedef unsigned int UINT16;
+/**
+ * \brief Unsigned 32 bits integer
+ */
 typedef unsigned long UINT32;
 
-// Unions to efficiently access hi and lo parts of integers and words
+/**
+ * \brief Union to efficiently access hi and lo parts of a signed 16 bits integer
+ */
 typedef union
 {
   INT16 l;
@@ -28,6 +46,9 @@ typedef union
   } s;
 } TINT16;
 
+/**
+ * \brief Union to efficiently access hi and lo parts of a unsigned 16 bits integer
+ */
 typedef union
 {
   UINT16 l;
@@ -38,7 +59,9 @@ typedef union
   } s;
 } TUINT16;
 
-// Union to efficiently access hi and lo parts of a long integer
+/**
+ * \brief Union to efficiently access hi and lo parts of a unsigned 32 bits integer
+ */
 typedef union
 {
   UINT32 l;
@@ -49,7 +72,9 @@ typedef union
   } s;
 } TUINT32;
 
-// Union to efficiently access individual bytes of a float
+/** 
+ * \brief Union to efficiently access individual bytes of a float
+ */
 typedef union
 {
   float d;
@@ -60,11 +85,18 @@ typedef union
   } dParts;
 } TFloat;
 
-// Macros for critical sections
+/**
+ * \brief Macros for enter critical section
+ */
 #define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
+/**
+ * \brief Macros for exit critical section
+ */
 #define ExitCritical()  { asm leas -1,sp; asm pulc; }
 
-// Boolean definition that includes type and value
+/**
+ * \brief Boolean definition that includes type and value
+ */
 typedef enum
 {
   bFALSE = 0,

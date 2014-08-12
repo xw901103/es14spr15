@@ -1,58 +1,130 @@
-// ----------------------------------------
-// Filename: main.c
-// Description: Lab 2
-//  Implements the ModCon serial protocol
-//  Implements EEPROM write support and PLL
-// Author: PMcL
-// Date: 16-Mar-06
+/**
+ * \mainpage Xu's Embedded Software Lab 2
+ *
+ * \section intro_sec Introduction
+ * Lab 2
+ *
+ * \file main.c
+ * \brief Program main entry file.
+ * \author Xu Waycell
+ * \date 06-August-2014
+ */
+#include <hidef.h>          /* common defines and macros */		 
+#pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
-#include <hidef.h>          /* common defines and macros */
-#include <mc9s12a512.h>     /* derivative information */
-		 
-#pragma LINK_INFO DERIVATIVE "mc9s12a512"
-
-// global.h includes defs.h and types.h
 #include "global.h"
-
-// Serial Communication Interface
-#include "SCI.h"
-
-// Packet handling
 #include "packet.h"
-
-// EEPROM
 #include "EEPROM.h"
-
-// Clocks and Reset Generator
 #include "CRG.h"
 
-// ----------------------------------------
-// Packet_Commands
+/**
+ * \fn void Initialize(void)
+ * \brief Initializes hardware and software parameters that required for this program.
+ */
+void Initialize(void);
 
-const UINT8 CMD_STARTUP     = 0x04;
-const UINT8 CMD_EEPROM_PROG	= 0x07;
-const UINT8 CMD_EEPROM_GET  = 0x08;
-const UINT8 CMD_SPECIAL     = 0x09;
-const UINT8 CMD_MODCON_NB   = 0x0b;
-const UINT8 CMD_MODCON_MODE = 0x0d;
+/**
+ * \fn void Routine(void)
+ * \brief Retrieves ModCon packets and sends back packets if it is necessary.
+ */
+void Routine(void);
 
+/**
+ * \fn void main(void)
+ * \brief The main entry of the program will initialize runtime parameters and keep looping routine.
+ */
+void main(void);
+
+#ifndef NO_DEBUG
 void LogDebug(const UINT16 lineNumber, const UINT16 err) {
     /* break point here */
     UNUSED(lineNumber);
     UNUSED(err);
 }
+#endif
 
 void Initialize(void) {
+    ModConNumber.l = 7229;
+    
+	if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_EEPROM_SETUP);
+#endif
+	}
+    if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_PACKET_SETUP);
+#endif
+    }
 }
 
 void Routine(void) {
+    UINT8 ACK = 0;
+    BOOL DENY = bFALSE;
+    
+    if (Packet_Get()) { 
+        ACK = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
+        Packet_Command &= ~MODCON_COMMAND_ACK_MASK;     /* clear ACK mask from command */
+        
+        switch(Packet_Command) {
+            case MODCON_COMMAND_STARTUP:
+                if (!Packet_Put_ModCon_Startup()) { /* push first three packets */
+#ifndef NO_DEBUG
+                    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                }
+                break;
+			case MODCON_COMMNAD_EEPROM_PROGRAM:
+				break;
+			case MODCON_COMMAND_EEPROM_GET:
+				break;
+            case MODCON_COMMAND_SPECIAL:
+                if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR) {                    
+                    if (!Packet_Put_ModCon_Version()) {
+#ifndef NO_DEBUG
+                        DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                    }
+                } else {
+                    DENY = bTRUE;
+                }
+                break;
+            case MODCON_COMMAND_NUMBER:
+                if (Packet_Parameter1 == MODCON_NUMBER_GET) {                        
+                    if (!Packet_Put_ModCon_Number_Get()) {
+#ifndef NO_DEBUG
+                        DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                    }
+                } else if (Packet_Parameter1 == MODCON_NUMBER_SET) {
+                    ModConNumberLSB = Packet_Parameter2;
+                    ModConNumberMSB = Packet_Parameter3;
+                }
+                break;
+			case MODCON_COMMAND_MODE:
+				break;				
+            default:
+                DENY = bTRUE;
+                break;
+        }
+        
+        if (ACK) {
+            if (!DENY) {                
+                if (!Packet_Put(Packet_Command | MODCON_COMMAND_ACK_MASK, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3)) {
+#ifndef NO_DEBUG
+                    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                }
+            } else { /* NOTE: ACK mask has been cleared already */
+                if (!Packet_Put(Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3)) {
+#ifndef NO_DEBUG
+                    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                }                
+            }
+        }
+    }
 }
-
-// ----------------------------------------
-// main
-//
-// Initializes the various peripherals
-// Handles received packets endlessly
 
 void main(void)
 {
