@@ -26,41 +26,39 @@ extern TUINT16 ModConNumber;
 
 
 /**
- * Packet_Checksum
+ * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
+  const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Generates a checksum result of four given bytes.
+ * \return Checksum result of given bytes.
+ * \param command command byte
+ * \param parameter1 first parameter byte
+ * \param parameter2 second parameter byte
+ * \param parameter3 third parameter byte
  */
 UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3);
 
 /**
- * Packet_Setup
- * 
- * Initializes the packets by calling the
- * initialization routines of the supporting
- * software modules
- * Input: baudRate is the baud rate in bits/sec
- *   busClk is the bus clock rate in Hz
- * Output: TRUE if the packets were initialized successfully
- * Conditions: none
+ * \fn BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
+ * \brief Initializes the packets by calling the initialization routines of the supporting software modules.
+ * \param baudRate the baud rate in bits/sec
+ * \param busClk the bus clock rate in Hz
+ * \return TRUE if the packets were initialized successfully
  */
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk);
 
 /**
- * Packet_Get
- * 
- * Attempts to get a packet from the received data
- * Input: none
- * Output: TRUE if a valid packet was received
- * Conditions: none
+ * \fn BOOL Packet_Get(void)
+ * \brief Attempts to get a packet from the received data.
+ * \return TRUE if a valid packet was received
  */
 BOOL Packet_Get(void);
 
 /**
- * Packet_Put
- * 
- * Builds a packet and places it in the transmit FIFO buffer
- * Input: none
- * Output: TRUE if a valid packet was sent
- * Conditions: none
+ * \fn BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
+  const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Builds a packet and places it in the transmit FIFO buffer.
+ * \return TRUE if a valid packet was sent
  */
 BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3);

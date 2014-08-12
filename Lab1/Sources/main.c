@@ -1,4 +1,8 @@
 /**
+ * \mainpage Xu's Embedded Software Lab 1
+ * \section intro_sec Introduction
+ * Lab 1 is to implement a program that responds ModCon protocol via Serial Communication Interface
+ * on ModCon board running at bus clock 8 Mhz with 38400 baud rate.
  * \file main.c
  * \brief Program main entry
  * \author Xu Waycell
