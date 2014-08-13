@@ -41,4 +41,8 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
  */
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate);
 
+void CRG_ArmCOP(void);
+void CRG_DisarmCOP(void);
+void CRG_ResetCOP(void);
+
 #endif

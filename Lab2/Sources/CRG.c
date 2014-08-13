@@ -1,6 +1,11 @@
 #include "CRG.h"
 #include "mc9s12a512.h"
 
+#if !defined(COP_ARM) && !defined(COP_DISARM)
+#define COP_ARM     0x55
+#define COP_DISARM  0xAA
+#endif
+
 BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk) {
     UINT8 refDiv = 0, synReg = 0;
 
@@ -8,8 +13,8 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
         refDiv = (UINT8)(oscClk/refClk);
         synReg = (UINT8)((busClk*refDiv)/oscClk);
         if (CONFIG_BUSCLK_MAXIMUM >= (oscClk*synReg/refDiv)) { /* make sure that target bus clock is not harmful */            
-            REFDV_REFDV = refDiv - 1;
-            SYNR_SYN = synReg - 1;    
+            REFDV_REFDV = (byte)(refDiv - 1);
+            SYNR_SYN = (byte)(synReg - 1);    
             PLLCTL_PLLON = 1;
             while(!CRGFLG_LOCK);                               /* poll until it is stable */
             CLKSEL_PLLSEL = 1;                                 /* select phase-locked loop as system clock */
@@ -20,5 +25,21 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
 }
 
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate) {
-    return bFALSE;
+    COPCTL_CR = (byte)aCOPRate;
+#ifndef NO_DEBUG
+    COPCTL_RSBCK = 1;
+#endif
+    return bTRUE;
+}
+
+void CRG_ArmCOP(void) {
+    ARMCOP = COP_ARM;    
+}
+
+void CRG_DisarmCOP(void) {
+    ARMCOP = COP_DISARM;    
+}
+
+void CRG_ResetCOP(void) {
+    __RESET_WATCHDOG();   
 }

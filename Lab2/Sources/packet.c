@@ -28,19 +28,6 @@ UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1,
 }
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
-    if (!CRG_SetupPLL(busClk, CONFIG_OSCCLK, CONFIG_REFCLK)) {
-#ifndef NO_DEBUG
-        DEBUG(__LINE__, ERR_CRGPLL_SETUP);
-#endif
-        return bFALSE;        
-    }
-    /*
-	if (!EEPROM_Setup(CONFIG_OSCCLK, busClk)) {
-#ifndef NO_DEBUG
-        DEBUG(__LINE__, ERR_EEPROM_SETUP);
-#endif
-	}
-	*/
     SCI_Setup(baudRate, busClk);
     return Packet_Put_ModCon_Startup();
 }

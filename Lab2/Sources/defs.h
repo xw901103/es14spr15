@@ -47,7 +47,8 @@
 #define ERR_PACKET_SETUP    0xBAD3 /* packet initialization failure */
 #define ERR_PACKET_PUT      0xBAD4 /* cannot put a packet into transmission queue */
 #define ERR_CRGPLL_SETUP    0xBAD5 /* clock and reset generator phase-locked loop initialization failure */
-#define ERR_EEPROM_SETUP    0xBAD6 /* EEPROM initialization failure */
+#define ERR_CRGCOP_SETUP    0xBAD6 /* clock and reset generator computer operating properly initialization failure */
+#define ERR_EEPROM_SETUP    0xBAD7 /* EEPROM initialization failure */
 #define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 

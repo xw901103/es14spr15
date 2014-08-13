@@ -31,6 +31,12 @@
 #warning "Bus clock override detected!"
 #endif
 
+#ifndef CONFIG_COPRATE
+#define CONFIG_COPRATE COP_RATE_2_14    /* Predefined COP rate */
+#else
+#warning "COP rate override detected!"
+#endif
+
 #ifndef CONFIG_BUSCLK_MAXIMUM
 #define CONFIG_BUSCLK_MAXIMUM 25000000  /* Maximum bus clock in hz */
 #else

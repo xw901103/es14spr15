@@ -14,6 +14,7 @@
 
 #include "global.h"
 #include "packet.h"
+#include "CRG.h"
 
 /**
  * \fn void Initialize(void)
@@ -44,7 +45,23 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err) {
 void Initialize(void) {
     ModConNumber.l = 29;
     ModConMode.l = 1;
-    
+    if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_CRGPLL_SETUP);
+#endif
+    }
+    if (!CRG_SetupCOP(CONFIG_COPRATE)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_CRGCOP_SETUP);
+#endif
+    }
+    /*
+	if (!EEPROM_Setup(CONFIG_OSCCLK, busClk)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_EEPROM_SETUP);
+#endif
+	}
+	*/    
     if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_SETUP);
@@ -134,6 +151,8 @@ void main(void)
 {
     Initialize();
     for (;;) {
+        CRG_ArmCOP();
         Routine();
+        CRG_DisarmCOP();
     }
 }
