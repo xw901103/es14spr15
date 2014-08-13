@@ -1,6 +1,7 @@
 #include "EEPROM.h"
 
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk) {
+    
     return bFALSE;    
 }
 

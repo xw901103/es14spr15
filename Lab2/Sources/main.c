@@ -14,8 +14,6 @@
 
 #include "global.h"
 #include "packet.h"
-#include "EEPROM.h"
-#include "CRG.h"
 
 /**
  * \fn void Initialize(void)
@@ -44,13 +42,9 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err) {
 #endif
 
 void Initialize(void) {
-    ModConNumber.l = 7229;
+    ModConNumber.l = 29;
+    ModConMode.l = 1;
     
-	if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK)) {
-#ifndef NO_DEBUG
-        DEBUG(__LINE__, ERR_EEPROM_SETUP);
-#endif
-	}
     if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_SETUP);
@@ -102,6 +96,16 @@ void Routine(void) {
                 }
                 break;
 			case MODCON_COMMAND_MODE:
+                if (Packet_Parameter1 == MODCON_MODE_GET) {                        
+                    if (!Packet_Put_ModCon_Mode_Get()) {
+#ifndef NO_DEBUG
+                        DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+                    }
+                } else if (Packet_Parameter1 == MODCON_MODE_SET) {
+                    ModConModeLSB = Packet_Parameter2;
+                    ModConModeMSB = Packet_Parameter3;
+                }
 				break;				
             default:
                 DENY = bTRUE;

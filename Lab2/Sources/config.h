@@ -14,15 +14,27 @@
 #endif
 
 #ifndef CONFIG_BAUDRATE
-#define CONFIG_BAUDRATE 38400 /* SCI baud rate in bits/sec */
+#define CONFIG_BAUDRATE 115200          /* SCI baud rate in bits/sec */
 #else
 #warning "Baudrate override detected!"
 #endif
 
+#ifndef CONFIG_REFCLK
+#define CONFIG_REFCLK 8000000           /* Reference clock in hz */
+#else
+#warning "Reference clock override detected!"
+#endif
+
 #ifndef CONFIG_BUSCLK
-#define CONFIG_BUSCLK 8000000 /* Bus clock in hz */
+#define CONFIG_BUSCLK 24000000          /* Bus clock in hz */
 #else
 #warning "Bus clock override detected!"
+#endif
+
+#ifndef CONFIG_BUSCLK_MAXIMUM
+#define CONFIG_BUSCLK_MAXIMUM 25000000  /* Maximum bus clock in hz */
+#else
+#warning "Maximum bus clock override detected!"
 #endif
 
 #ifndef CONFIG_FIFO_SIZE

@@ -3,10 +3,24 @@
  * \date 06-August-2014
  */
 #include "packet.h"
+#include "CRG.h"
+#include "EEPROM.h"
 #include "SCI.h"
 
 UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
 TUINT16 ModConNumber;
+TUINT16 ModConMode;
+
+typedef enum {
+    STATE_0,
+    STATE_1,
+    STATE_2,
+    STATE_3,
+    STATE_4,
+    STATE_5        
+} PACKET_STATE;
+static UINT8 _TEMP_Packet_Command = 0, _TEMP_Packet_Parameter1 = 0, _TEMP_Packet_Parameter2 = 0, _TEMP_Packet_Parameter3 = 0, _TEMP_Packet_Checksum = 0;
+static PACKET_STATE _TEMP_Packet_State = STATE_1;
 
 UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3) {
@@ -14,28 +28,71 @@ UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1,
 }
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
+    if (!CRG_SetupPLL(busClk, CONFIG_OSCCLK, CONFIG_REFCLK)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_CRGPLL_SETUP);
+#endif
+        return bFALSE;        
+    }
+    /*
+	if (!EEPROM_Setup(CONFIG_OSCCLK, busClk)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_EEPROM_SETUP);
+#endif
+	}
+	*/
     SCI_Setup(baudRate, busClk);
     return Packet_Put_ModCon_Startup();
 }
 
-BOOL Packet_Get(void) {
-    UINT8 checksum = 0;
-    
+BOOL Packet_Get(void) {    
     SCI_Poll();
-    if (SCI_InChar(&Packet_Command)) { /* if we got first byte then we're gonna poll out the reset of them */
-        while(!SCI_InChar(&Packet_Parameter1))
-            SCI_Poll();
-        while(!SCI_InChar(&Packet_Parameter2))
-            SCI_Poll();
-        while(!SCI_InChar(&Packet_Parameter3))
-            SCI_Poll();
-        while(!SCI_InChar(&checksum))
-            SCI_Poll();    
-        if (checksum == Packet_Checksum(Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3)) {
-            return bTRUE;
-        }
+    switch(_TEMP_Packet_State) {
+        case STATE_0:
+            if (SCI_InChar(&_TEMP_Packet_Command)) {
+                _TEMP_Packet_State = STATE_1;
+            }
+            break;
+        case STATE_1:
+            if (SCI_InChar(&_TEMP_Packet_Parameter1)) {
+                _TEMP_Packet_State = STATE_2;
+            }
+            break;
+        case STATE_2:
+            if (SCI_InChar(&_TEMP_Packet_Parameter2)) {
+                _TEMP_Packet_State = STATE_3;
+            }
+            break;
+        case STATE_3:
+            if (SCI_InChar(&_TEMP_Packet_Parameter3)) {
+                _TEMP_Packet_State = STATE_4;
+            }
+            break;            
+        case STATE_4:
+            if (SCI_InChar(&_TEMP_Packet_Checksum)) {
+                _TEMP_Packet_State = STATE_5;
+            }
+            break;
+        case STATE_5:
+                if (_TEMP_Packet_Checksum != Packet_Checksum(_TEMP_Packet_Command, _TEMP_Packet_Parameter1, _TEMP_Packet_Parameter2, _TEMP_Packet_Parameter3)) {
+                    _TEMP_Packet_Command = _TEMP_Packet_Parameter1;
+                    _TEMP_Packet_Parameter1 = _TEMP_Packet_Parameter2;
+                    _TEMP_Packet_Parameter2 = _TEMP_Packet_Parameter3;
+                    _TEMP_Packet_Parameter3 = _TEMP_Packet_Checksum;
+                    _TEMP_Packet_State = STATE_4;                    
+                } else {
+                    Packet_Command = _TEMP_Packet_Command;
+                    Packet_Parameter1 = _TEMP_Packet_Parameter1;
+                    Packet_Parameter2 = _TEMP_Packet_Parameter2;
+                    Packet_Parameter3 = _TEMP_Packet_Parameter3;
+                    _TEMP_Packet_State = STATE_0;
+                    return bTRUE;
+                }
+            break;
+        default:
+            break;
     }
-    return bFALSE;   
+    return bFALSE;
 }
 
 BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
@@ -50,7 +107,8 @@ BOOL Packet_Put(const UINT8 command, const UINT8 parameter1,
 BOOL Packet_Put_ModCon_Startup(void) {
     return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
            Packet_Put_ModCon_Version() &&
-           Packet_Put_ModCon_Number_Get();    
+           Packet_Put_ModCon_Number_Get() &&    
+           Packet_Put_ModCon_Mode_Get();    
 }
 
 BOOL Packet_Put_ModCon_Version(void) {
@@ -59,4 +117,8 @@ BOOL Packet_Put_ModCon_Version(void) {
 
 BOOL Packet_Put_ModCon_Number_Get(void) {
     return Packet_Put(MODCON_COMMAND_NUMBER, MODCON_NUMBER_GET, ModConNumberLSB, ModConNumberMSB);
+}
+
+BOOL Packet_Put_ModCon_Mode_Get(void) {
+    return Packet_Put(MODCON_COMMAND_MODE, MODCON_MODE_GET, ModConModeLSB, ModConModeMSB);
 }

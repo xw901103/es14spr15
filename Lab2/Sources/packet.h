@@ -24,6 +24,14 @@ extern TUINT16 ModConNumber;
 #define ModConNumberMSB ModConNumber.s.Hi
 #endif
 
+/**
+ * ModCon mode
+ */
+extern TUINT16 ModConMode;
+#if !defined(ModConModeLSB) && !defined(ModConModeMSB)
+#define ModConModeLSB ModConMode.s.Lo
+#define ModConModeMSB ModConMode.s.Hi
+#endif
 
 /**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
@@ -87,5 +95,12 @@ BOOL Packet_Put_ModCon_Version(void);
  * \return TRUE if the packet was queued for transmission successfully
  */
 BOOL Packet_Put_ModCon_Number_Get(void);
+
+/**
+ * \fn BOOL Packet_Put_ModCon_Mode_Get(void)
+ * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
+ * \return TRUE if the packet was queued for transmission successfully
+ */
+BOOL Packet_Put_ModCon_Mode_Get(void);
 
 #endif

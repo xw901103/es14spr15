@@ -1,17 +1,15 @@
-// ----------------------------------------
-// Filename: EEPROM.h
-// Description: Routines for erasing and
-//   writing to the EEPROM
-// Author: PMcL
-// Date: 16-Mar-07
-
+/**
+ * \file EEPROM.h
+ * \brief Routines for erasing and writing to the EEPROM
+ * \author Xu Waycell
+ * \date 13-August-2014
+ */
 #ifndef EEPROM_H
 #define EEPROM_H
 
-// new types
-#include "types.h"
+#include "global.h"
 
-// EEPROM data access
+/* EEPROM data access */
 #define _EB(EEPROM_ADDRESS)	  *(UINT8 volatile *)(EEPROM_ADDRESS)
 #define _EI(EEPROM_ADDRESS)	  *(INT16 volatile *)(EEPROM_ADDRESS)
 #define _EW(EEPROM_ADDRESS)	  *(UINT16 volatile *)(EEPROM_ADDRESS)
@@ -26,35 +24,23 @@
 #define    sModConNb        _EW(0x400)
 #define    sModConMode      _EW(0x402)
 
-// ----------------------------------------
-// EEPROM_Setup
-// 
-// Sets up the EEPROM with the correct internal clock
-// Based on Figure 4-1 of the EETS4K Block User Guide V02.07
-// Input:
-//  oscClk is the oscillator clock frequency in Hz
-//  busClk is the bus clock frequency in Hz
-// Output:
-//   TRUE if the EEPROM was setup succesfully
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
+ * \brief Sets up the EEPROM with the correct internal clock Based on Figure 4-1 of the EETS4K Block User Guide V02.07.
+ * \param oscClk the oscillator clock frequency in Hz
+ * \param busClk the bus clock frequency in Hz
+ * \return TRUE if the EEPROM was setup succesfully
+ */
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk);
  
-// ----------------------------------------
-// EEPROM_Write32
-// 
-// Writes a 32-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if address is not aligned to a 4-byte boundary
-//   or if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
+ * \brief Writes a 32-bit number to EEPROM.
+ * \param address the address of the data
+ * \param data the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 4-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
  
 // ----------------------------------------

@@ -32,6 +32,11 @@
 #define MODCON_NUMBER_SET 2
 #endif
 
+#if !defined(MODCON_MODE_GET) && !defined(MODCON_MODE_SET)
+#define MODCON_MODE_GET 1
+#define MODCON_MODE_SET 2
+#endif
+
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
 #endif
@@ -41,7 +46,8 @@
 #define ERR_FIFO_PUT        0xBAD2 /* cannot put a byte into FIFO buffer */
 #define ERR_PACKET_SETUP    0xBAD3 /* packet initialization failure */
 #define ERR_PACKET_PUT      0xBAD4 /* cannot put a packet into transmission queue */
-#define ERR_EEPROM_SETUP    0xBAD5 /* EEPROM initialization failure */
+#define ERR_CRGPLL_SETUP    0xBAD5 /* clock and reset generator phase-locked loop initialization failure */
+#define ERR_EEPROM_SETUP    0xBAD6 /* EEPROM initialization failure */
 #define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 
