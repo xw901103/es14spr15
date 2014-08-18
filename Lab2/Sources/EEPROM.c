@@ -53,7 +53,7 @@ BOOL EEPROM_Program(UINT32 volatile * const address, const UINT32 data, UINT8 co
 }
 
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data) {
-    return bFALSE;    
+    return EEPROM_Program(address, data, EEPROM_COMMAND_SECTOR_MODIFY);    
 }
 
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data) {
