@@ -49,4 +49,17 @@
 #warning "General FIFO buffer size override detected!"
 #endif
 
+
+#ifndef CONFIG_EEPROM_OFFSET_MODCON_NUMBER
+#define CONFIG_EEPROM_OFFSET_MODCON_NUMBER  0 //16bits, offset in byte
+#else
+#warning "ModCon number EEPROM offset override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_OFFSET_MODCON_MODE
+#define CONFIG_EEPROM_OFFSET_MODCON_MODE  2   //16bits, offset in byte
+#else
+#warning "ModCon mode EEPROM offset override detected!"
+#endif
+
 #endif

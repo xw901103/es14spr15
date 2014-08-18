@@ -13,8 +13,9 @@
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
 #include "global.h"
-#include "packet.h"
 #include "CRG.h"
+#include "EEPROM.h"
+#include "packet.h"
 
 /**
  * \fn void Initialize(void)
@@ -43,8 +44,6 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err) {
 #endif
 
 void Initialize(void) {
-    ModConNumber.l = 29;
-    ModConMode.l = 1;
     if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_CRGPLL_SETUP);
@@ -55,18 +54,18 @@ void Initialize(void) {
         DEBUG(__LINE__, ERR_CRGCOP_SETUP);
 #endif
     }
-    /*
-	if (!EEPROM_Setup(CONFIG_OSCCLK, busClk)) {
+  	if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_EEPROM_SETUP);
 #endif
-	}
-	*/    
+	  }
     if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_SETUP);
 #endif
     }
+    ModConNumber.l = 29;
+    ModConMode.l = 1;
 }
 
 void Routine(void) {
@@ -150,6 +149,7 @@ void Routine(void) {
 void main(void)
 {
     Initialize();
+    EEPROM_Erase();
     for (;;) {
         CRG_ArmCOP();
         Routine();

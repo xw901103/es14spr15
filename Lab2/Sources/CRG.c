@@ -9,17 +9,15 @@
 BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk) {
     UINT8 refDiv = 0, synReg = 0;
 
-    if (!CLKSEL_PLLSEL) {        
+    if (!CLKSEL_PLLSEL && CONFIG_BUSCLK_MAXIMUM >= busClk) {        
         refDiv = (UINT8)(oscClk/refClk);
         synReg = (UINT8)((busClk*refDiv)/oscClk);
-        if (CONFIG_BUSCLK_MAXIMUM >= (oscClk*synReg/refDiv)) { /* make sure that target bus clock is not harmful */            
-            REFDV_REFDV = (byte)(refDiv - 1);
-            SYNR_SYN = (byte)(synReg - 1);    
-            PLLCTL_PLLON = 1;
-            while(!CRGFLG_LOCK);                               /* poll until it is stable */
-            CLKSEL_PLLSEL = 1;                                 /* select phase-locked loop as system clock */
-            return bTRUE;
-        }
+        REFDV_REFDV = (byte)(refDiv - 1);
+        SYNR_SYN = (byte)(synReg - 1);    
+        PLLCTL_PLLON = 1;
+        while(!CRGFLG_LOCK);                               /* poll until it is stable */
+        CLKSEL_PLLSEL = 1;                                 /* select phase-locked loop as system clock */
+        return bTRUE;
     }
     return bFALSE;
 }
@@ -41,5 +39,7 @@ void CRG_DisarmCOP(void) {
 }
 
 void CRG_ResetCOP(void) {
-    __RESET_WATCHDOG();   
+//    __RESET_WATCHDOG();   
+    ARMCOP = COP_ARM;    
+    ARMCOP = COP_DISARM;    
 }
