@@ -29,7 +29,7 @@ UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1,
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
     SCI_Setup(baudRate, busClk);
-    return Packet_Put_ModCon_Startup();
+    return bTRUE;
 }
 
 BOOL Packet_Get(void) {    
@@ -89,23 +89,4 @@ BOOL Packet_Put(const UINT8 command, const UINT8 parameter1,
            SCI_OutChar(parameter2) &&
            SCI_OutChar(parameter3) &&
            SCI_OutChar(Packet_Checksum(command, parameter1, parameter2, parameter3));
-}
-
-BOOL Packet_Put_ModCon_Startup(void) {
-    return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
-           Packet_Put_ModCon_Version() &&
-           Packet_Put_ModCon_Number_Get() &&    
-           Packet_Put_ModCon_Mode_Get();    
-}
-
-BOOL Packet_Put_ModCon_Version(void) {
-    return Packet_Put(MODCON_COMMAND_SPECIAL, MODCON_VERSION_INITIAL, MODCON_VERSION_MAJOR, MODCON_VERSION_MINOR);    
-}
-
-BOOL Packet_Put_ModCon_Number_Get(void) {
-    return Packet_Put(MODCON_COMMAND_NUMBER, MODCON_NUMBER_GET, ModConNumberLSB, ModConNumberMSB);
-}
-
-BOOL Packet_Put_ModCon_Mode_Get(void) {
-    return Packet_Put(MODCON_COMMAND_MODE, MODCON_MODE_GET, ModConModeLSB, ModConModeMSB);
 }

@@ -95,11 +95,6 @@ void Initialize(void) {
         DEBUG(__LINE__, ERR_PACKET_SETUP);
 #endif
     }
-    if (!Packet_Put_ModCon_Startup()) {
-#ifndef NO_DEBUG
-        DEBUG(__LINE__, ERR_PACKET_PUT);
-#endif      
-    }
 }
 
 void Routine(void) {
@@ -167,7 +162,11 @@ void Routine(void) {
 void main(void)
 {			  
     Initialize();
-  
+    if (!Packet_Put_ModCon_Startup()) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif      
+    }  
     for (;;) {
         Routine();
     }
