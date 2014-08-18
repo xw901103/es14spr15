@@ -37,7 +37,7 @@ BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk) {
     return bFALSE;    
 }
 
-BOOL EEPROM_Program(UINT8 volatile * const address, const UINT8 data, UINT8 command) {  
+BOOL EEPROM_Program(UINT32 volatile * const address, const UINT32 data, UINT8 command) {  
     if (ECLKDIV_EDIVLD) {      
         ESTAT_PVIOL = 1;  //clear PVIOL flag
         ESTAT_ACCERR = 1; //clear ACCERR flag

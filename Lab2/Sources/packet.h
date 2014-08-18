@@ -15,25 +15,6 @@
 extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
 
 /**
- * ModCon number
- */
-extern TUINT16 ModConNumber;
-
-#if !defined(ModConNumberLSB) && !defined(ModConNumberMSB)
-#define ModConNumberLSB ModConNumber.s.Lo
-#define ModConNumberMSB ModConNumber.s.Hi
-#endif
-
-/**
- * ModCon mode
- */
-extern TUINT16 ModConMode;
-#if !defined(ModConModeLSB) && !defined(ModConModeMSB)
-#define ModConModeLSB ModConMode.s.Lo
-#define ModConModeMSB ModConMode.s.Hi
-#endif
-
-/**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3)
  * \brief Generates a checksum result of four given bytes.
