@@ -7,6 +7,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <hidef.h>      /* common defines and macros */
 #include "defs.h"
 #include "types.h"
 #include "config.h"
