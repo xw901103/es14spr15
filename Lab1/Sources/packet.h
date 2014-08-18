@@ -15,17 +15,6 @@
 extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
 
 /**
- * ModCon number
- */
-extern TUINT16 ModConNumber;
-
-#if !defined(ModConNumberLSB) && !defined(ModConNumberMSB)
-#define ModConNumberLSB ModConNumber.s.Lo
-#define ModConNumberMSB ModConNumber.s.Hi
-#endif
-
-
-/**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3)
  * \brief Generates a checksum result of four given bytes.
@@ -66,26 +55,5 @@ BOOL Packet_Get(void);
  */
 BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
   const UINT8 parameter2, const UINT8 parameter3);
-
-/**
- * \fn BOOL Packet_Put_ModCon_Startup(void)
- * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
- * \return TRUE if packets were queued for transmission successfully
- */  
-BOOL Packet_Put_ModCon_Startup(void);
-
-/**
- * \fn BOOL Packet_Put_ModCon_Version(void)
- * \brief Builds a packet that contains ModCon version details and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully
- */
-BOOL Packet_Put_ModCon_Version(void);
-
-/**
- * \fn BOOL Packet_Put_ModCon_Number_Get(void)
- * \brief Builds a packet that contains ModCon number and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully
- */
-BOOL Packet_Put_ModCon_Number_Get(void);
 
 #endif
