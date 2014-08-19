@@ -92,15 +92,25 @@ BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data) {
 }
 
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data) {
+    UINT8 volatile * EEPROM_ADDR = address;
     TUINT32 CACHE32;
     TUINT16 CACHE16;
-    CACHE32.l = *(UINT32 volatile * const) address;
-    CACHE16.l = CACHE32.s.Hi;
-    CACHE16.s.Hi = data;
-    CACHE32.s.Hi = CACHE16.l;
-    return EEPROM_Command((UINT16 volatile * const)address, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
-           EEPROM_Command((UINT16 volatile * const)address, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
-           EEPROM_Command((UINT16 volatile * const)address+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
+    
+    if ((UINT16)EEPROM_ADDR%2 == 0) {
+        CACHE32.l = *(UINT32 volatile * const) EEPROM_ADDR;
+        CACHE16.l = CACHE32.s.Hi;
+        CACHE16.s.Hi = data;
+        CACHE32.s.Hi = CACHE16.l;
+    } else {
+        --EEPROM_ADDR;
+        CACHE32.l = *(UINT32 volatile * const) EEPROM_ADDR;
+        CACHE16.l = CACHE32.s.Hi;
+        CACHE16.s.Lo = data;
+        CACHE32.s.Hi = CACHE16.l;
+    }
+    return EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
+           EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
+           EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
 }
 
 BOOL EEPROM_Erase(void) {
