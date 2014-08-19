@@ -73,10 +73,10 @@
 /**
  * \brief Macros for enter critical section
  */
-#define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
+#define EnterCritical() { asm tfr ccr,a; asm staa savedCCR; asm sei; }
 /**
  * \brief Macros for exit critical section
  */
-#define ExitCritical()  { asm leas -1,sp; asm pulc; }
+#define ExitCritical()  { asm ldaa savedCCR; asm tfr a,ccr; }
 
 #endif
