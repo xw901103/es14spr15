@@ -49,13 +49,6 @@ typedef union
   } s;
 } TUINT32;
 
-// Macros for critical sections
-#define OldEnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
-#define OldExitCritical()  { asm leas -1,sp; asm pulc; }
-
-#define EnterCritical() { asm tfr ccr,a; asm staa savedCCR; asm sei; }
-#define ExitCritical()  { asm ldaa savedCCR; asm tfr a,ccr; }
-
 // Boolean definition that includes type and value
 typedef enum
 {
