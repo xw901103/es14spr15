@@ -48,11 +48,12 @@ void Initialize(void) {
         DEBUG(__LINE__, ERR_CRGPLL_SETUP);
 #endif
     }
+    /*
     if (!CRG_SetupCOP(CONFIG_COPRATE)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_CRGCOP_SETUP);
 #endif
-    }
+    }*/
   	if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_EEPROM_SETUP);
@@ -147,16 +148,19 @@ void Routine(void) {
 
 void main(void)
 {
+    UINT32 volatile cache = 0;
     Initialize();
     if (!Packet_Put_ModCon_Startup()) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif      
     }
-    EEPROM_Erase();
+    //EEPROM_Erase();
+    EEPROM_Write32((UINT32 volatile * const)0x0400, 0xC0FF);
+    cache = *(UINT16 volatile *)0x400;
     for (;;) {
-        CRG_ArmCOP();
+        //CRG_ArmCOP();
         Routine();
-        CRG_DisarmCOP();
+        //CRG_DisarmCOP();
     }
 }
