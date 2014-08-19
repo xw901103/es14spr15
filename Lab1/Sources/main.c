@@ -1,10 +1,4 @@
 /**
- * \mainpage Xu's Embedded Software Lab 1
- *
- * \section intro_sec Introduction
- * Lab 1 is to implement a program that responds ModCon protocol via Serial Communication Interface
- * on ModCon board running at bus clock 8 Mhz with 38400 baud rate.
- *
  * \file main.c
  * \brief Program main entry file.
  * \author Xu Waycell
@@ -16,6 +10,7 @@
 
 
 #ifndef NO_DEBUG
+/* this will log errors from other functions, make sure you have a break point here */
 void LogDebug(const UINT16 lineNumber, const UINT16 err) {
     /* break point here */
     UNUSED(lineNumber);
@@ -40,6 +35,7 @@ BOOL Packet_Put_ModCon_Number_Get(void) {
 void Initialize(void) {
     ModConNumber.l = 7229;
     
+    /* initialize ModCon packet communication module */
     if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_SETUP);
@@ -48,8 +44,9 @@ void Initialize(void) {
 }
 
 void Routine(void) {
-    UINT8 ACK = 0;
-    BOOL DENY = bFALSE;
+    UINT8 ACK = 0;      /* abbreviation of acknowledgment */
+    BOOL DENY = bFALSE; /* DENY is using for acknowledgment purpose.                */
+                        /* if DENY is true then acknowledgment bit will be removed */
     
     if (Packet_Get()) { 
         ACK = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
@@ -57,13 +54,14 @@ void Routine(void) {
         
         switch(Packet_Command) {
             case MODCON_COMMAND_STARTUP:
-                if (!Packet_Put_ModCon_Startup()) { /* push first three packets */
+                if (!Packet_Put_ModCon_Startup()) { /* push first three packets of ModCon startup figures */
 #ifndef NO_DEBUG
                     DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
                 }
                 break;
             case MODCON_COMMAND_SPECIAL:
+                /* make sure it is the version special query not some others */
                 if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR) {                    
                     if (!Packet_Put_ModCon_Version()) {
 #ifndef NO_DEBUG
@@ -75,19 +73,19 @@ void Routine(void) {
                 }
                 break;
             case MODCON_COMMAND_NUMBER:
-                if (Packet_Parameter1 == MODCON_NUMBER_GET) {                        
+                if (Packet_Parameter1 == MODCON_NUMBER_GET) {        /* send back current ModCon number after this */                
                     if (!Packet_Put_ModCon_Number_Get()) {
 #ifndef NO_DEBUG
                         DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
                     }
-                } else if (Packet_Parameter1 == MODCON_NUMBER_SET) {
+                } else if (Packet_Parameter1 == MODCON_NUMBER_SET) { /* we set our new number after this */
                     ModConNumberLSB = Packet_Parameter2;
                     ModConNumberMSB = Packet_Parameter3;
                 }
                 break;
             default:
-                DENY = bTRUE;
+                DENY = bTRUE; /* not acceptable command so we deny */
                 break;
         }
         
@@ -111,13 +109,13 @@ void Routine(void) {
 
 void main(void)
 {			  
-    Initialize();
-    if (!Packet_Put_ModCon_Startup()) {
+    Initialize();                       /* initialize packet communication module */
+    if (!Packet_Put_ModCon_Startup()) { /* queue startup packets for transmission */
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif      
     }  
     for (;;) {
-        Routine();
+        Routine();                      /* ModCon command poll and execution routine */
     }
 }

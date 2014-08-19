@@ -24,6 +24,7 @@
 #define MODCON_VERSION_MINOR    0
 #endif
 
+/* ModCon Number command parameter for get and set */
 #if !defined(MODCON_NUMBER_GET) && !defined(MODCON_NUMBER_SET)
 #define MODCON_NUMBER_GET 1
 #define MODCON_NUMBER_SET 2

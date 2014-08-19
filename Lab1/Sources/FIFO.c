@@ -6,8 +6,9 @@
 
 void FIFO_Init(TFIFO * const FIFO) {
     if (FIFO) {
+        /* ready given FIFO by setting zeros */
         FIFO->Start = 0;
-        FIFO->End = 0;
+        FIFO->End   = 0;
         FIFO->NbBytes = 0;
         return;
     }

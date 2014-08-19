@@ -1,4 +1,18 @@
 /**
+ * \mainpage Xu's Embedded Software Lab 1
+ *
+ * \section intro_sec Introduction
+ * Lab 1 is to implement a program that responds ModCon protocol via Serial Communication Interface
+ * on ModCon board running at bus clock 8 Mhz with 38400 baud rate.
+ * Following ModCon Protocols have been implemented.
+ *
+ * 0x04 ModCon Startup
+ * - This will send program settings including ModCon number and version.
+ * 0x09 ModCon Special ModCon version number query
+ * - This will send current ModCon version number
+ * 0x0B ModCon number get and set
+ * - This is the accessor and mutator of ModCon number
+ *
  * \file main.h
  * \brief Program main entry file. 
  * \author Xu Waycell
