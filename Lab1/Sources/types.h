@@ -86,15 +86,6 @@ typedef union
 } TFloat;
 
 /**
- * \brief Macros for enter critical section
- */
-#define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
-/**
- * \brief Macros for exit critical section
- */
-#define ExitCritical()  { asm leas -1,sp; asm pulc; }
-
-/**
  * \brief Boolean definition that includes type and value
  */
 typedef enum
