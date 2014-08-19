@@ -9,7 +9,7 @@
 #define EEPROM_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 // EEPROM data access
 #define _EB(EEPROM_ADDRESS)	  *(UINT8 volatile *)(EEPROM_ADDRESS)

@@ -69,4 +69,13 @@
 #define EEPROM_S(OFFSET) *(UINT32 volatile *)EEPROM_ACCESS(OFFSET)
 #endif
 
+/**
+ * \brief Macros for enter critical section
+ */
+#define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
+/**
+ * \brief Macros for exit critical section
+ */
+#define ExitCritical()  { asm leas -1,sp; asm pulc; }
+
 #endif
