@@ -66,11 +66,37 @@ void Initialize(void) {
     }
     ModConNumber.l = 29;
     ModConMode.l = 1;
+    if (*(UINT16 volatile *)0x0400 == 0xFFFF) {
+        if (!EEPROM_Write16((UINT16 volatile *)0x0400, ModConNumber.l)) {
+#ifndef NO_DEBUG
+            DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+        }
+    } else {
+        ModConNumber.l = *(UINT16 volatile *)0x0400;
+    }
+    if (*(UINT16 volatile *)0x0402 == 0xFFFF) {
+        if (EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l)) {
+#ifndef NO_DEBUG
+            DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+        }
+    } else {
+        ModConMode.l = *(UINT16 volatile *)0x0402;
+    }
+}
+
+UINT16 Util_Merge16(UINT8 hi, UINT8 lo) {
+    TUINT16 CACHE;
+    CACHE.s.Hi = hi;
+    CACHE.s.Lo = lo;
+    return CACHE.l;
 }
 
 void Routine(void) {
     UINT8 ACK = 0;
     BOOL DENY = bFALSE;
+    UINT8 volatile * EEPROM_ADDRESS = 0;
     
     if (Packet_Get()) { 
         ACK = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
@@ -84,10 +110,22 @@ void Routine(void) {
 #endif
                 }
                 break;
-			case MODCON_COMMNAD_EEPROM_PROGRAM:
-				break;
-			case MODCON_COMMAND_EEPROM_GET:
-				break;
+			      case MODCON_COMMNAD_EEPROM_PROGRAM:
+			          EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
+			          if (!EEPROM_Write8(EEPROM_ADDRESS, Packet_Parameter3)) {
+#ifndef NO_DEBUG
+                    DEBUG(__LINE__, ERR_EEPROM_WRITE);
+#endif			            
+			          }
+				        break;
+			      case MODCON_COMMAND_EEPROM_GET:
+			          EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
+			          if(!Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *EEPROM_ADDRESS)) {
+#ifndef NO_DEBUG
+                    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif			          
+			          }
+				        break;
             case MODCON_COMMAND_SPECIAL:
                 if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR) {                    
                     if (!Packet_Put_ModCon_Version()) {
@@ -111,7 +149,7 @@ void Routine(void) {
                     ModConNumberMSB = Packet_Parameter3;
                 }
                 break;
-			case MODCON_COMMAND_MODE:
+		      	case MODCON_COMMAND_MODE:
                 if (Packet_Parameter1 == MODCON_MODE_GET) {                        
                     if (!Packet_Put_ModCon_Mode_Get()) {
 #ifndef NO_DEBUG
@@ -122,7 +160,7 @@ void Routine(void) {
                     ModConModeLSB = Packet_Parameter2;
                     ModConModeMSB = Packet_Parameter3;
                 }
-				break;				
+				        break;				
             default:
                 DENY = bTRUE;
                 break;
@@ -146,18 +184,13 @@ void Routine(void) {
     }
 }
 
-void main(void)
-{
-    UINT32 volatile cache = 0;
+void main(void) {
     Initialize();
     if (!Packet_Put_ModCon_Startup()) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif      
     }
-    //EEPROM_Erase();
-    EEPROM_Write32((UINT32 volatile * const)0x0400, 0xC0FF);
-    cache = *(UINT16 volatile *)0x400;
     for (;;) {
         //CRG_ArmCOP();
         Routine();

@@ -53,6 +53,7 @@
 #define ERR_CRGPLL_SETUP    0xBAD5 /* clock and reset generator phase-locked loop initialization failure */
 #define ERR_CRGCOP_SETUP    0xBAD6 /* clock and reset generator computer operating properly initialization failure */
 #define ERR_EEPROM_SETUP    0xBAD7 /* EEPROM initialization failure */
+#define ERR_EEPROM_WRITE    0xBAD8 /* EEPROM program failure */
 #define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 
@@ -68,5 +69,14 @@
 #define EEPROM_L(OFFSET) *(INT32 volatile *)EEPROM_ACCESS(OFFSET)
 #define EEPROM_S(OFFSET) *(UINT32 volatile *)EEPROM_ACCESS(OFFSET)
 #endif
+
+/**
+ * \brief Macros for enter critical section
+ */
+#define EnterCritical() { asm pshc; asm sei; asm leas 1,sp; }
+/**
+ * \brief Macros for exit critical section
+ */
+#define ExitCritical()  { asm leas -1,sp; asm pulc; }
 
 #endif
