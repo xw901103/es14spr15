@@ -1,6 +1,6 @@
 /**
  * \file packet.h
- * \brief Routines to implement packet encoding and decoding for the serial port
+ * \brief Routines to implement packet encoding and decoding for the serial port to serve ModCon protocols.
  * \author Xu Waycell
  * \date 06-August-2014
  */

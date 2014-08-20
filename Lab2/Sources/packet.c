@@ -3,14 +3,12 @@
  * \date 06-August-2014
  */
 #include "packet.h"
-#include "CRG.h"
-#include "EEPROM.h"
 #include "SCI.h"
 
+/* define and initialize our externs */
 UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
-TUINT16 ModConNumber;
-TUINT16 ModConMode;
 
+/* states of packet receive state machine */
 typedef enum {
     STATE_0,
     STATE_1,
@@ -19,6 +17,7 @@ typedef enum {
     STATE_4,
     STATE_5        
 } PACKET_STATE;
+/* temps for packet receive state machine */
 static UINT8 _TEMP_Packet_Command = 0, _TEMP_Packet_Parameter1 = 0, _TEMP_Packet_Parameter2 = 0, _TEMP_Packet_Parameter3 = 0, _TEMP_Packet_Checksum = 0;
 static PACKET_STATE _TEMP_Packet_State = STATE_1;
 
@@ -29,10 +28,10 @@ UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1,
 
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk) {
     SCI_Setup(baudRate, busClk);
-    return bTRUE;
+    return bTRUE; /* no extra configs for now so we leave it here */
 }
 
-BOOL Packet_Get(void) {    
+BOOL Packet_Get(void) {
     SCI_Poll();
     switch(_TEMP_Packet_State) {
         case STATE_0:
