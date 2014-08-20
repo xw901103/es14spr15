@@ -40,9 +40,33 @@ BOOL Handle_ModCon_Number_Get(void)
   return Packet_Put(MODCON_COMMAND_NUMBER, MODCON_NUMBER_GET, ModConNumberLSB, ModConNumberMSB);
 }
 
+BOOL Handle_ModCon_Number_Set(const UINT16 number)
+{
+  ModConNumberLSB = Packet_Parameter2;
+  ModConNumberMSB = Packet_Parameter3;
+  return bFALSE;
+}
+
 BOOL Handle_ModCon_Mode_Get(void)
 {
   return Packet_Put(MODCON_COMMAND_MODE, MODCON_MODE_GET, ModConModeLSB, ModConModeMSB);
+}
+
+BOOL Handle_ModCon_Mode_Set(const UINT16 mode)
+{
+  ModConModeLSB = Packet_Parameter2;
+  ModConModeMSB = Packet_Parameter3;
+  return bFALSE;
+}
+
+BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
+{
+  return bFALSE;
+}
+
+BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address)
+{
+  return bFALSE;
 }
 
 void Initialize(void)
@@ -134,26 +158,32 @@ void Routine(void)
         break;
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
 			  EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
-			  if (!EEPROM_Write8(EEPROM_ADDRESS, Packet_Parameter3))
-			  {
+        if (!Handle_ModCon_EEPROM_Program(EEPROM_ADDRESS, Packet_Parameter3))
+        {
+        }
+//			  if (!EEPROM_Write8(EEPROM_ADDRESS, Packet_Parameter3))
+//			  {
 #ifndef NO_DEBUG
-          DEBUG(__LINE__, ERR_EEPROM_WRITE);
+//          DEBUG(__LINE__, ERR_EEPROM_WRITE);
 #endif			            
-			  }
+//			  }
 				break;
 			case MODCON_COMMAND_EEPROM_GET:
 			  EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
-			  if(!Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *EEPROM_ADDRESS))
+			  if (!Handle_ModCon_EEPROM_Get(EEPROM_ADDRESS))
 			  {
-#ifndef NO_DEBUG
-          DEBUG(__LINE__, ERR_PACKET_PUT);
-#endif			          
 			  }
+			  //if(!Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *EEPROM_ADDRESS))
+			  //{
+#ifndef NO_DEBUG
+        //  DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif			          
+			  //}
 				break;
       case MODCON_COMMAND_SPECIAL:
         if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)
         {                    
-          if (!Packet_Put_ModCon_Version())
+          if (!Handle_ModCon_Version())
           {
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -168,7 +198,7 @@ void Routine(void)
       case MODCON_COMMAND_NUMBER:
         if (Packet_Parameter1 == MODCON_NUMBER_GET)
         {                        
-          if (!Packet_Put_ModCon_Number_Get())
+          if (!Handle_ModCon_Number_Get())
           {
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -177,6 +207,7 @@ void Routine(void)
         }
         else if (Packet_Parameter1 == MODCON_NUMBER_SET)
         {
+          Handle_ModCon_Number_Set(0);
           ModConNumberLSB = Packet_Parameter2;
           ModConNumberMSB = Packet_Parameter3;
         }
@@ -184,7 +215,7 @@ void Routine(void)
 		  case MODCON_COMMAND_MODE:
         if (Packet_Parameter1 == MODCON_MODE_GET)
         {                        
-          if (!Packet_Put_ModCon_Mode_Get())
+          if (!Handle_ModCon_Mode_Get())
           {
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -193,6 +224,7 @@ void Routine(void)
         }
         else if (Packet_Parameter1 == MODCON_MODE_SET)
         {
+          Handle_ModCon_Mode_Set(0);
           ModConModeLSB = Packet_Parameter2;
           ModConModeMSB = Packet_Parameter3;
         }
@@ -202,7 +234,7 @@ void Routine(void)
         break;
     }
         
-    if (acl)
+    if (ack)
     {
       if (!deny)
       {                

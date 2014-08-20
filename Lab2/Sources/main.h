@@ -73,12 +73,33 @@ BOOL Handle_ModCon_Version(void);
  */
 BOOL Handle_ModCon_Number_Get(void);
 
+BOOL Handle_ModCon_Number_Set(const UINT16 number);
+
 /**
  * \fn BOOL Handle_ModCon_Mode_Get(void)
  * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
  * \return TRUE if the packet was queued for transmission successfully
  */
 BOOL Handle_ModCon_Mode_Get(void);
+
+BOOL Handle_ModCon_Mode_Set(const UINT16 mode);
+
+/**
+ * \fn BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
+ * \brief
+ * \param address
+ * \param data
+ * \return
+ */
+BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data);
+
+/**
+ * \fn BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address)
+ * \brief
+ * \param address
+ * \return
+ */
+BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address);
 
 /**
  * \fn void Initialize(void)

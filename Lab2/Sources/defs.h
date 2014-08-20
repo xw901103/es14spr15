@@ -22,10 +22,6 @@
 #define CONTROL_CR  0x0D /* control character carriage return */
 #endif
 
-#if !defined(MODCON_COMMAND_ACK_MASK)
-#define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
-#endif
-
 #if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
 #define ERR_INVALID_POINTER 0xBAD1 /* given pointer is not valid */
 #define ERR_FIFO_PUT        0xBAD2 /* cannot put a byte into FIFO buffer */
