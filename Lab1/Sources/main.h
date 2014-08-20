@@ -6,12 +6,12 @@
  * on ModCon board running at bus clock 8 Mhz with 38400 baud rate.
  * Following ModCon Protocols have been implemented.
  *
- * 0x04 ModCon Startup
- * - This will send program settings including ModCon number and version.
- * 0x09 ModCon Special ModCon version number query
- * - This will send current ModCon version number
- * 0x0B ModCon number get and set
- * - This is the accessor and mutator of ModCon number
+ * * 0x04 ModCon Startup
+ * <br>This will send program settings including ModCon number and version.
+ * * 0x09 ModCon Special ModCon version number query
+ * <br>This will send current ModCon version number
+ * * 0x0B ModCon number get and set
+ * <br>This is the accessor and mutator of ModCon number
  *
  * \file main.h
  * \brief Program main entry file. 
