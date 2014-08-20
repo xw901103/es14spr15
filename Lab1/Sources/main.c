@@ -8,7 +8,6 @@
 #include "main.h"
 #include "packet.h"
 
-
 #ifndef NO_DEBUG
 /* this will log errors from other functions, make sure you have a break point here */
 void LogDebug(const UINT16 lineNumber, const UINT16 err) 

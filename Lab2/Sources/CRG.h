@@ -11,7 +11,7 @@
 
 typedef enum
 {
-  COP_DISABLED = 0,
+  COP_DISABLED  = 0,
   COP_RATE_2_14 = 1,
   COP_RATE_2_16 = 2,
   COP_RATE_2_18 = 3,
