@@ -11,6 +11,7 @@
  */
 
 #include "main.h"
+#include "utils.h"
 #include "CRG.h"
 #include "EEPROM.h"
 #include "packet.h"
@@ -27,7 +28,8 @@ BOOL Handle_ModCon_Startup(void)
 {
   return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
          Handle_ModCon_Version() &&
-         Handle_ModCon_Number_Get();    
+         Handle_ModCon_Number_Get() &&
+         Handle_ModCon_Mode_Get();    
 }
 
 BOOL Handle_ModCon_Version(void) 
@@ -40,10 +42,9 @@ BOOL Handle_ModCon_Number_Get(void)
   return Packet_Put(MODCON_COMMAND_NUMBER, MODCON_NUMBER_GET, ModConNumberLSB, ModConNumberMSB);
 }
 
-BOOL Handle_ModCon_Number_Set(const UINT16 number)
+BOOL Handle_ModCon_Number_Set(void)
 {
-  ModConNumberLSB = Packet_Parameter2;
-  ModConNumberMSB = Packet_Parameter3;
+  ModConNumber.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
   return bFALSE;
 }
 
@@ -52,21 +53,22 @@ BOOL Handle_ModCon_Mode_Get(void)
   return Packet_Put(MODCON_COMMAND_MODE, MODCON_MODE_GET, ModConModeLSB, ModConModeMSB);
 }
 
-BOOL Handle_ModCon_Mode_Set(const UINT16 mode)
+BOOL Handle_ModCon_Mode_Set(void)
 {
-  ModConModeLSB = Packet_Parameter2;
-  ModConModeMSB = Packet_Parameter3;
+  ModConMode.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
   return bFALSE;
 }
 
-BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
-{
-  return bFALSE;
+BOOL Handle_ModCon_EEPROM_Program(void)
+{  
+  UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
+  return EEPROM_Write8(address, Packet_Parameter3);;
 }
 
-BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address)
+BOOL Handle_ModCon_EEPROM_Get(void)
 {
-  return bFALSE;
+  UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
+  return Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *address);
 }
 
 void Initialize(void)
@@ -125,18 +127,10 @@ void Initialize(void)
   }
 }
 
-UINT16 Util_Merge16(UINT8 hi, UINT8 lo) {
-  TUINT16 CACHE;
-  CACHE.s.Hi = hi;
-  CACHE.s.Lo = lo;
-  return CACHE.l;
-}
-
 void Routine(void)
 {
   UINT8 ack = 0;
   BOOL deny = bFALSE;
-  UINT8 volatile * EEPROM_ADDRESS = 0;
     
   if (Packet_Get())
   { 
@@ -145,41 +139,32 @@ void Routine(void)
         
     switch(Packet_Command)
     {
+      
       case MODCON_COMMAND_STARTUP:
         if (!Packet_Parameter1 && !Packet_Parameter2 && !Packet_Parameter3) 
-        {                    
+        {
+          /* push packets of ModCon startup figures */                    
           if (!Handle_ModCon_Startup()) 
-          { /* push first three packets of ModCon startup figures */
+          {
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
           }
         }
         break;
+			
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
-			  EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
-        if (!Handle_ModCon_EEPROM_Program(EEPROM_ADDRESS, Packet_Parameter3))
+        if (!Handle_ModCon_EEPROM_Program())
         {
         }
-//			  if (!EEPROM_Write8(EEPROM_ADDRESS, Packet_Parameter3))
-//			  {
-#ifndef NO_DEBUG
-//          DEBUG(__LINE__, ERR_EEPROM_WRITE);
-#endif			            
-//			  }
 				break;
+			
 			case MODCON_COMMAND_EEPROM_GET:
-			  EEPROM_ADDRESS = (UINT8 volatile *)Util_Merge16(Packet_Parameter2, Packet_Parameter1);
-			  if (!Handle_ModCon_EEPROM_Get(EEPROM_ADDRESS))
+			  if (!Handle_ModCon_EEPROM_Get())
 			  {
 			  }
-			  //if(!Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *EEPROM_ADDRESS))
-			  //{
-#ifndef NO_DEBUG
-        //  DEBUG(__LINE__, ERR_PACKET_PUT);
-#endif			          
-			  //}
 				break;
+      
       case MODCON_COMMAND_SPECIAL:
         if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)
         {                    
@@ -195,6 +180,7 @@ void Routine(void)
           deny = bTRUE;
         }
         break;
+      
       case MODCON_COMMAND_NUMBER:
         if (Packet_Parameter1 == MODCON_NUMBER_GET)
         {                        
@@ -207,11 +193,12 @@ void Routine(void)
         }
         else if (Packet_Parameter1 == MODCON_NUMBER_SET)
         {
-          Handle_ModCon_Number_Set(0);
-          ModConNumberLSB = Packet_Parameter2;
-          ModConNumberMSB = Packet_Parameter3;
+          if(!Handle_ModCon_Number_Set())
+          {
+          }
         }
         break;
+		  
 		  case MODCON_COMMAND_MODE:
         if (Packet_Parameter1 == MODCON_MODE_GET)
         {                        
@@ -224,11 +211,12 @@ void Routine(void)
         }
         else if (Packet_Parameter1 == MODCON_MODE_SET)
         {
-          Handle_ModCon_Mode_Set(0);
-          ModConModeLSB = Packet_Parameter2;
-          ModConModeMSB = Packet_Parameter3;
+          if(!Handle_ModCon_Mode_Set())
+          {
+          }
         }
 				break;				
+      
       default:
         deny = bTRUE;
         break;

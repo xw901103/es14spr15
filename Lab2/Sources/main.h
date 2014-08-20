@@ -73,7 +73,7 @@ BOOL Handle_ModCon_Version(void);
  */
 BOOL Handle_ModCon_Number_Get(void);
 
-BOOL Handle_ModCon_Number_Set(const UINT16 number);
+BOOL Handle_ModCon_Number_Set(void);
 
 /**
  * \fn BOOL Handle_ModCon_Mode_Get(void)
@@ -82,7 +82,7 @@ BOOL Handle_ModCon_Number_Set(const UINT16 number);
  */
 BOOL Handle_ModCon_Mode_Get(void);
 
-BOOL Handle_ModCon_Mode_Set(const UINT16 mode);
+BOOL Handle_ModCon_Mode_Set(void);
 
 /**
  * \fn BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
@@ -91,7 +91,7 @@ BOOL Handle_ModCon_Mode_Set(const UINT16 mode);
  * \param data
  * \return
  */
-BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data);
+BOOL Handle_ModCon_EEPROM_Program(void);
 
 /**
  * \fn BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address)
@@ -99,7 +99,7 @@ BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 da
  * \param address
  * \return
  */
-BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address);
+BOOL Handle_ModCon_EEPROM_Get(void);
 
 /**
  * \fn void Initialize(void)
