@@ -7,31 +7,15 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#if !defined(CONTROL_CR)
-#define CONTROL_CR 0x0D /* control character carriage return */
-#endif
-
-#if !defined(MODCON_COMMAND_STARTUP) && !defined(MODCON_COMMAND_SPECIAL) && !defined(MODCON_COMMAND_NUMBER)
-#define MODCON_COMMAND_STARTUP 0x04 /* ModCon protocol startup command */
-#define MODCON_COMMAND_SPECIAL 0x09 /* ModCon protocol special command */
-#define MODCON_COMMAND_NUMBER  0x0B /* ModCon protocol number command */
-#endif
-
-#if !defined(MODCON_VERSION_INITIAL) && !defined(MODCON_VERSION_TOKEN) && !defined(MODCON_VERSION_MAJOR) && !defined(MODCON_VERSION_MINOR)
-#define MODCON_VERSION_INITIAL 'v'
-#define MODCON_VERSION_TOKEN   'x' /* TODO: rename it for better functionality reflection */
-#define MODCON_VERSION_MAJOR    1
-#define MODCON_VERSION_MINOR    0
-#endif
-
-/* ModCon Number command parameter for get and set */
-#if !defined(MODCON_NUMBER_GET) && !defined(MODCON_NUMBER_SET)
-#define MODCON_NUMBER_GET 1
-#define MODCON_NUMBER_SET 2
-#endif
-
-#if !defined(MODCON_COMMAND_ACK_MASK)
-#define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
+#if !defined(CONTROL_NUL) && !defined(CONTROL_BEL) && !defined(CONTROL_BS) && !defined(CONTROL_TAB) && !defined(CONTROL_LF) && !defined(CONTROL_VT) && !defined(CONTROL_FF) && !defined(CONTROL_CR)
+#define CONTROL_NUL 0x00 /* control character null */
+#define CONTROL_BEL 0x07 /* control character bell */
+#define CONTROL_BS  0x08 /* control character backspace */
+#define CONTROL_TAB 0x09 /* control character horizontal tab */
+#define CONTROL_LF  0x0A /* control character line feed */
+#define CONTROL_VT  0x0B /* control character vertical tab */
+#define CONTROL_FF  0x0C /* control character form feed/page break */
+#define CONTROL_CR  0x0D /* control character carriage return */
 #endif
 
 #if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)

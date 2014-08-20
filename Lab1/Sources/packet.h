@@ -24,8 +24,7 @@ extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parame
  * \param parameter3 third parameter byte
  * \return Checksum result of given bytes.
  */
-UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3);
+UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
 /**
  * \fn BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
@@ -53,7 +52,6 @@ BOOL Packet_Get(void);
  * \param parameter3 third parameter byte
  * \return TRUE if a valid packet was queued for transmission successfully
  */
-BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3);
+BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
 #endif

@@ -24,6 +24,22 @@
 #include "global.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
+const UINT8 MODCON_COMMAND_STARTUP = 0x04; /* ModCon protocol startup command */
+const UINT8 MODCON_COMMAND_SPECIAL = 0x09; /* ModCon protocol special command */
+const UINT8 MODCON_COMMAND_NUMBER  = 0x0B; /* ModCon protocol number command */
+
+const UINT8 MODCON_VERSION_INITIAL = 'v';
+const UINT8 MODCON_VERSION_TOKEN   = 'x'; /* TODO: rename it for better functionality reflection */
+const UINT8 MODCON_VERSION_MAJOR   =  1 ;
+const UINT8 MODCON_VERSION_MINOR   =  0 ;
+
+const UINT8 MODCON_NUMBER_GET = 1;
+const UINT8 MODCON_NUMBER_SET = 2;
+
+#if !defined(MODCON_COMMAND_ACK_MASK)
+#define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
+#endif
+
 /**
  * ModCon number
  */
@@ -35,25 +51,25 @@ static TUINT16 ModConNumber;
 #endif
 
 /**
- * \fn BOOL Packet_Put_ModCon_Startup(void)
+ * \fn BOOL Handle_ModCon_Startup(void)
  * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
  * \return TRUE if packets were queued for transmission successfully
  */  
-BOOL Packet_Put_ModCon_Startup(void);
+BOOL Handle_ModCon_Startup(void);
 
 /**
- * \fn BOOL Packet_Put_ModCon_Version(void)
+ * \fn BOOL Handle_ModCon_Version(void)
  * \brief Builds a packet that contains ModCon version details and places it into transmit buffer. 
  * \return TRUE if the packet was queued for transmission successfully
  */
-BOOL Packet_Put_ModCon_Version(void);
+BOOL Handle_ModCon_Version(void);
 
 /**
- * \fn BOOL Packet_Put_ModCon_Number_Get(void)
+ * \fn BOOL Handle_ModCon_Number_Get(void)
  * \brief Builds a packet that contains ModCon number and places it into transmit buffer. 
  * \return TRUE if the packet was queued for transmission successfully
  */
-BOOL Packet_Put_ModCon_Number_Get(void);
+BOOL Handle_ModCon_Number_Get(void);
 
 /**
  * \fn void Initialize(void)
