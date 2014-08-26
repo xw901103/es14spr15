@@ -11,6 +11,11 @@
 #define EEPROM_COMMAND_MASS_ERASE     0x41
 #define EEPROM_COMMAND_SECTOR_MODIFY  0x60
 
+#if !defined(COP_ARM) && !defined(COP_DISARM)
+#define COP_ARM     0x55
+#define COP_DISARM  0xAA
+#endif
+
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
 {
   UINT8  PRDIV8 = 0;
@@ -36,7 +41,7 @@ BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
     {
       EDIV = (UINT8)((PRDCLK*5/MATH_1_MEGA)+PRDCLK/busClk);        
     }
-    if ((MATH_1_MEGA*(1+EDIV)/PRDCLK+MATH_1_MEGA/busClk) >= 5 && PRDCLK/(1+EDIV) >= EEPROM_MINIMUM_EECLK)
+    if ((MATH_1_MEGA*(1+EDIV)/PRDCLK+MATH_1_KILO/busClk) >= 5 && PRDCLK/(1+EDIV) >= EEPROM_MINIMUM_EECLK)
     {
       ECLKDIV_PRDIV8 = PRDIV8;
       ECLKDIV_EDIV = EDIV;
@@ -54,7 +59,9 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
     ESTAT_ACCERR = 1; //clear ACCERR flag
     while(!ESTAT_CBEIF)
     {
-      // feed watch dog 
+      // feed watch dog
+      ARMCOP = COP_ARM;
+      ARMCOP = COP_DISARM; 
     }
     if (address)
       *address = data;
@@ -65,6 +72,8 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
       while(!ESTAT_CCIF)
       {
         // feed watch dog
+        ARMCOP = COP_ARM;
+        ARMCOP = COP_DISARM; 
       }
       return bTRUE;
     }
@@ -99,12 +108,23 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
 
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
 {
+  UINT16 volatile * EEPROM_ADDR = (UINT16 volatile *)address;
   TUINT32 CACHE32;
-  CACHE32.l = *(UINT32 volatile * const) address;
-  CACHE32.s.Hi = data;
-  return EEPROM_Command((UINT16 volatile * const)address, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
-         EEPROM_Command((UINT16 volatile * const)address, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
-         EEPROM_Command((UINT16 volatile * const)address+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
+  
+  if ((UINT16)EEPROM_ADDR%2 == 0)
+  {
+    CACHE32.l = *(UINT32 volatile *) address;
+    CACHE32.s.Hi = data;
+  }
+  else
+  {
+    --EEPROM_ADDR;
+    CACHE32.l = *(UINT32 volatile *) EEPROM_ADDR;
+    CACHE32.s.Lo = data;
+  }
+  return EEPROM_Command(EEPROM_ADDR, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
+         EEPROM_Command(EEPROM_ADDR, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
+         EEPROM_Command(EEPROM_ADDR+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
 }
 
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
@@ -115,7 +135,7 @@ BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
     
   if ((UINT16)EEPROM_ADDR%2 == 0)
   {
-    CACHE32.l = *(UINT32 volatile * const) EEPROM_ADDR;
+    CACHE32.l = *(UINT32 volatile *) EEPROM_ADDR;
     CACHE16.l = CACHE32.s.Hi;
     CACHE16.s.Hi = data;
     CACHE32.s.Hi = CACHE16.l;
@@ -123,14 +143,14 @@ BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
   else
   {
     --EEPROM_ADDR;
-    CACHE32.l = *(UINT32 volatile * const) EEPROM_ADDR;
+    CACHE32.l = *(UINT32 volatile *) EEPROM_ADDR;
     CACHE16.l = CACHE32.s.Hi;
     CACHE16.s.Lo = data;
     CACHE32.s.Hi = CACHE16.l;
   }
-  return EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
-         EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
-         EEPROM_Command((UINT16 volatile * const)EEPROM_ADDR+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
+  return EEPROM_Command((UINT16 volatile *)EEPROM_ADDR, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
+         EEPROM_Command((UINT16 volatile *)EEPROM_ADDR, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
+         EEPROM_Command((UINT16 volatile *)EEPROM_ADDR+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
 }
 
 BOOL EEPROM_Erase(void)

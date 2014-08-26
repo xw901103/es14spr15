@@ -26,10 +26,12 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
 
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
 {
-  COPCTL_CR = (byte)aCOPRate;
+  COPCTL_WCOP = 0;  /* window mode */
 #ifndef NO_DEBUG
-  COPCTL_RSBCK = 1;
+  COPCTL_RSBCK = 1; /* BDM mode */
 #endif
+  COPCTL_CR = (byte)aCOPRate;
+//  CRG_ResetCOP();
   return bTRUE;
 }
 

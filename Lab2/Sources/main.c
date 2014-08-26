@@ -62,7 +62,9 @@ BOOL Handle_ModCon_Mode_Set(void)
 BOOL Handle_ModCon_EEPROM_Program(void)
 {  
   UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
-  return EEPROM_Write8(address, Packet_Parameter3);;
+  if (address != (UINT8 volatile * const)0x1000)
+    return EEPROM_Write8(address, Packet_Parameter3);;
+  return EEPROM_Erase();
 }
 
 BOOL Handle_ModCon_EEPROM_Get(void)
@@ -79,12 +81,11 @@ void Initialize(void)
     DEBUG(__LINE__, ERR_CRGPLL_SETUP);
 #endif
   }
-    /*
-    if (!CRG_SetupCOP(CONFIG_COPRATE)) {
+  if (!CRG_SetupCOP(CONFIG_COPRATE)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_CRGCOP_SETUP);
 #endif
-    }*/
+  }  
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
@@ -114,7 +115,7 @@ void Initialize(void)
   }
   if (*(UINT16 volatile *)0x0402 == 0xFFFF)
   {
-    if (EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l))
+    if (!EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l))
     {
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
@@ -157,14 +158,17 @@ void Routine(void)
         if (!Handle_ModCon_EEPROM_Program())
         {
         }
+        ModConNumber.l = *(UINT16 volatile *)0x0400;
+        ModConMode.l = *(UINT16 volatile *)0x0402;
 				break;
 			
 			case MODCON_COMMAND_EEPROM_GET:
 			  if (!Handle_ModCon_EEPROM_Get())
 			  {
 			  }
-				break;
-      
+        ModConNumber.l = *(UINT16 volatile *)0x0400;
+        ModConMode.l = *(UINT16 volatile *)0x0402;			  
+				break;      
       case MODCON_COMMAND_SPECIAL:
         if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)
         {                    
@@ -258,8 +262,8 @@ void main(void)
   }
   for (;;)
   {
-    //CRG_ArmCOP();
+    CRG_ArmCOP();
     Routine();
-    //CRG_DisarmCOP();
+    CRG_DisarmCOP();
   }
 }

@@ -7,7 +7,8 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#ifndef MATH_1_MEGA
+#if !defined(MATH_1_KILO) && !defined(MATH_1_MEGA)
+#define MATH_1_KILO 1000
 #define MATH_1_MEGA 1000000
 #endif
 
