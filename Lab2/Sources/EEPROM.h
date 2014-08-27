@@ -44,48 +44,32 @@ BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk);
  */
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
  
-// ----------------------------------------
-// EEPROM_Write16
-// 
-// Writes a 16-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if address is not aligned to a 2-byte boundary
-//   or if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
+ * \brief Writes a 16-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 2-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
 
-// ----------------------------------------
-// EEPROM_Write8
-// 
-// Writes an 8-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
+ * \brief Writes an 8-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data);
 
-// ----------------------------------------
-// EEPROM_Erase
-// 
-// Erases the entire EEPROM
-// Input:
-//   none
-// Output:
-//   TRUE if EEPROM was erased successfully
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Erase(void)  
+ * \brief Erases the entire EEPROM
+ * \return TRUE if EEPROM was erased successfully
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Erase(void);
 
 #endif

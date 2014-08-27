@@ -45,7 +45,7 @@ BOOL Handle_ModCon_Number_Get(void)
 BOOL Handle_ModCon_Number_Set(void)
 {
   ModConNumber.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
-  return bFALSE;
+  return EEPROM_Write16((UINT16 volatile *)0x0400, ModConNumber.l);
 }
 
 BOOL Handle_ModCon_Mode_Get(void)
@@ -56,7 +56,7 @@ BOOL Handle_ModCon_Mode_Get(void)
 BOOL Handle_ModCon_Mode_Set(void)
 {
   ModConMode.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
-  return bFALSE;
+  return EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l);
 }
 
 BOOL Handle_ModCon_EEPROM_Program(void)
@@ -157,6 +157,10 @@ void Routine(void)
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
         if (!Handle_ModCon_EEPROM_Program())
         {
+          if (ack)
+          {
+            deny = bTRUE; 
+          }
         }
         ModConNumber.l = *(UINT16 volatile *)0x0400;
         ModConMode.l = *(UINT16 volatile *)0x0402;
