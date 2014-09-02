@@ -50,16 +50,16 @@
 #endif
 
 
-#ifndef CONFIG_EEPROM_OFFSET_MODCON_NUMBER
-#define CONFIG_EEPROM_OFFSET_MODCON_NUMBER  0 //16bits, offset in byte
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_NUMBER
+#define CONFIG_EEPROM_ADDRESS_MODCON_NUMBER  0x0400 //16bits, offset in byte
 #else
-#warning "ModCon number EEPROM offset override detected!"
+#warning "ModCon number EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_OFFSET_MODCON_MODE
-#define CONFIG_EEPROM_OFFSET_MODCON_MODE  2   //16bits, offset in byte
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_MODE
+#define CONFIG_EEPROM_ADDRESS_MODCON_MODE  0x0402   //16bits, offset in byte
 #else
-#warning "ModCon mode EEPROM offset override detected!"
+#warning "ModCon mode EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN

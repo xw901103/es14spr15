@@ -49,7 +49,7 @@ BOOL Handle_ModCon_Number_Get(void)
 BOOL Handle_ModCon_Number_Set(void)
 {
   ModConNumber.l = ForgeWord(Packet_Parameter3, Packet_Parameter2);
-  return EEPROM_Write16((UINT16 volatile *)0x0400, ModConNumber.l);
+  return EEPROM_Write16((UINT16 volatile *)CONFIG_EEPROM_ADDRESS_MODCON_NUMBER, ModConNumber.l);
 }
 
 BOOL Handle_ModCon_Mode_Get(void)
@@ -60,7 +60,7 @@ BOOL Handle_ModCon_Mode_Get(void)
 BOOL Handle_ModCon_Mode_Set(void)
 {
   ModConMode.l = ForgeWord(Packet_Parameter3, Packet_Parameter2);
-  return EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l);
+  return EEPROM_Write16((UINT16 volatile *)CONFIG_EEPROM_ADDRESS_MODCON_MODE, ModConMode.l);
 }
 
 BOOL Handle_ModCon_EEPROM_Program(void)
@@ -68,7 +68,7 @@ BOOL Handle_ModCon_EEPROM_Program(void)
   UINT8 volatile * const address = (UINT8 volatile *)ForgeWord(Packet_Parameter2, Packet_Parameter1);
   if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
   {    
-    if (address != (UINT8 volatile * const)0x1000)
+    if (address != (UINT8 volatile * const)CONFIG_MODCON_EEPROM_ADDRESS_END)
     {
       return EEPROM_Write8(address, Packet_Parameter3);
     }
@@ -91,9 +91,8 @@ BOOL Handle_ModCon_EEPROM_Get(void)
 }
 
 void TurnOnStartupIndicator(void) {
-  //turn on led test  
-  DDRE_BIT7 = 1;
-  //PEAR_NOACCE = 1;
+  DDRE_BIT7= 1;   /* set PORT E pin 7 data direction to output */
+  PORTE_BIT7 = 0; /* set PORT E pin 7 low */
 }
 
 void Initialize(void)
@@ -193,17 +192,15 @@ void Routine(void)
         {
           deny = bTRUE; 
         }
-        ModConNumber.l = *(UINT16 volatile *)0x0400;
-        ModConMode.l = *(UINT16 volatile *)0x0402;
-				break;
-			
+        /* update ModCon mode and number due to potential mutation */
+        ModConNumber.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER);
+        ModConMode.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE);
+				break;			
 			case MODCON_COMMAND_EEPROM_GET:
 			  if (!Handle_ModCon_EEPROM_Get())
 			  {
 			    deny = bTRUE;
 			  }
-        ModConNumber.l = *(UINT16 volatile *)0x0400;
-        ModConMode.l = *(UINT16 volatile *)0x0402;			  
 				break;      
       case MODCON_COMMAND_SPECIAL:
         if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)
@@ -219,8 +216,7 @@ void Routine(void)
         {
           deny = bTRUE;
         }
-        break;
-      
+        break;      
       case MODCON_COMMAND_NUMBER:
         if (Packet_Parameter1 == MODCON_NUMBER_GET)
         {                        
@@ -237,8 +233,7 @@ void Routine(void)
           {
           }
         }
-        break;
-		  
+        break;		  
 		  case MODCON_COMMAND_MODE:
         if (Packet_Parameter1 == MODCON_MODE_GET)
         {                        

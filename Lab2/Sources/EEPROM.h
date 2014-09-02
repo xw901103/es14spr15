@@ -15,13 +15,6 @@
 #define EEPROM_WORD(EEPROM_ADDRESS)	  *(UINT16 volatile *)(EEPROM_ADDRESS)
 #define EEPROM_LONG(EEPROM_ADDRESS)	  *(INT32 volatile *)(EEPROM_ADDRESS)
 #define EEPROM_SECTOR(EEPROM_ADDRESS)	  *(UINT32 volatile *)(EEPROM_ADDRESS)
-// ----------------------------------------
-// EEPROM addresses
-// ----------------------------------------
-
-// ModCon parameters
-#define    sModConNb        _EW(0x400)
-#define    sModConMode      _EW(0x402)
 
 /**
  * \fn BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)

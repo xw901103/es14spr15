@@ -73,6 +73,11 @@ BOOL Handle_ModCon_Version(void);
  */
 BOOL Handle_ModCon_Number_Get(void);
 
+/**
+ * \fn BOOL Handle_ModCon_Number_Set(void)
+ * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
+ * \return TRUE if write new value to EEPROM is successful.
+ */
 BOOL Handle_ModCon_Number_Set(void);
 
 /**
@@ -82,7 +87,12 @@ BOOL Handle_ModCon_Number_Set(void);
  */
 BOOL Handle_ModCon_Mode_Get(void);
 
-BOOL Handle_ModCon_Mode_Set(void);
+/**
+ * \fn BOOL Handle_ModCon_Mode_Set(void)
+ * \brief Assign new value to ModCon mode through given packet then update stored EEPROM value. 
+ * \return TRUE if write new value to EEPROM is successful.
+ */
+ BOOL Handle_ModCon_Mode_Set(void);
 
 /**
  * \fn BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
