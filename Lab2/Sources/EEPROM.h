@@ -55,6 +55,13 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
 
 /**
+ * \fn BOOL EEPROM_ValidateAddress 
+ * \brief verify given pointer
+ * \return TRUE if given EEPROM address is in the range.
+ */
+BOOL EEPROM_ValidateAddress(UINT16 volatile * const address);
+
+/**
  * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
  * \brief Writes an 8-bit number to EEPROM
  * \param address is the address of the data,

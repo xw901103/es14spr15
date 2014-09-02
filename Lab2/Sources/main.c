@@ -16,6 +16,10 @@
 #include "EEPROM.h"
 #include "packet.h"
 
+#include "mc9s12a512.h"
+
+int Error_Code = ERR_NO_ERROR;
+
 #ifndef NO_DEBUG
 void LogDebug(const UINT16 lineNumber, const UINT16 err) {
     /* break point here */
@@ -60,17 +64,36 @@ BOOL Handle_ModCon_Mode_Set(void)
 }
 
 BOOL Handle_ModCon_EEPROM_Program(void)
-{  
+{ 
   UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
-  if (address != (UINT8 volatile * const)0x1000)
-    return EEPROM_Write8(address, Packet_Parameter3);;
-  return EEPROM_Erase();
+  if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
+  {    
+    if (address != (UINT8 volatile * const)0x1000)
+    {
+      return EEPROM_Write8(address, Packet_Parameter3);
+    }
+    return EEPROM_Erase();
+  }
+  return bFALSE;
 }
 
 BOOL Handle_ModCon_EEPROM_Get(void)
 {
   UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
-  return Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *address);
+  if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
+  { 
+    if (EEPROM_ValidateAddress((UINT16 volatile * const)address))
+    {    
+      return Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *address);
+    }
+  }
+  return bFALSE;
+}
+
+void TurnOnStartupIndicator(void) {
+  //turn on led test  
+  DDRE_BIT7 = 1;
+  //PEAR_NOACCE = 1;
 }
 
 void Initialize(void)
@@ -80,23 +103,31 @@ void Initialize(void)
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_CRGPLL_SETUP);
 #endif
+    Error_Code = ERR_CRGPLL_SETUP;
+    return;
   }
   if (!CRG_SetupCOP(CONFIG_COPRATE)) {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_CRGCOP_SETUP);
 #endif
+    Error_Code = ERR_CRGCOP_SETUP;
+    return;
   }  
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_EEPROM_SETUP);
 #endif
+    Error_Code = ERR_EEPROM_SETUP;
+    return;
 	}
   if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_SETUP);
 #endif
+    Error_Code = ERR_PACKET_SETUP;
+    return;
   }
   ModConNumber.l = 29;
   ModConMode.l = 1;
@@ -107,6 +138,7 @@ void Initialize(void)
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
 #endif
+      return; 
     }
   }
   else
@@ -120,12 +152,14 @@ void Initialize(void)
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
 #endif
+      return; 
     }
   }
   else
   {
     ModConMode.l = *(UINT16 volatile *)0x0402;
   }
+  Error_Code = ERR_NO_ERROR; 
 }
 
 void Routine(void)
@@ -157,10 +191,7 @@ void Routine(void)
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
         if (!Handle_ModCon_EEPROM_Program())
         {
-          if (ack)
-          {
-            deny = bTRUE; 
-          }
+          deny = bTRUE; 
         }
         ModConNumber.l = *(UINT16 volatile *)0x0400;
         ModConMode.l = *(UINT16 volatile *)0x0402;
@@ -169,6 +200,7 @@ void Routine(void)
 			case MODCON_COMMAND_EEPROM_GET:
 			  if (!Handle_ModCon_EEPROM_Get())
 			  {
+			    deny = bTRUE;
 			  }
         ModConNumber.l = *(UINT16 volatile *)0x0400;
         ModConMode.l = *(UINT16 volatile *)0x0402;			  
@@ -257,6 +289,9 @@ void Routine(void)
 void main(void)
 {
   Initialize();
+  if (Error_Code == ERR_NO_ERROR) {
+    TurnOnStartupIndicator();
+  }
   /* queue startup packets for transmission */
   if (!Handle_ModCon_Startup())
   {

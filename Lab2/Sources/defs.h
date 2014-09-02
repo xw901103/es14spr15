@@ -24,6 +24,7 @@
 #endif
 
 #if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
+#define ERR_NO_ERROR        0x0000 /* all good */
 #define ERR_INVALID_POINTER 0xBAD1 /* given pointer is not valid */
 #define ERR_FIFO_PUT        0xBAD2 /* cannot put a byte into FIFO buffer */
 #define ERR_PACKET_SETUP    0xBAD3 /* packet initialization failure */

@@ -102,6 +102,12 @@ BOOL Handle_ModCon_EEPROM_Program(void);
 BOOL Handle_ModCon_EEPROM_Get(void);
 
 /**
+ * \fn void TurnOnStartupIndicator(void)
+ * \brief turn on the Port E pin 7 connected LED.
+ */
+void TurnOnStartupIndicator(void);
+
+/**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
  */
