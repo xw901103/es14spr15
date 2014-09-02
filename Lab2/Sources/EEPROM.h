@@ -10,13 +10,11 @@
 #include "global.h"
 
 /* EEPROM data access */
-/*
-#define _EB(EEPROM_ADDRESS)	  *(UINT8 volatile *)(EEPROM_ADDRESS)
-#define _EI(EEPROM_ADDRESS)	  *(INT16 volatile *)(EEPROM_ADDRESS)
-#define _EW(EEPROM_ADDRESS)	  *(UINT16 volatile *)(EEPROM_ADDRESS)
-#define _EL(EEPROM_ADDRESS)	  *(INT32 volatile *)(EEPROM_ADDRESS)
-#define _ES(EEPROM_ADDRESS)	  *(UINT32 volatile *)(EEPROM_ADDRESS)
- */
+#define EEPROM_BYTE(EEPROM_ADDRESS)	  *(UINT8 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_INTEGER(EEPROM_ADDRESS)	  *(INT16 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_WORD(EEPROM_ADDRESS)	  *(UINT16 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_LONG(EEPROM_ADDRESS)	  *(INT32 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_SECTOR(EEPROM_ADDRESS)	  *(UINT32 volatile *)(EEPROM_ADDRESS)
 // ----------------------------------------
 // EEPROM addresses
 // ----------------------------------------
@@ -56,10 +54,10 @@ BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
 
 /**
  * \fn BOOL EEPROM_ValidateAddress 
- * \brief verify given pointer
+ * \brief Verify given pointer it is in the legal access range or not.
  * \return TRUE if given EEPROM address is in the range.
  */
-BOOL EEPROM_ValidateAddress(UINT16 volatile * const address);
+BOOL EEPROM_ValidateAddress(void * const address);
 
 /**
  * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)

@@ -33,58 +33,58 @@ BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
 BOOL Packet_Get(void)
 {
   /* temps for packet receive state machine */
-  static PACKET_STATE _TEMP_Packet_State = STATE_1;
-  static UINT8 _TEMP_Packet_Command = 0, _TEMP_Packet_Parameter1 = 0, _TEMP_Packet_Parameter2 = 0, _TEMP_Packet_Parameter3 = 0, _TEMP_Packet_Checksum = 0;
+  static PACKET_STATE state = STATE_1;
+  static UINT8 command = 0, parameter1 = 0, parameter2 = 0, parameter3 = 0, checksum = 0;
     
   SCI_Poll();
-  switch(_TEMP_Packet_State)
+  switch(state)
   {
     case STATE_0:
-      if (SCI_InChar(&_TEMP_Packet_Command))
+      if (SCI_InChar(&command))
       {
-        _TEMP_Packet_State = STATE_1;
+        state = STATE_1;
       }
       break;
     case STATE_1:
-      if (SCI_InChar(&_TEMP_Packet_Parameter1))
+      if (SCI_InChar(&parameter1))
       {
-        _TEMP_Packet_State = STATE_2;
+        state = STATE_2;
       }
       break;
     case STATE_2:
-      if (SCI_InChar(&_TEMP_Packet_Parameter2))
+      if (SCI_InChar(&parameter2))
       {
-        _TEMP_Packet_State = STATE_3;
+        state = STATE_3;
       }
       break;
     case STATE_3:
-      if (SCI_InChar(&_TEMP_Packet_Parameter3))
+      if (SCI_InChar(&parameter3))
       {
-        _TEMP_Packet_State = STATE_4;
+        state = STATE_4;
       }
       break;            
     case STATE_4:
-      if (SCI_InChar(&_TEMP_Packet_Checksum))
+      if (SCI_InChar(&checksum))
       {
-        _TEMP_Packet_State = STATE_5;
+        state = STATE_5;
       }
       break;
     case STATE_5:
-      if (_TEMP_Packet_Checksum != Packet_Checksum(_TEMP_Packet_Command, _TEMP_Packet_Parameter1, _TEMP_Packet_Parameter2, _TEMP_Packet_Parameter3))
+      if (checksum != Packet_Checksum(command, parameter1, parameter2, parameter3))
       {
-        _TEMP_Packet_Command = _TEMP_Packet_Parameter1;
-        _TEMP_Packet_Parameter1 = _TEMP_Packet_Parameter2;
-        _TEMP_Packet_Parameter2 = _TEMP_Packet_Parameter3;
-        _TEMP_Packet_Parameter3 = _TEMP_Packet_Checksum;
-        _TEMP_Packet_State = STATE_4;                    
+        command = parameter1;
+        parameter1 = parameter2;
+        parameter2 = parameter3;
+        parameter3 = checksum;
+        state = STATE_4;                    
       }
       else
       {
-        Packet_Command = _TEMP_Packet_Command;
-        Packet_Parameter1 = _TEMP_Packet_Parameter1;
-        Packet_Parameter2 = _TEMP_Packet_Parameter2;
-        Packet_Parameter3 = _TEMP_Packet_Parameter3;
-        _TEMP_Packet_State = STATE_0;
+        Packet_Command = command;
+        Packet_Parameter1 = parameter1;
+        Packet_Parameter2 = parameter2;
+        Packet_Parameter3 = parameter3;
+        state = STATE_0;
         return bTRUE;
       }
       break;

@@ -48,7 +48,7 @@ BOOL Handle_ModCon_Number_Get(void)
 
 BOOL Handle_ModCon_Number_Set(void)
 {
-  ModConNumber.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
+  ModConNumber.l = ForgeWord(Packet_Parameter3, Packet_Parameter2);
   return EEPROM_Write16((UINT16 volatile *)0x0400, ModConNumber.l);
 }
 
@@ -59,13 +59,13 @@ BOOL Handle_ModCon_Mode_Get(void)
 
 BOOL Handle_ModCon_Mode_Set(void)
 {
-  ModConMode.l = Forge_Word(Packet_Parameter3, Packet_Parameter2);
+  ModConMode.l = ForgeWord(Packet_Parameter3, Packet_Parameter2);
   return EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l);
 }
 
 BOOL Handle_ModCon_EEPROM_Program(void)
 { 
-  UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
+  UINT8 volatile * const address = (UINT8 volatile *)ForgeWord(Packet_Parameter2, Packet_Parameter1);
   if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
   {    
     if (address != (UINT8 volatile * const)0x1000)
@@ -79,10 +79,10 @@ BOOL Handle_ModCon_EEPROM_Program(void)
 
 BOOL Handle_ModCon_EEPROM_Get(void)
 {
-  UINT8 volatile * const address = (UINT8 volatile *)Forge_Word(Packet_Parameter2, Packet_Parameter1);
+  UINT8 volatile * const address = (UINT8 volatile *)ForgeWord(Packet_Parameter2, Packet_Parameter1);
   if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
   { 
-    if (EEPROM_ValidateAddress((UINT16 volatile * const)address))
+    if (EEPROM_ValidateAddress((void * const)address))
     {    
       return Packet_Put(MODCON_COMMAND_EEPROM_GET, Packet_Parameter1, Packet_Parameter2, *address);
     }

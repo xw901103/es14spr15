@@ -10,10 +10,10 @@
 /**
  * \fn UINT16 Forge_Word(const UINT8 msb, const UINT8 lsb)
  * \brief
- * \param  msb
- * \param  lsb
- * \return
+ * \param msb Most significant byte
+ * \param lsb Least significant byte
+ * \return A word
  */
-UINT16 Forge_Word(const UINT8 msb, const UINT8 lsb);
+UINT16 ForgeWord(const UINT8 msb, const UINT8 lsb);
 
 #endif

@@ -1,8 +1,8 @@
 #include "EEPROM.h"
 #include "mc9s12a512.h"
 
-#define EEPROM_MINIMUM_BUSCLK   1000000   //1Mhz
 #define EEPROM_CONDITION_OSCCLK  12800000  //12.8Mhz
+#define EEPROM_MINIMUM_BUSCLK   1000000   //1Mhz
 #define EEPROM_MINIMUM_EECLK    150000    //0.15Mhz
 #define EEPROM_MAXIMUM_EECLK    200000    //0.20Mhz
 #define EEPROM_COMMAND_ERASE_VERIFY   0x05
@@ -51,13 +51,14 @@ BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
   return bFALSE;    
 }
 
-BOOL EEPROM_ValidateAddress(UINT16 volatile * const address) {
+BOOL EEPROM_ValidateAddress(void * const address)
+{
   return (UINT16)address >= CONFIG_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_EEPROM_ADDRESS_END;
 }
 
 BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 command)
 {  
-  if (ECLKDIV_EDIVLD && EEPROM_ValidateAddress(address))
+  if (ECLKDIV_EDIVLD && EEPROM_ValidateAddress((void * const)address))
   {      
     ESTAT_PVIOL = 1;  //clear PVIOL flag
     ESTAT_ACCERR = 1; //clear ACCERR flag
@@ -68,7 +69,7 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
       ARMCOP = COP_DISARM; 
     }
     if (address)
-      *address = data;
+      EEPROM_WORD(address) = data;
     ECMD = command;
     ESTAT_CBEIF = 1;
     if (!ESTAT_PVIOL && !ESTAT_ACCERR)
@@ -87,14 +88,16 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
 
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
 {
-  TUINT32 CACHE32;
-  if ((UINT16)address%4 == 0)
+  UINT16 volatile * eepromAddress = (UINT16 volatile * const)address;
+  TUINT32 eepromSector;
+
+  if ((UINT16)eepromAddress%4 == 0)
   {
     
-    CACHE32.l = data;
-    return EEPROM_Command((UINT16 volatile * const)address, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
-           EEPROM_Command((UINT16 volatile * const)address, CACHE32.s.Hi, EEPROM_COMMAND_PROGRAM) &&
-           EEPROM_Command((UINT16 volatile * const)address+1, CACHE32.s.Lo, EEPROM_COMMAND_PROGRAM);    
+    eepromSector.l = data;
+    return EEPROM_Command(eepromAddress, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
+           EEPROM_Command(eepromAddress, eepromSector.s.Hi, EEPROM_COMMAND_PROGRAM) &&
+           EEPROM_Command(++eepromAddress, eepromSector.s.Lo, EEPROM_COMMAND_PROGRAM);    
   }
   return bFALSE;
 }
@@ -102,7 +105,7 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
 {
   UINT16 volatile * eepromAddress = address;
-  TUINT32 cache;
+  TUINT32 eepromSector;
 
   if ((UINT16)eepromAddress%2 == 0)
   { 
@@ -110,33 +113,33 @@ BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
     if ((UINT16)eepromAddress%4 != 0)
     {
       --eepromAddress; /* move 2 bytes to left */
-      cache.l = *(UINT32 volatile *) eepromAddress;
-      cache.s.Lo = data;
+      eepromSector.l = EEPROM_SECTOR(eepromAddress);
+      eepromSector.s.Lo = data;
     }
     else
     {
-      cache.l = *(UINT32 volatile *) eepromAddress;
-      cache.s.Hi = data;
+      eepromSector.l = EEPROM_SECTOR(eepromAddress);
+      eepromSector.s.Hi = data;
     }
-    return EEPROM_Write32((UINT32 volatile * const)eepromAddress, cache.l); 
+    return EEPROM_Write32((UINT32 volatile * const)eepromAddress, eepromSector.l); 
   }       
   return bFALSE;
 }
 
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
 {
-  TUINT16 cache;
   UINT8 volatile * eepromAddress = address;
+  TUINT16 eepromWord;
   
   if ((UINT16)eepromAddress % 2 != 0) {
       --eepromAddress; /* move 1 byte to left */
-      cache.l = *(UINT16 volatile *)eepromAddress;
-      cache.s.Lo = data;      
+      eepromWord.l = EEPROM_WORD(eepromAddress);
+      eepromWord.s.Lo = data;      
   } else {
-      cache.l = *(UINT16 volatile *)eepromAddress;
-      cache.s.Hi = data;      
+      eepromWord.l = EEPROM_WORD(eepromAddress);
+      eepromWord.s.Hi = data;      
   }
-  return EEPROM_Write16((UINT16 volatile * const)eepromAddress, cache.l);
+  return EEPROM_Write16((UINT16 volatile * const)eepromAddress, eepromWord.l);
 } 
 
 BOOL EEPROM_Erase(void)
