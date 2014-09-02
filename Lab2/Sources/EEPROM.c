@@ -1,20 +1,32 @@
 #include "EEPROM.h"
 #include "mc9s12a512.h"
 
-#define EEPROM_CONDITION_OSCCLK  12800000  //12.8Mhz
-#define EEPROM_MINIMUM_BUSCLK   1000000   //1Mhz
-#define EEPROM_MINIMUM_EECLK    150000    //0.15Mhz
-#define EEPROM_MAXIMUM_EECLK    200000    //0.20Mhz
-#define EEPROM_COMMAND_ERASE_VERIFY   0x05
-#define EEPROM_COMMAND_PROGRAM        0x20
-#define EEPROM_COMMAND_SECTOR_ERASE   0x40
-#define EEPROM_COMMAND_MASS_ERASE     0x41
-#define EEPROM_COMMAND_SECTOR_MODIFY  0x60
+const UINT32 EEPROM_CONDITION_OSCCLK = 12800000;  //12.8Mhz
+const UINT32 EEPROM_MINIMUM_BUSCLK   = 1000000;   //1Mhz
+const UINT32 EEPROM_MINIMUM_EECLK    = 150000;    //0.15Mhz
+const UINT32 EEPROM_MAXIMUM_EECLK    = 200000;    //0.20Mhz
+const UINT8 EEPROM_COMMAND_ERASE_VERIFY  = 0x05;
+const UINT8 EEPROM_COMMAND_PROGRAM       = 0x20;
+const UINT8 EEPROM_COMMAND_SECTOR_ERASE  = 0x40;
+const UINT8 EEPROM_COMMAND_MASS_ERASE    = 0x41;
+const UINT8 EEPROM_COMMAND_SECTOR_MODIFY = 0x60;
 
+/*
 #if !defined(COP_ARM) && !defined(COP_DISARM)
 #define COP_ARM     0x55
 #define COP_DISARM  0xAA
 #endif
+ */
+ 
+/**
+ * \fn BOOL EEPROM_Command(UINT8 command, UINT16 volatile * const address, const UINT16 data)
+ * \brief Routines to execute EEPROM commands.
+ * \param command Supported EEPROM command
+ * \param address EEPROM address
+ * \param data 2 bytes data, the purpose of it depends on the given EEPROM command..
+ * \return TRUE if given EEPROM command has been executed successfully.
+ */
+BOOL EEPROM_Command(UINT8 command, UINT16 volatile * const address, const UINT16 data);
 
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
 {
@@ -56,7 +68,7 @@ BOOL EEPROM_ValidateAddress(void * const address)
   return (UINT16)address >= CONFIG_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_EEPROM_ADDRESS_END;
 }
 
-BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 command)
+BOOL EEPROM_Command(UINT8 command, UINT16 volatile * const address, const UINT16 data)
 {  
   if (ECLKDIV_EDIVLD && EEPROM_ValidateAddress((void * const)address))
   {      
@@ -65,8 +77,9 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
     while(!ESTAT_CBEIF)
     {
       // feed watch dog
-      ARMCOP = COP_ARM;
-      ARMCOP = COP_DISARM; 
+      //ARMCOP = COP_ARM;
+      //ARMCOP = COP_DISARM;
+      __RESET_WATCHDOG(); 
     }
     if (address)
       EEPROM_WORD(address) = data;
@@ -77,8 +90,9 @@ BOOL EEPROM_Command(UINT16 volatile * const address, const UINT16 data, UINT8 co
       while(!ESTAT_CCIF)
       {
         // feed watch dog
-        ARMCOP = COP_ARM;
-        ARMCOP = COP_DISARM; 
+        //ARMCOP = COP_ARM;
+        //ARMCOP = COP_DISARM; 
+        __RESET_WATCHDOG(); 
       }
       return bTRUE;
     }
@@ -95,9 +109,9 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
   {
     
     eepromSector.l = data;
-    return EEPROM_Command(eepromAddress, 0xFFFF, EEPROM_COMMAND_SECTOR_ERASE) &&
-           EEPROM_Command(eepromAddress, eepromSector.s.Hi, EEPROM_COMMAND_PROGRAM) &&
-           EEPROM_Command(++eepromAddress, eepromSector.s.Lo, EEPROM_COMMAND_PROGRAM);    
+    return EEPROM_Command(EEPROM_COMMAND_SECTOR_ERASE, eepromAddress, 0xFFFF) &&
+           EEPROM_Command(EEPROM_COMMAND_PROGRAM, eepromAddress, eepromSector.s.Hi) &&
+           EEPROM_Command(EEPROM_COMMAND_PROGRAM, ++eepromAddress, eepromSector.s.Lo);    
   }
   return bFALSE;
 }
@@ -144,5 +158,5 @@ BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
 
 BOOL EEPROM_Erase(void)
 {
-  return EEPROM_Command((UINT16 volatile * const)0x0400, 0xFFFF, EEPROM_COMMAND_MASS_ERASE);
+  return EEPROM_Command(EEPROM_COMMAND_MASS_ERASE, (UINT16 volatile * const)CONFIG_EEPROM_ADDRESS_BEGIN, 0xFFFF);
 }

@@ -1,10 +1,9 @@
 #include "CRG.h"
 #include "mc9s12a512.h"
 
-#if !defined(COP_ARM) && !defined(COP_DISARM)
-#define COP_ARM     0x55
-#define COP_DISARM  0xAA
-#endif
+/* watchdog reset sequence values */
+const UINT8 COP_ARM    = 0x55;
+const UINT8 COP_DISARM = 0xAA;
 
 BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
 {
@@ -31,7 +30,6 @@ BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
   COPCTL_RSBCK = 1; /* BDM mode */
 #endif
   COPCTL_CR = (byte)aCOPRate;
-//  CRG_ResetCOP();
   return bTRUE;
 }
 
@@ -47,7 +45,9 @@ void CRG_DisarmCOP(void)
 
 void CRG_ResetCOP(void)
 {
-//  __RESET_WATCHDOG();   
+  __RESET_WATCHDOG();   
+  /*
   ARMCOP = COP_ARM;    
   ARMCOP = COP_DISARM;    
+   */
 }

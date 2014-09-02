@@ -1,4 +1,25 @@
 /**
+ * \mainpage Xu's Embedded Software Lab 2
+ *
+ * \section intro_sec Introduction
+ * Lab 2 is based on Lab 1 to setup bus clock to 24Mhz via Phase-Locked Loop
+ * module, Watchdog for operating properly and EEPROM functions for ModCon 
+ * protocol expansion. In addition, SCI baud rate has been increased to 115200
+ * to adapte bus clock change.
+ *
+ * * 0x04 ModCon Startup
+ * <br>This will send program settings including ModCon number and version.
+ * * 0x07 ModCon Program EEPROM byte
+ * <br>This will program a byte in EEPROM through given data and address. 
+ * * 0x08 ModCon Get EEPROM byte
+ * <br>This will send current data stored in given EEPROM address.
+ * * 0x09 ModCon Special ModCon version number query
+ * <br>This will send current ModCon version number
+ * * 0x0B ModCon number get and set
+ * <br>This is the accessor and mutator of ModCon number
+ * * 0x0D ModCon mode get and set
+ * <br>This is the accessor and mutator of ModCon mode
+ *
  * \file main.h
  * \brief Program main entry file. 
  * \author Xu Waycell
@@ -120,8 +141,9 @@ void TurnOnStartupIndicator(void);
 /**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
+ * \return TRUE if initialization routines executed successfully.
  */
-void Initialize(void);
+BOOL Initialize(void);
 
 /**
  * \fn void Routine(void)

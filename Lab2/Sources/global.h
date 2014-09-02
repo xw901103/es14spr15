@@ -23,6 +23,6 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err);
 #define DEBUG(LINE, ERR) LogDebug(LINE, ERR)
 #endif
 
-extern int Error_Code;
+//extern int Error_Code;
 
 #endif

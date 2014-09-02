@@ -1,9 +1,4 @@
 /**
- * \mainpage Xu's Embedded Software Lab 2
- *
- * \section intro_sec Introduction
- * Lab 2
- *
  * \file main.c
  * \brief Program main entry file.
  * \author Xu Waycell
@@ -18,7 +13,7 @@
 
 #include "mc9s12a512.h"
 
-int Error_Code = ERR_NO_ERROR;
+//int Error_Code = ERR_NO_ERROR;
 
 #ifndef NO_DEBUG
 void LogDebug(const UINT16 lineNumber, const UINT16 err) {
@@ -95,76 +90,79 @@ void TurnOnStartupIndicator(void) {
   PORTE_BIT7 = 0; /* set PORT E pin 7 low */
 }
 
-void Initialize(void)
+// TODO: return boolen not void
+BOOL Initialize(void)
 {
   if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_CRGPLL_SETUP);
 #endif
-    Error_Code = ERR_CRGPLL_SETUP;
-    return;
+    //Error_Code = ERR_CRGPLL_SETUP;
+    return bFALSE;
   }
-  if (!CRG_SetupCOP(CONFIG_COPRATE)) {
-#ifndef NO_DEBUG
-        DEBUG(__LINE__, ERR_CRGCOP_SETUP);
-#endif
-    Error_Code = ERR_CRGCOP_SETUP;
-    return;
-  }  
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_EEPROM_SETUP);
 #endif
-    Error_Code = ERR_EEPROM_SETUP;
-    return;
+    //Error_Code = ERR_EEPROM_SETUP;
+    return bFALSE;
 	}
   if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_SETUP);
 #endif
-    Error_Code = ERR_PACKET_SETUP;
-    return;
+    //Error_Code = ERR_PACKET_SETUP;
+    return bFALSE;
   }
+  if (!CRG_SetupCOP(CONFIG_COPRATE)) {
+#ifndef NO_DEBUG
+        DEBUG(__LINE__, ERR_CRGCOP_SETUP);
+#endif
+    //Error_Code = ERR_CRGCOP_SETUP;
+    return bFALSE;
+  }  
   ModConNumber.l = 29;
   ModConMode.l = 1;
-  if (*(UINT16 volatile *)0x0400 == 0xFFFF)
+  if (EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER) == 0xFFFF)
   {
-    if (!EEPROM_Write16((UINT16 volatile *)0x0400, ModConNumber.l))
+    if (!EEPROM_Write16((UINT16 volatile *)CONFIG_EEPROM_ADDRESS_MODCON_NUMBER, ModConNumber.l))
     {
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
 #endif
-      return; 
+      return bFALSE;
     }
   }
   else
   {
-    ModConNumber.l = *(UINT16 volatile *)0x0400;
+    ModConNumber.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER);
   }
-  if (*(UINT16 volatile *)0x0402 == 0xFFFF)
+  
+  if (EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE) == 0xFFFF)
   {
-    if (!EEPROM_Write16((UINT16 volatile *)0x0402, ModConMode.l))
+    if (!EEPROM_Write16((UINT16 volatile *)CONFIG_EEPROM_ADDRESS_MODCON_MODE, ModConMode.l))
     {
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
 #endif
-      return; 
+      return bFALSE;
     }
   }
   else
   {
-    ModConMode.l = *(UINT16 volatile *)0x0402;
+    ModConMode.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE);
   }
-  Error_Code = ERR_NO_ERROR; 
+  //Error_Code = ERR_NO_ERROR; 
+  return bTRUE;
 }
 
 void Routine(void)
 {
   UINT8 ack = 0;
-  BOOL deny = bFALSE;
+  BOOL bad = bFALSE;
     
   if (Packet_Get())
   { 
@@ -183,6 +181,7 @@ void Routine(void)
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
+            bad = bTRUE;
           }
         }
         break;
@@ -190,7 +189,7 @@ void Routine(void)
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
         if (!Handle_ModCon_EEPROM_Program())
         {
-          deny = bTRUE; 
+          bad = bTRUE; 
         }
         /* update ModCon mode and number due to potential mutation */
         ModConNumber.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER);
@@ -199,7 +198,7 @@ void Routine(void)
 			case MODCON_COMMAND_EEPROM_GET:
 			  if (!Handle_ModCon_EEPROM_Get())
 			  {
-			    deny = bTRUE;
+			    bad = bTRUE;
 			  }
 				break;      
       case MODCON_COMMAND_SPECIAL:
@@ -210,11 +209,12 @@ void Routine(void)
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
+            bad = bTRUE;
           }
         }
         else
         {
-          deny = bTRUE;
+          bad = bTRUE;
         }
         break;      
       case MODCON_COMMAND_NUMBER:
@@ -225,12 +225,14 @@ void Routine(void)
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
+            bad = bTRUE;
           }
         }
         else if (Packet_Parameter1 == MODCON_NUMBER_SET)
         {
           if(!Handle_ModCon_Number_Set())
           {
+            bad = bTRUE;
           }
         }
         break;		  
@@ -242,24 +244,26 @@ void Routine(void)
 #ifndef NO_DEBUG
             DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
+            bad = bTRUE;
           }
         }
         else if (Packet_Parameter1 == MODCON_MODE_SET)
         {
           if(!Handle_ModCon_Mode_Set())
           {
+            bad = bTRUE;
           }
         }
 				break;				
       
       default:
-        deny = bTRUE;
+        bad = bTRUE;
         break;
     }
         
     if (ack)
     {
-      if (!deny)
+      if (!bad)
       {                
         if (!Packet_Put(Packet_Command | MODCON_COMMAND_ACK_MASK, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3))
         {
@@ -283,10 +287,14 @@ void Routine(void)
 
 void main(void)
 {
-  Initialize();
-  if (Error_Code == ERR_NO_ERROR) {
-    TurnOnStartupIndicator();
+  if (!Initialize())
+  {
+    /* hang if initialization failed */
+    for(;;);
   }
+
+  TurnOnStartupIndicator();    
+
   /* queue startup packets for transmission */
   if (!Handle_ModCon_Startup())
   {

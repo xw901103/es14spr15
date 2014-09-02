@@ -8,7 +8,7 @@
 #include "global.h"
 
 /**
- * \fn UINT16 Forge_Word(const UINT8 msb, const UINT8 lsb)
+ * \fn UINT16 ForgeWord(const UINT8 msb, const UINT8 lsb)
  * \brief
  * \param msb Most significant byte
  * \param lsb Least significant byte

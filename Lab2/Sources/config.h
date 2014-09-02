@@ -51,31 +51,39 @@
 
 
 #ifndef CONFIG_EEPROM_ADDRESS_MODCON_NUMBER
-#define CONFIG_EEPROM_ADDRESS_MODCON_NUMBER  0x0400 //16bits, offset in byte
+#define CONFIG_EEPROM_ADDRESS_MODCON_NUMBER  0x0400 /* 16-bits ModCon number EEPROM address */
 #else
 #warning "ModCon number EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_MODCON_MODE
-#define CONFIG_EEPROM_ADDRESS_MODCON_MODE  0x0402   //16bits, offset in byte
+#define CONFIG_EEPROM_ADDRESS_MODCON_MODE  0x0402 /* 16-bits ModCon mode EEPROM address */
 #else
 #warning "ModCon mode EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN
-#define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400
+#define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400 /* Begin boundary of EEPROM */
+#else
+#warning "EEPROM address begin boundary override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_END
-#define CONFIG_EEPROM_ADDRESS_END 0x07FF
+#define CONFIG_EEPROM_ADDRESS_END 0x07FF /* End boundary of EEPROM */
+#else
+#warning "EEPROM address end boundary override detected!"
 #endif
 
 #ifndef CONFIG_MODCON_EEPROM_ADDRESS_BEGIN
-#define CONFIG_MODCON_EEPROM_ADDRESS_BEGIN 0x0400
+#define CONFIG_MODCON_EEPROM_ADDRESS_BEGIN 0x0400 /* Acceptable ModCon EEPROM begin boundary */
+#else
+#warning "ModCon acceptable EEPROM address begin boundary override detected!"
 #endif
 
 #ifndef CONFIG_MODCON_EEPROM_ADDRESS_END
-#define CONFIG_MODCON_EEPROM_ADDRESS_END 0x1000
+#define CONFIG_MODCON_EEPROM_ADDRESS_END 0x1000 /* Acceptable ModCon EEPROM end boundary */
+#else
+#warning "ModCon acceptable EEPROM address end boundary override detected!"
 #endif
 
 #endif

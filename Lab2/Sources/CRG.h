@@ -9,6 +9,9 @@
 
 #include "global.h"
 
+/**
+ * \brief Watchdog timeout rate
+ */
 typedef enum
 {
   COP_DISABLED  = 0,
@@ -41,8 +44,28 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
  */
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate);
 
+/**
+ * \fn void CRG_ArmCOP(void)
+ * \brief Arm watchdog to start reset sequence.
+ * \see CRG_DisarmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_ArmCOP(void);
+
+/**
+ * \fn void CRG_DisarmCOP(void)
+ * \brief Disarm watchdog to finish reset sequence.
+ * \see CRG_ArmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_DisarmCOP(void);
+
+/**
+ * \fn void CRG_ResetCOP(void)
+ * \brief Reset watchdog immediately.
+ * \see CRG_ArmCOP
+ * \see CRG_DisarmCOP
+ */
 void CRG_ResetCOP(void);
 
 #endif
