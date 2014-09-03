@@ -24,10 +24,14 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err)
 
 BOOL HandleModConStartup(void) 
 {
-  return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
-         HandleModConSpecialVersion() &&
-         HandleModConNumberGet() &&
-         HandleModConModeGet();    
+  if (!Packet_Parameter1 && !Packet_Parameter2 && !Packet_Parameter3)
+  {    
+    return Packet_Put(MODCON_COMMAND_STARTUP, 0, 0, 0) &&
+           HandleModConSpecialVersion() &&
+           HandleModConNumberGet() &&
+           HandleModConModeGet();
+  }
+  return bFALSE;    
 }
 
 BOOL HandleModConSpecialVersion(void) 
@@ -68,13 +72,17 @@ BOOL HandleModConEEPROMProgram(void)
     }
     return EEPROM_Erase();
   }
+  /* update ModCon mode and number due to potential mutation */
+  //ModConNumber.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER);
+  //ModConMode.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE);  
   return bFALSE;
 }
 
 BOOL HandleModConEEPROMGet(void)
 {
   UINT8 volatile * const address = (UINT8 volatile *)ForgeWord(Packet_Parameter2, Packet_Parameter1);
-  if ((UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
+  
+  if (!Packet_Parameter3 && (UINT16)address >= CONFIG_MODCON_EEPROM_ADDRESS_BEGIN && (UINT16)address <= CONFIG_MODCON_EEPROM_ADDRESS_END)
   { 
     if (EEPROM_ValidateAddress((void * const)address))
     {    
@@ -176,8 +184,8 @@ void Routine(void)
     {     
       case MODCON_COMMAND_STARTUP:
         /* it should contain zeros */
-        if (!Packet_Parameter1 && !Packet_Parameter2 && !Packet_Parameter3) 
-        {
+        //if (!Packet_Parameter1 && !Packet_Parameter2 && !Packet_Parameter3) 
+        //{
           /* push packets of ModCon startup figures */                    
           if (!HandleModConStartup()) 
           {
@@ -186,33 +194,32 @@ void Routine(void)
 #endif
             bad = bTRUE;
           }
-        }
-        else
-        {
-          bad = bTRUE;  
-        }
+        //}
+        //else
+        //{
+        //  bad = bTRUE;  
+        //}
         break;			
 			case MODCON_COMMNAD_EEPROM_PROGRAM:
-        if (!HandleModConEEPROMProgram())
-        {
-          bad = bTRUE; 
-        }
-        /* update ModCon mode and number due to potential mutation */
-        ModConNumber.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER);
-        ModConMode.l = EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE);
+        //if (!HandleModConEEPROMProgram())
+        //{
+        //  bad = bTRUE; 
+        //}
+        bad = !HandleModConEEPROMProgram();
 				break;			
 			case MODCON_COMMAND_EEPROM_GET:
-			  if (!Packet_Parameter3) /* parameter 3 must be zero */
-			  {			    
-			    if (!HandleModConEEPROMGet())
-			    {
-			      bad = bTRUE;
-			    }
-			  }
-			  else
-			  {
-			    bad = bTRUE;  
-			  }
+			  //if (!Packet_Parameter3) /* parameter 3 must be zero */
+			  //{			    
+			  //  if (!HandleModConEEPROMGet())
+			  //  {
+			  //    bad = bTRUE;
+			  //  }
+			  //}
+			  //else
+			  //{
+			  //  bad = bTRUE;  
+			  //}
+			  bad = !HandleModConEEPROMGet();
 				break;      
       case MODCON_COMMAND_SPECIAL:
         if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)

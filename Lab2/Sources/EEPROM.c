@@ -1,3 +1,7 @@
+/**
+ * \author Xu Waycell
+ * \date 12-August-2014
+ */
 #include "EEPROM.h"
 #include "mc9s12a512.h"
 
@@ -68,7 +72,7 @@ BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 
   {      
     //ESTAT_PVIOL = 1;  //clear PVIOL flag
     //ESTAT_ACCERR = 1; //clear ACCERR flag
-    ESTAT = ESTAT_PVIOL_MASK | ESTAT_ACCERR;
+    ESTAT = ESTAT_PVIOL_MASK | ESTAT_ACCERR_MASK;
     while(!ESTAT_CBEIF)
     {
       /* feed watch dog */
@@ -78,7 +82,7 @@ BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 
       EEPROM_WORD(address) = data;
     ECMD = command;
     //ESTAT_CBEIF = 1;
-    ESTAT_CBEIF = ESTAT_CBEIF_MASK;
+    ESTAT = ESTAT_CBEIF_MASK;
     if (!ESTAT_PVIOL && !ESTAT_ACCERR)
     {
       while(!ESTAT_CCIF)
@@ -118,8 +122,8 @@ BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
     /* alignment */  
     if ((UINT16) eepromAddress % 4 != 0)
     {
-      --eepromAddress; /* move 2 bytes to left */
-      eepromSector.l = EEPROM_SECTOR(eepromAddress);
+      //--eepromAddress; /* move 2 bytes to left */
+      eepromSector.l = EEPROM_SECTOR(--eepromAddress);
       eepromSector.s.Lo = data;
     }
     else
@@ -139,8 +143,8 @@ BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
   
   /* alignment */
   if ((UINT16)eepromAddress % 2 != 0) {
-      --eepromAddress; /* move 1 byte to left */
-      eepromWord.l = EEPROM_WORD(eepromAddress);
+      //--eepromAddress; /* move 1 byte to left */
+      eepromWord.l = EEPROM_WORD(--eepromAddress);
       eepromWord.s.Lo = data;      
   } else {
       eepromWord.l = EEPROM_WORD(eepromAddress);
