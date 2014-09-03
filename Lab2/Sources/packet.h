@@ -9,10 +9,46 @@
 
 #include "global.h"
 
+/* Packet structure */
+typedef struct
+{
+  UINT8 command;
+  union
+  {
+    struct
+    {
+      UINT8 parameter3;
+      UINT8 parameter2;
+      UINT8 parameter1;
+    } separate;
+    struct
+    {
+      UINT8 parameter3;
+      UINT16 parameter12;
+    } combined12;
+    struct
+    {
+      UINT16 parameter23;
+      UINT8 paramater1;
+    } combined23;
+  } parameters;
+} TPacket;
+
+#define Packet_Command     Packet.command
+#define Packet_Parameter1  Packet.parameters.separate.parameter1
+#define Packet_Parameter2  Packet.parameters.separate.parameter2
+#define Packet_Parameter3  Packet.parameters.separate.parameter3
+#define Packet_Parameter12 Packet.parameters.combined12.parameter12
+#define Packet_Parameter23 Packet.parameters.combined23.parameter23
+
+// Packet structure
+extern TPacket Packet;
+extern BOOL Packet_CommandOK;
+
 /**
  * Packet content
  */
-extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
+//extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
 
 /**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 

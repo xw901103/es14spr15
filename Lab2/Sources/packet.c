@@ -5,8 +5,10 @@
 #include "packet.h"
 #include "SCI.h"
 
+TPacket Packet = {0};
+
 /* define and initialize our externs */
-UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
+//UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
 
 /* states of packet receive state machine */
 typedef enum 

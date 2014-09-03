@@ -5,7 +5,7 @@
  * Lab 2 is based on Lab 1 to setup bus clock to 24Mhz via Phase-Locked Loop
  * module, Watchdog for operating properly and EEPROM functions for ModCon 
  * protocol expansion. In addition, SCI baud rate has been increased to 115200
- * to adapte bus clock change.
+ * to adapt changes.
  *
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
@@ -74,63 +74,60 @@ static TUINT16 ModConMode;
 #endif
 
 /**
- * \fn BOOL Handle_ModCon_Startup(void)
+ * \fn BOOL HandleModConStartup(void)
  * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
- * \return TRUE if packets were queued for transmission successfully
+ * \return TRUE if packets were queued for transmission successfully.
  */  
-BOOL Handle_ModCon_Startup(void);
+BOOL HandleModConStartup(void);
 
 /**
- * \fn BOOL Handle_ModCon_Version(void)
+ * \fn BOOL HandleModConSpecialVersion(void)
  * \brief Builds a packet that contains ModCon version details and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully
+ * \return TRUE if the packet was queued for transmission successfully.
  */
-BOOL Handle_ModCon_Version(void);
+BOOL HandleModConSpecialVersion(void);
 
 /**
- * \fn BOOL Handle_ModCon_Number_Get(void)
+ * \fn BOOL HandleModConNumberGet(void)
  * \brief Builds a packet that contains ModCon number and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully
+ * \return TRUE if the packet was queued for transmission successfully.
  */
-BOOL Handle_ModCon_Number_Get(void);
+BOOL HandleModConNumberGet(void);
 
 /**
  * \fn BOOL Handle_ModCon_Number_Set(void)
  * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
  * \return TRUE if write new value to EEPROM is successful.
  */
-BOOL Handle_ModCon_Number_Set(void);
+BOOL HandleModConNumberSet(void);
 
 /**
  * \fn BOOL Handle_ModCon_Mode_Get(void)
  * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully
+ * \return TRUE if the packet was queued for transmission successfully.
  */
-BOOL Handle_ModCon_Mode_Get(void);
+BOOL HandleModConModeGet(void);
 
 /**
  * \fn BOOL Handle_ModCon_Mode_Set(void)
  * \brief Assign new value to ModCon mode through given packet then update stored EEPROM value. 
  * \return TRUE if write new value to EEPROM is successful.
  */
- BOOL Handle_ModCon_Mode_Set(void);
+ BOOL HandleModConModeSet(void);
 
 /**
- * \fn BOOL Handle_ModCon_EEPROM_Program(UINT8 volatile * const address, const UINT8 data)
- * \brief
- * \param address
- * \param data
- * \return
+ * \fn BOOL Handle_ModCon_EEPROM_Program(void)
+ * \brief Program a byte in EEPROM by given address.
+ * \return TRUE if EEPROM program successfully. 
  */
-BOOL Handle_ModCon_EEPROM_Program(void);
+BOOL HandleModConEEPROMProgram(void);
 
 /**
- * \fn BOOL Handle_ModCon_EEPROM_Get(UINT8 volatile * const address)
- * \brief
- * \param address
- * \return
+ * \fn BOOL Handle_ModCon_EEPROM_Get(void)
+ * \brief Return byte value of given EEPROM address.
+ * \return TRUE if address is validated and the packet was queued for transmission successfully.
  */
-BOOL Handle_ModCon_EEPROM_Get(void);
+BOOL HandleModConEEPROMGet(void);
 
 /**
  * \fn void TurnOnStartupIndicator(void)

@@ -46,9 +46,9 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
 
 /**
- * \fn BOOL EEPROM_ValidateAddress 
+ * \fn BOOL EEPROM_ValidateAddress(void * const address) 
  * \brief Verify given pointer it is in the legal access range or not.
- * \return TRUE if given EEPROM address is in the range.
+ * \return TRUE if given EEPROM address is in the valid range.
  */
 BOOL EEPROM_ValidateAddress(void * const address);
 
