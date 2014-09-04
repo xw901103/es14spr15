@@ -33,6 +33,7 @@
 #define ERR_CRGCOP_SETUP    0xBAD6 /* clock and reset generator computer operating properly initialization failure */
 #define ERR_EEPROM_SETUP    0xBAD7 /* EEPROM initialization failure */
 #define ERR_EEPROM_WRITE    0xBAD8 /* EEPROM program failure */
+#define ERR_EEPROM_ERASE    0xBAD9 /* EEPROM erase failure */
 #define ERR_CRITICAL        0xBADC /* critical error */
 #define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif

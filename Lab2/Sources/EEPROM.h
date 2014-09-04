@@ -9,6 +9,26 @@
 
 #include "global.h"
 
+/**
+ * EEPROM address begin boundary
+ */
+#ifndef CONFIG_EEPROM_ADDRESS_BEGIN
+#define EEPROM_ADDRESS_BEGIN 0x0400 /* fallback plan */
+#warning "EEPROM_ADDRESS_BEGIN using fallback setting 0x0400"
+#else
+#define EEPROM_ADDRESS_BEGIN CONFIG_EEPROM_ADDRESS_BEGIN
+#endif
+
+/**
+ * EEPROM address end boundary
+ */
+#ifndef CONFIG_EEPROM_ADDRESS_END
+#define EEPROM_ADDRESS_END 0x07FF /* fallback plan */
+#warning "EEPROM_ADDRESS_END using fallback setting 0x07FF"
+#else
+#define EEPROM_ADDRESS_END CONFIG_EEPROM_ADDRESS_END
+#endif
+
 /* EEPROM data access */
 #define EEPROM_BYTE(EEPROM_ADDRESS)	   *(UINT8 volatile *)(EEPROM_ADDRESS)
 #define EEPROM_INTEGER(EEPROM_ADDRESS) *(INT16 volatile *)(EEPROM_ADDRESS)

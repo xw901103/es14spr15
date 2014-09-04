@@ -41,9 +41,8 @@ typedef struct
 #define Packet_Parameter12 Packet.parameters.combined12.parameter12
 #define Packet_Parameter23 Packet.parameters.combined23.parameter23
 
-// Packet structure
 extern TPacket Packet;
-extern BOOL Packet_CommandOK;
+//extern BOOL Packet_CommandOK;
 
 /**
  * Packet content

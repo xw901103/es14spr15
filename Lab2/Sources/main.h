@@ -54,24 +54,36 @@ const UINT8 MODCON_MODE_SET = 2;
 #endif
 
 /**
+ * ModCon acceptable EEPROM address begin boundary
+ */
+#ifndef CONFIG_MODCON_EEPROM_ADDRESS_BEGIN
+#define MODCON_EEPROM_ADDRESS_BEGIN 0x0400 /* fallback plan */
+#warning "MODCON_EEPROM_ADDRESS_BEGIN using fallback setting 0x0400"
+#else
+#define MODCON_EEPROM_ADDRESS_BEGIN CONFIG_MODCON_EEPROM_ADDRESS_BEGIN
+#endif
+
+/**
+ * ModCon acceptable EEPROM address end boundary
+ */
+#ifndef CONFIG_MODCON_EEPROM_ADDRESS_END
+#define MODCON_EEPROM_ADDRESS_END 0x1000 /* fallback plan */
+#warning "MODCON_EEPROM_ADDRESS_END using fallback setting 0x1000"
+#else
+#define MODCON_EEPROM_ADDRESS_END CONFIG_MODCON_EEPROM_ADDRESS_END
+#endif
+
+/**
  * ModCon number
  */
-static TUINT16 ModConNumber;
-
-#if !defined(ModConNumberLSB) && !defined(ModConNumberMSB)
-#define ModConNumberLSB ModConNumber.s.Lo
-#define ModConNumberMSB ModConNumber.s.Hi
-#endif
+#define DEFAULT_MODCON_NUMBER 29
+#define ModConNumber EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_NUMBER)
 
 /**
  * ModCon mode
  */
-static TUINT16 ModConMode;
-
-#if !defined(ModConModeLSB) && !defined(ModConModeMSB)
-#define ModConModeLSB ModConMode.s.Lo
-#define ModConModeMSB ModConMode.s.Hi
-#endif
+#define DEFAULT_MODCON_MODE 1
+#define ModConMode EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE)
 
 /**
  * \fn BOOL HandleModConStartup(void)
@@ -81,39 +93,25 @@ static TUINT16 ModConMode;
 BOOL HandleModConStartup(void);
 
 /**
- * \fn BOOL HandleModConSpecialVersion(void)
- * \brief Builds a packet that contains ModCon version details and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully.
+ * \fn BOOL HandleModConSpecial(void)
+ * \brief response to ModCon special commands. 
+ * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConSpecialVersion(void);
+BOOL HandleModConSpecial(void);
 
 /**
- * \fn BOOL HandleModConNumberGet(void)
- * \brief Builds a packet that contains ModCon number and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully.
+ * \fn BOOL HandleModConNumber(void)
+ * \brief response to ModCon number commands. 
+ * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConNumberGet(void);
+BOOL HandleModConNumber(void);
 
 /**
- * \fn BOOL Handle_ModCon_Number_Set(void)
- * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
- * \return TRUE if write new value to EEPROM is successful.
+ * \fn BOOL HandleModConMode(void)
+ * \brief response to ModCon mode commands. 
+ * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConNumberSet(void);
-
-/**
- * \fn BOOL Handle_ModCon_Mode_Get(void)
- * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
- * \return TRUE if the packet was queued for transmission successfully.
- */
-BOOL HandleModConModeGet(void);
-
-/**
- * \fn BOOL Handle_ModCon_Mode_Set(void)
- * \brief Assign new value to ModCon mode through given packet then update stored EEPROM value. 
- * \return TRUE if write new value to EEPROM is successful.
- */
- BOOL HandleModConModeSet(void);
+BOOL HandleModConMode(void);
 
 /**
  * \fn BOOL Handle_ModCon_EEPROM_Program(void)
