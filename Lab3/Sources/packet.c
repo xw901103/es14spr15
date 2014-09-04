@@ -37,8 +37,10 @@ BOOL Packet_Get(void)
   /* temps for packet receive state machine */
   static PACKET_STATE state = STATE_1;
   static UINT8 command = 0, parameter1 = 0, parameter2 = 0, parameter3 = 0, checksum = 0;
-    
+
+#ifdef NO_INTERRUPT    
   SCI_Poll();
+#endif  
   switch(state)
   {
     case STATE_0:

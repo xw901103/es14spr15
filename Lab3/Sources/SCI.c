@@ -8,9 +8,46 @@
 
 static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
+#ifndef NO_INTERRUPT
+void interrupt VectorNumber_Vsci0 SCI0_ISR(void)
+{
+  /* handle receive interrupts */
+  if (SCI0CR2_RIE)
+  {
+    /* check and clear receive data register full flag */
+    if (SCI0SR1_RDRF)
+    { 
+      /* put it to receive buffer for later use */
+      if (!FIFO_Put(&RxFIFO, SCI0DRL))
+      { 
+#ifndef NO_DEBUG
+        /* generally, it should not be full. if it does, there is a design issue. */
+        DEBUG(__LINE__, ERR_FIFO_PUT);
+#endif
+      }                                    
+    }    
+  }
+
+  /* handle transmit interrupts */  
+  if (SCI0CR2_SCTIE)
+  {
+    /* check transmit data register empty flag */
+    if (SCI0SR1_TDRE)
+    { 
+      /* try to obtain one byte from transmission buffer */
+      if (!FIFO_Get(&TxFIFO, &SCI0DRL))
+      {       
+        /* disable interrupt due to empty buffer */
+        SCI0CR2_SCTIE = 0;
+      }
+    }    
+  }
+}
+#endif
+
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
 {
-  SCI0BD     = (word)(busClk/baudRate/16); /* baud rate */
+  SCI0BD = (word)(busClk / baudRate / 16); /* baud rate */
   
   /* SCI control register 1 */
   SCI0CR1_PT      = 0; /* Parity Type                   0=event                1=odd                        */
@@ -23,9 +60,14 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
   SCI0CR1_LOOPS   = 0; /* Loop Select                   0=normal               1=loop                       */
   
   /* SCI control register 2 */
+#ifndef NO_INTERRUPT
+  SCI0CR2_SCTIE = 1;   /* Tx Interrupt Eanbled          0=off                  1=on                         */
+  SCI0CR2_RIE   = 1;   /* Rx Full Interrupt Enabled     0=off                  1=on                         */
+#else
   SCI0CR2_SCTIE = 0;   /* Tx Interrupt Eanbled          0=off                  1=on                         */
-  SCI0CR2_TCIE  = 0;   /* Tx Complete Interrupt Enabled 0=off                  1=on                         */
   SCI0CR2_RIE   = 0;   /* Rx Full Interrupt Enabled     0=off                  1=on                         */
+#endif
+  SCI0CR2_TCIE  = 0;   /* Tx Complete Interrupt Enabled 0=off                  1=on                         */
   SCI0CR2_ILIE  = 0;   /* Idle Line Interrupt Enabled   0=off                  1=on                         */
   SCI0CR2_TE    = 1;   /* Tx Enabled                    0=off                  1=on                         */
   SCI0CR2_RE    = 1;   /* Rx Enabled                    0=off                  1=on                         */
@@ -38,23 +80,28 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
 
 void SCI_Poll(void)
 {
-  UINT8 temp = 0;
+  UINT8 data = 0;
     
   if (SCI0SR1_RDRF)
-  { /* check receive data register full flag */
-    temp = SCI0DRL; /* read one byte from data register low */
-    if (!FIFO_Put(&RxFIFO, temp))
-    { /* put it to receive buffer for later use */
+  { 
+    /* check receive data register full flag */
+    data = SCI0DRL; /* read one byte from data register low */
+    /* put it to receive buffer for later use */
+    if (!FIFO_Put(&RxFIFO, data))
+    { 
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_FIFO_PUT); /* generally, it should not be full. if it does, there is a design issue. */
 #endif
     }                                    
   }
+  
   if (SCI0SR1_TDRE)
-  {   /* check transmit data register empty flag */
-    if (FIFO_Get(&TxFIFO, &temp))
-    {   /* try to get one byte from transmit buffer */
-      SCI0DRL = temp; /* set it to data register for hardware transmission process */           
+  { 
+    /* check transmit data register empty flag */
+    if (FIFO_Get(&TxFIFO, &data))
+    { 
+      /* try to get one byte from transmit buffer */
+      SCI0DRL = data; /* set it to data register for hardware transmission process */           
     }
   }    
 }
@@ -74,5 +121,12 @@ BOOL SCI_InChar(UINT8 * const dataPtr)
 BOOL SCI_OutChar(const UINT8 data)
 {
   /* simple wrap of transmit FIFO buffer */
-  return FIFO_Put(&TxFIFO, data);
+  if (FIFO_Put(&TxFIFO, data))
+  {
+#ifndef NO_INTERRUPT  
+    SCI0CR2_SCTIE = 1;
+#endif
+    return bTRUE;
+  }
+  return bFALSE;
 }

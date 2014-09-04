@@ -36,7 +36,11 @@ const UINT8 MODCON_COMMNAD_EEPROM_PROGRAM = 0x07;
 const UINT8 MODCON_COMMAND_EEPROM_GET     = 0x08;
 const UINT8 MODCON_COMMAND_SPECIAL        = 0x09; /* ModCon protocol special command */
 const UINT8 MODCON_COMMAND_NUMBER         = 0x0B; /* ModCon protocol number command */
+const UINT8 MODCON_COMMAND_TIME           = 0x0C; /* ModCon protocol time command */
 const UINT8 MODCON_COMMAND_MODE           = 0x0D;
+
+const UINT8 MODCON_DEBUG_INITIAL = 'd';
+const UINT8 MODCON_DEBUG_TOKEN   = 'j';
 
 const UINT8 MODCON_VERSION_INITIAL = 'v';
 const UINT8 MODCON_VERSION_TOKEN   = 'x'; /* TODO: rename it for better functionality reflection */
@@ -45,6 +49,8 @@ const UINT8 MODCON_VERSION_MINOR   =  0 ;
 
 const UINT8 MODCON_NUMBER_GET = 1;
 const UINT8 MODCON_NUMBER_SET = 2;
+
+const UINT8 MODCON_TIME_INITIAL = 'i';
 
 const UINT8 MODCON_MODE_GET = 1;
 const UINT8 MODCON_MODE_SET = 2;
@@ -86,6 +92,12 @@ const UINT8 MODCON_MODE_SET = 2;
 #define ModConMode EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_MODE)
 
 /**
+ * ModCon debug
+ */
+#define DEFAULT_MODCON_DEBUG 0
+#define ModConDebug EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_DEBUG)
+
+/**
  * \fn BOOL HandleModConStartup(void)
  * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
  * \return TRUE if packets were queued for transmission successfully.
@@ -105,6 +117,13 @@ BOOL HandleModConSpecial(void);
  * \return TRUE if the command has been executed successfully.
  */
 BOOL HandleModConNumber(void);
+
+/**
+ * \fn BOOL HandleModConTime(void)
+ * \brief
+ * \return
+ */
+BOOL HandleModConTime(void);
 
 /**
  * \fn BOOL HandleModConMode(void)

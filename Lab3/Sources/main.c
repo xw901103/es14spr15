@@ -8,10 +8,18 @@
 #include "main.h"
 #include "utils.h"
 #include "CRG.h"
+#include "clock.h"
 #include "EEPROM.h"
 #include "packet.h"
 
 #include "mc9s12a512.h"
+
+/**
+ * \fn BOOL HandleModConSpecialDebug(void)
+ * \brief  
+ * \return 
+ */
+BOOL HandleModConSpecialDebug(void);
 
 /**
  * \fn BOOL HandleModConSpecialVersion(void)
@@ -79,11 +87,27 @@ BOOL HandleModConStartup(void)
 
 BOOL HandleModConSpecial(void)
 {
+  if (Packet_Parameter1 == MODCON_DEBUG_INITIAL && Packet_Parameter2 == MODCON_DEBUG_TOKEN && Packet_Parameter3 == CONTROL_CR)
+  {                    
+    return HandleModConSpecialDebug();
+  }
   if (Packet_Parameter1 == MODCON_VERSION_INITIAL && Packet_Parameter2 == MODCON_VERSION_TOKEN && Packet_Parameter3 == CONTROL_CR)
   {                    
     return HandleModConSpecialVersion();
   }
   return bFALSE;
+}
+
+BOOL HandleModConSpecialDebug(void) 
+{
+  if (!EEPROM_Write16(&ModConDebug, !ModConDebug))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    return bFALSE;
+  }
+  return bTRUE;
 }
 
 BOOL HandleModConSpecialVersion(void) 
@@ -139,6 +163,18 @@ BOOL HandleModConNumberSet(void)
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    return bFALSE;
+  }
+  return bTRUE;
+}
+
+BOOL HandleModConTime(void)
+{
+  if (!Packet_Put(MODCON_COMMAND_TIME, MODCON_TIME_INITIAL, Clock_Seconds, Clock_Minutes)) 
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
     return bFALSE;
   }
@@ -300,6 +336,23 @@ BOOL Initialize(void)
       return bFALSE;
     }
   }
+
+  if (ModConDebug == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConDebug, DEFAULT_MODCON_DEBUG))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;
+    }
+  }
+
+#ifndef NO_INTERRUPT 
+  EnableInterrupts;
+#else
+  DisableInterrupts;
+#endif
   
   return bTRUE;
 }

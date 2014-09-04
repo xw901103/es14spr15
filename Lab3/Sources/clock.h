@@ -13,19 +13,6 @@
 
 extern UINT8 Clock_Seconds, Clock_Minutes;
 
-// ----------------------------------------
-// Clock_Setup
-// 
-// Initializes the clock
-// Input:
-//   prescaleRate is the desired prescale rate and modulus count
-//   of the CRG block's real-time interrupt module,
-//   corresponding to Table 3.2 in the CRG Block User Guide,
-//   to ensure ticks of the clock occur every 65.536 ms
-// Output:
-//   TRUE if the clock was setup successfully
-// Conditions:
-//   none
 /**
  * \fn void Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount)
  * \brief Initializes the clock.

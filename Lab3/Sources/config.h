@@ -7,6 +7,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* uncomment to disable */
+//#define NO_DEBUG     /* disable debug */
+//#define NO_INTERRUPT /* disable interrupts NOTE: some modules heavily depend on it. */
+
 #ifndef CONFIG_OSCCLK
 #define CONFIG_OSCCLK 16000000 /* Oscillator clock in hz */
 #else
@@ -60,6 +64,12 @@
 #define CONFIG_EEPROM_ADDRESS_MODCON_MODE  0x0402 /* 16-bits ModCon mode EEPROM address */
 #else
 #warning "ModCon mode EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_DEBUG
+#define CONFIG_EEPROM_ADDRESS_MODCON_DEBUG  0x0420 /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "ModCon debug EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN
