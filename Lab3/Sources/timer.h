@@ -11,7 +11,7 @@
 #define TIMER_H
 
 // new types
-#include "types.h"
+#include "global.h"
 
 typedef enum
 {

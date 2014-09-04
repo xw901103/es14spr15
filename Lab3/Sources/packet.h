@@ -1,6 +1,6 @@
 /**
  * \file packet.h
- * \brief Routines to implement packet encoding and decoding for the serial port
+ * \brief Routines to implement packet encoding and decoding for the serial port to serve ModCon protocols.
  * \author Xu Waycell
  * \date 06-August-2014
  */
@@ -9,29 +9,45 @@
 
 #include "global.h"
 
+/* Packet structure */
+typedef struct
+{
+  UINT8 command;
+  union
+  {
+    struct
+    {
+      UINT8 parameter3;
+      UINT8 parameter2;
+      UINT8 parameter1;
+    } separate;
+    struct
+    {
+      UINT8 parameter3;
+      UINT16 parameter12;
+    } combined12;
+    struct
+    {
+      UINT16 parameter23;
+      UINT8 paramater1;
+    } combined23;
+  } parameters;
+} TPacket;
+
+#define Packet_Command     Packet.command
+#define Packet_Parameter1  Packet.parameters.separate.parameter1
+#define Packet_Parameter2  Packet.parameters.separate.parameter2
+#define Packet_Parameter3  Packet.parameters.separate.parameter3
+#define Packet_Parameter12 Packet.parameters.combined12.parameter12
+#define Packet_Parameter23 Packet.parameters.combined23.parameter23
+
+extern TPacket Packet;
+//extern BOOL Packet_CommandOK;
+
 /**
  * Packet content
  */
-extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
-
-/**
- * ModCon number
- */
-extern TUINT16 ModConNumber;
-
-#if !defined(ModConNumberLSB) && !defined(ModConNumberMSB)
-#define ModConNumberLSB ModConNumber.s.Lo
-#define ModConNumberMSB ModConNumber.s.Hi
-#endif
-
-/**
- * ModCon mode
- */
-extern TUINT16 ModConMode;
-#if !defined(ModConModeLSB) && !defined(ModConModeMSB)
-#define ModConModeLSB ModConMode.s.Lo
-#define ModConModeMSB ModConMode.s.Hi
-#endif
+//extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
 
 /**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
@@ -43,8 +59,7 @@ extern TUINT16 ModConMode;
  * \param parameter3 third parameter byte
  * \return Checksum result of given bytes.
  */
-UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3);
+UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
 /**
  * \fn BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
@@ -72,7 +87,6 @@ BOOL Packet_Get(void);
  * \param parameter3 third parameter byte
  * \return TRUE if a valid packet was queued for transmission successfully
  */
-BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3);
+BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
 #endif

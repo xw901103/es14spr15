@@ -24,7 +24,7 @@
  */
 typedef struct
 {
-  UINT16 Start, End;        /* \brief iterator, it should be from 0 to FIFO_SIZE - 1. */
+  UINT16 Start, End;        /* \brief boundary and iterator, it should be from 0 to FIFO_SIZE - 1. */
   UINT16 volatile NbBytes;  /* \brief count of bytes inside the buffer */
   UINT8 Buffer[FIFO_SIZE];  /* \brief byte array serving as container */
 } TFIFO;
