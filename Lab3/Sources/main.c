@@ -205,7 +205,7 @@ BOOL HandleModConModeGet(void)
 {
   TUINT16 mode;
   
-  mode.l = ModConNumber;
+  mode.l = ModConMode;
   if (!Packet_Put(MODCON_COMMAND_MODE, MODCON_MODE_GET, mode.s.Lo, mode.s.Hi))
   {
 #ifndef NO_DEBUG
@@ -282,12 +282,22 @@ void TurnOnStartupIndicator(void)
 }
 
 BOOL Initialize(void)
-{
+{ 
+  DisableInterrupts;
+ 
   if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_CRGPLL_SETUP);
 #endif
+    return bFALSE;
+  }
+  
+  if (!Clock_Setup(CONFIG_RTI_PRESCALERATE, CONFIG_RTI_MODULUSCOUNT))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_CRITICAL);
+#endif  
     return bFALSE;
   }
   
@@ -307,14 +317,14 @@ BOOL Initialize(void)
     return bFALSE;
   }
   
-  if (!CRG_SetupCOP(CONFIG_COPRATE))
+  if (!CRG_SetupCOP(CONFIG_COP_RATE))
   {
 #ifndef NO_DEBUG
         DEBUG(__LINE__, ERR_CRGCOP_SETUP);
 #endif
     return bFALSE;
   }
-    
+      
   if (ModConNumber == 0xFFFF)
   {
     if (!EEPROM_Write16(&ModConNumber, DEFAULT_MODCON_NUMBER))
@@ -347,11 +357,9 @@ BOOL Initialize(void)
       return bFALSE;
     }
   }
-
+  
 #ifndef NO_INTERRUPT 
   EnableInterrupts;
-#else
-  DisableInterrupts;
 #endif
   
   return bTRUE;
@@ -361,6 +369,14 @@ void Routine(void)
 {
   UINT8 ack = 0;
   BOOL bad = bFALSE;
+  
+  if (Clock_Update())
+  {
+    if (ModConDebug)
+    {
+      bad = !HandleModConTime();
+    }
+  }
     
   if (Packet_Get())
   { 

@@ -80,14 +80,11 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
 
 void SCI_Poll(void)
 {
-  UINT8 data = 0;
-    
+  /* check receive data register full flag */
   if (SCI0SR1_RDRF)
   { 
-    /* check receive data register full flag */
-    data = SCI0DRL; /* read one byte from data register low */
     /* put it to receive buffer for later use */
-    if (!FIFO_Put(&RxFIFO, data))
+    if (!FIFO_Put(&RxFIFO, SCI0DRL))
     { 
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_FIFO_PUT); /* generally, it should not be full. if it does, there is a design issue. */
@@ -95,14 +92,11 @@ void SCI_Poll(void)
     }                                    
   }
   
+  /* check transmit data register empty flag */
   if (SCI0SR1_TDRE)
   { 
-    /* check transmit data register empty flag */
-    if (FIFO_Get(&TxFIFO, &data))
-    { 
-      /* try to get one byte from transmit buffer */
-      SCI0DRL = data; /* set it to data register for hardware transmission process */           
-    }
+    /* try to get one byte from transmit buffer */
+    (void)FIFO_Get(&TxFIFO, &SCI0DRL);
   }    
 }
 

@@ -17,6 +17,18 @@
 #warning "Oscillator clock override detected!"
 #endif
 
+#ifndef CONFIG_RTI_PRESCALERATE
+#define CONFIG_RTI_PRESCALERATE 0x07
+#else
+#warning "Real time interrupt prescale rate override detected!"
+#endif
+
+#ifndef CONFIG_RTI_MODULUSCOUNT
+#define CONFIG_RTI_MODULUSCOUNT 0x0F
+#else
+#warning "Real time interrupt modulus count override detected!"
+#endif
+
 #ifndef CONFIG_BAUDRATE
 #define CONFIG_BAUDRATE 115200          /* SCI baud rate in bits/sec */
 #else
@@ -35,8 +47,8 @@
 #warning "Bus clock override detected!"
 #endif
 
-#ifndef CONFIG_COPRATE
-#define CONFIG_COPRATE COP_RATE_2_14    /* Predefined COP rate */
+#ifndef CONFIG_COP_RATE
+#define CONFIG_COP_RATE COP_RATE_2_14    /* Predefined COP rate */
 #else
 #warning "COP rate override detected!"
 #endif
@@ -70,6 +82,12 @@
 #define CONFIG_EEPROM_ADDRESS_MODCON_DEBUG  0x0420 /* 16-bits ModCon debug EEPROM address */
 #else
 #warning "ModCon debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_RTI_DEBUG
+#define CONFIG_EEPROM_ADDRESS_RTI_DEBUG  CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "RTI debug EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN

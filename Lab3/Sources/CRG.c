@@ -14,17 +14,17 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
     if (CLKSEL_PLLSEL)
     {
       CLKSEL_PLLSEL = 0;     /* de-select phase-locked loop as system clock */
-      //PPLCTL_CME  = 1;     /* Clock monitor enable     0= off  1= on */
-      PLLCTL_PLLON  = 0;     /* PLL enable               0= off  1= on */
-      //PLLCTL_AUTO = 1;     /* Auto bandwith control    0= off  1= on */
-      //PLLCTL_ACQ  = 1;     /* Acquisition(affected by AUTO) 0= low  1= high */
-      //PLLCTL_PRE  = 0;     /* RTI enable               0= off  1= on */
-      //PLLCTL_PCE  = 0;     /* Watchdog pseudo stop bit 0= stop 1= cont. */
-      //PLLCTL_SCME = 1;     /* Self clock mode enable   0= off  1= on */
+      //PPLCTL_CME   = 1;     /* Clock monitor enable     0= off  1= on */
+      //PLLCTL_PLLON = 0;     /* PLL enable               0= off  1= on */
+      //PLLCTL_AUTO  = 1;     /* Auto bandwith control    0= off  1= on */
+      //PLLCTL_ACQ   = 1;     /* Acquisition(affected by AUTO) 0= low  1= high */
+      //PLLCTL_PRE   = 0;     /* RTI enable               0= off  1= on */
+      //PLLCTL_PCE   = 0;     /* Watchdog pseudo stop bit 0= stop 1= cont. */
+      //PLLCTL_SCME  = 1;     /* Self clock mode enable   0= off  1= on */
     }
 
     /* check if PLL is not selected as E_CLK source and bus clock is suitable */
-    if (!CLKSEL_PLLSEL && !PLLCTL_PLLON)
+    if (!CLKSEL_PLLSEL)
     {        
       REFDV_REFDV = (byte)(oscClk / refClk - 1);
       SYNR_SYN = (byte)(busClk / refClk - 1);
@@ -56,7 +56,7 @@ BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
   byte mask = (byte)aCOPRate;
   //mask |= COPCTL_WCOP_MASK; /* enable window mode */
 #ifndef NO_DEBUG
-  //mask |= COPCTL_RSBCK_MASK; /* enable BDM mode */
+  mask |= COPCTL_RSBCK_MASK; /* enable BDM mode */
 #endif
   COPCTL = mask;
   return COPCTL == mask;

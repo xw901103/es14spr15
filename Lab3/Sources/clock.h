@@ -20,7 +20,7 @@ extern UINT8 Clock_Seconds, Clock_Minutes;
  * \param modulusCount modulus count of the CRG block's real-time interrupt module
  * \return TRUE if the clock was setup successfully.
  */
-void Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount);
+BOOL Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount);
 
 /**
  * \fn BOOL Clock_Update(void)

@@ -10,6 +10,7 @@
 #if !defined(MATH_1_KILO) && !defined(MATH_1_MEGA)
 #define MATH_1_KILO 1000
 #define MATH_1_MEGA 1000000
+#define MATH_HALF_MEGA 500000
 #endif
 
 #if !defined(CONTROL_NUL) && !defined(CONTROL_BEL) && !defined(CONTROL_BS) && !defined(CONTROL_TAB) && !defined(CONTROL_LF) && !defined(CONTROL_VT) && !defined(CONTROL_FF) && !defined(CONTROL_CR)
