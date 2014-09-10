@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "CRG.h"
 #include "clock.h"
+#include "timer.h"
 #include "EEPROM.h"
 #include "packet.h"
 
@@ -300,6 +301,9 @@ BOOL Initialize(void)
 #endif  
     return bFALSE;
   }
+  
+  Timer_Setup();
+  Timer_SetupPeriodicTimer(CONFIG_TIMER_PERIOD, CONFIG_BUSCLK);
   
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {

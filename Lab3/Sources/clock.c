@@ -26,12 +26,13 @@ void interrupt VectorNumber_Vrti RTI_ISR(void)
   /* check if debug is on */
   if (RTIDebugEnable)
   {
-    PTT_PTT5 = ~PTT_PTT5;
+    DDRT_DDRT5 = 1;
+    PTT_PTT5 = !PTT_PTT5;
   }
 
   if (++count == 0x08)
   {
-    PORTE_BIT7 = ~PORTE_BIT7;
+    PORTE_BIT7 = !PORTE_BIT7;
     count = 0;
   }
   

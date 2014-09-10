@@ -47,6 +47,12 @@
 #warning "Bus clock override detected!"
 #endif
 
+#ifndef CONFIG_TIMER_PERIOD
+#define CONFIG_TIMER_PERIOD 2          /* Timer period in ms */
+#else
+#warning "Timer period override detected!"
+#endif
+
 #ifndef CONFIG_COP_RATE
 #define CONFIG_COP_RATE COP_RATE_2_14    /* Predefined COP rate */
 #else
