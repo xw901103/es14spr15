@@ -4,9 +4,14 @@
  */
 #include "SCI.h"
 #include "FIFO.h"
+#ifndef NO_INTERRUPT
+#include "timer.h"
+#endif
 #include <mc9s12a512.h>
 
 static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
+
+UINT16 timerPeriod = 2083; //24Mhz*10/115200Hz
 
 #ifndef NO_INTERRUPT
 void interrupt VectorNumber_Vsci0 SCI0_ISR(void)
@@ -29,24 +34,55 @@ void interrupt VectorNumber_Vsci0 SCI0_ISR(void)
   }
 
   /* handle transmit interrupts */  
-  if (SCI0CR2_SCTIE)
-  {
+  //if (SCI0CR2_SCTIE)
+  //{
     /* check transmit data register empty flag */
-    if (SCI0SR1_TDRE)
-    { 
+    //if (SCI0SR1_TDRE)
+    //{ 
       /* try to obtain one byte from transmission buffer */
-      if (!FIFO_Get(&TxFIFO, &SCI0DRL))
-      {       
+      //if (!FIFO_Get(&TxFIFO, &SCI0DRL))
+      //{       
         /* disable interrupt due to empty buffer */
-        SCI0CR2_SCTIE = 0;
-      }
-    }    
+        //SCI0CR2_SCTIE = 0;
+      //}
+    //}    
+  //}
+}
+
+void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void) 
+{
+  TFLG1_C7F = 1;
+  TC7 = TC7 + timerPeriod;
+  
+  DDRT_DDRT6 = 1;
+  PTT_PTT6 = !PTT_PTT6;  
+
+  if (SCI0SR1_TDRE)
+  { 
+    /* try to obtain one byte from transmission buffer */
+    if (!FIFO_Get(&TxFIFO, &SCI0DRL))
+    {       
+      /* disable interrupt due to empty buffer */
+      Timer_Enable(TIMER_Ch7, bFALSE);
+    }
   }
 }
 #endif
 
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
 {
+#ifndef NO_INTERRUPT
+  TTimerSetup timerCh7;
+  
+  timerCh7.outputCompare = bTRUE;
+  timerCh7.outputAction = TIMER_OUTPUT_DISCONNECT;
+  timerCh7.inputDetection = TIMER_INPUT_OFF;
+  timerCh7.toggleOnOverflow = bFALSE;
+  timerCh7.interruptEnable = bTRUE;
+  timerCh7.pulseAccumulator = bFALSE;
+  
+  Timer_Init(TIMER_Ch7, &timerCh7);
+#endif
   SCI0BD = (word)(busClk / baudRate / 16); /* baud rate */
   
   /* SCI control register 1 */
@@ -61,7 +97,7 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
   
   /* SCI control register 2 */
 #ifndef NO_INTERRUPT
-  SCI0CR2_SCTIE = 1;   /* Tx Interrupt Eanbled          0=off                  1=on                         */
+  SCI0CR2_SCTIE = 0;   /* Tx Interrupt Eanbled          0=off                  1=on                         */
   SCI0CR2_RIE   = 1;   /* Rx Full Interrupt Enabled     0=off                  1=on                         */
 #else
   SCI0CR2_SCTIE = 0;   /* Tx Interrupt Eanbled          0=off                  1=on                         */
@@ -118,7 +154,9 @@ BOOL SCI_OutChar(const UINT8 data)
   if (FIFO_Put(&TxFIFO, data))
   {
 #ifndef NO_INTERRUPT  
-    SCI0CR2_SCTIE = 1;
+    //SCI0CR2_SCTIE = 1;
+    Timer_Set(TIMER_Ch7, timerPeriod);
+    Timer_Enable(TIMER_Ch7, bTRUE);
 #endif
     return bTRUE;
   }

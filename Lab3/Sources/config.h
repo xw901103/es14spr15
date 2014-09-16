@@ -48,7 +48,7 @@
 #endif
 
 #ifndef CONFIG_TIMER_PERIOD
-#define CONFIG_TIMER_PERIOD 2          /* Timer period in ms */
+#define CONFIG_TIMER_PERIOD 2000          /* Timer period in microseconds */
 #else
 #warning "Timer period override detected!"
 #endif
@@ -94,6 +94,12 @@
 #define CONFIG_EEPROM_ADDRESS_RTI_DEBUG  CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
 #else
 #warning "RTI debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG
+#define CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG  CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "Modulus down counter debug EEPROM address override detected!"
 #endif
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN

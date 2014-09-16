@@ -1,32 +1,100 @@
 #include "timer.h"
-#include "mc9s12a512.h"
+#include <mc9s12a512.h>
 
-void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk) {
-  MCCTL_MODMC = 1;
+#ifdef NO_INTERRUPT
+#error "Timer module depends on interrupt."
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG
+#define ModulusDownCounterDebugEnable *(volatile UINT16*)0x0420 /* fallback plan */
+#warning "ModulusDownCounterDebugEnable using fallback setting 0x0420"
+#else
+#define ModulusDownCounterDebugEnable *(volatile UINT16*)CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG
+#endif
+
+void interrupt VectorNumber_Vtimmdcu Timer_PeriodicTimer_ISR(void) 
+{
+  /* ack flag */
+  MCFLG_MCZF = 1;
+  
+  /* check if debug is on */
+  if (ModulusDownCounterDebugEnable)
+  {
+    DDRT_DDRT4 = 1;
+    PTT_PTT4 = !PTT_PTT4;
+  }  
+}
+
+void interrupt VectorNumber_Vtimch0 Timer_Ch0ISR(void) 
+{
   
 }
 
-void Timer_PeriodicTimerEnable(const BOOL enable) {
-  MCCTL_MCEN = (byte) enable;  
+void interrupt VectorNumber_Vtimch1 Timer_Ch1ISR(void) 
+{
+  
+}
+
+void interrupt VectorNumber_Vtimch2 Timer_Ch2ISR(void) 
+{
+  
+}
+
+void interrupt VectorNumber_Vtimch3 Timer_Ch3ISR(void) 
+{
+  
+}
+
+void interrupt VectorNumber_Vtimch4 Timer_Ch4ISR(void) 
+{
+  
+}
+
+void interrupt VectorNumber_Vtimch5 Timer_Ch5ISR(void) 
+{
+  
+}
+
+void interrupt VectorNumber_Vtimch6 Timer_Ch6ISR(void) 
+{
+  
+}
+
+/*
+void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void) 
+{
+  TFLG1_C7F = 1;
+  TC7 += 1000;
+  DDRT_DDRT6 = 1;
+  PTT_PTT6 = !PTT_PTT6;  
+}
+*/
+
+void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk)
+{
+  MCCTL_MCEN = 0;
+  MCCTL_MODMC = 1;
+  MCCTL_MCEN = 1;
+  MCCNT = (word)((busClk / MATH_1_MEGA) * microSeconds);  
+  MCCTL_FLMC = 1;
+  MCCTL_MCPR = 0; // prescale 0
+  //MCCTL_MCZI = 1;
+}
+
+void Timer_PeriodicTimerEnable(const BOOL enable)
+{
+  //MCCTL_MCEN = (byte) enable;  
+  MCCTL_MCZI = (byte) enable;
 }
 
 void Timer_Setup(void) {
-  
+  TSCR1_TEN = 1;
+  TSCR2_PR = 0; // prescale 0
+  //TC7 = TCNT + 1000;
 }
 
 void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerSetup)
 {
-/*
-typedef struct
-{
-  BOOL outputCompare;
-  TTimerOutputAction outputAction;
-  TTimerInputDetection inputDetection;
-  BOOL toggleOnOverflow;
-  BOOL interruptEnable;
-  BOOL pulseAccumulator;
-} TTimerSetup;
-*/
   if (aTimerSetup)
   {
     switch(channelNb)

@@ -362,6 +362,8 @@ BOOL Initialize(void)
     }
   }
   
+  Timer_PeriodicTimerEnable(bTRUE);
+  
 #ifndef NO_INTERRUPT 
   EnableInterrupts;
 #endif
