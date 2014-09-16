@@ -17,8 +17,8 @@
 
 /**
  * \fn BOOL HandleModConSpecialDebug(void)
- * \brief  
- * \return 
+ * \brief Toggles ModCon debug attribute 
+ * \return TRUE if the new debugging state has been updated.
  */
 BOOL HandleModConSpecialDebug(void);
 

@@ -12,7 +12,23 @@
 static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
 #ifndef NO_INTERRUPT
-static UINT16 timerPeriod = 0; //24Mhz*10/115200Hz = 2083
+
+#define INITIAL_SCI0_TX_ISR_DELAY DONT_PANIC
+
+static UINT16 SCI0TxRoutinePeriod = 0; /* delay period of transmission process */
+
+/**
+ * \fn void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
+ * \brief SCI0 receive interrupt service routine. This routine will be executed once the receive data register is full.
+ */
+void interrupt VectorNumber_Vsci0 SCI0RxISR(void);
+
+/**
+ * \fn void SCI0TxISR(const TTimerChannel channelNb)
+ * \brief SCI0 transmission interrupt service routine. This routine will be executed once the timer channel output compare interrupt triggered.
+ * \param channelNb timer channel number
+ */
+void SCI0TxISR(const TTimerChannel channelNb);
 
 void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
 {
@@ -32,56 +48,23 @@ void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
       }                                    
     }    
   }
-
-  /* handle transmit interrupts */  
-  //if (SCI0CR2_SCTIE)
-  //{
-    /* check transmit data register empty flag */
-    //if (SCI0SR1_TDRE)
-    //{ 
-      /* try to obtain one byte from transmission buffer */
-      //if (!FIFO_Get(&TxFIFO, &SCI0DRL))
-      //{       
-        /* disable interrupt due to empty buffer */
-        //SCI0CR2_SCTIE = 0;
-      //}
-    //}    
-  //}
 }
 
-//void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void) 
-//{
-//  TFLG1_C7F = 1;
-//  TC7 = TC7 + timerPeriod;
-  
-//  DDRT_DDRT6 = 1;
-//  PTT_PTT6 = !PTT_PTT6;  
-
-//  if (SCI0SR1_TDRE)
-//  { 
-    /* try to obtain one byte from transmission buffer */
-//    if (!FIFO_Get(&TxFIFO, &SCI0DRL))
-//    {       
-      /* disable interrupt due to empty buffer */
-//      Timer_Enable(TIMER_Ch7, bFALSE);
-//    }
-//  }
-//}
-
 void SCI0TxISR(const TTimerChannel channelNb)
-{  
-  Timer_Set(channelNb, timerPeriod);
-  //TC7 += timerPeriod;  
+{ 
+  /* check if transmission data register is empty */ 
   if (SCI0SR1_TDRE)
   { 
     /* try to obtain one byte from transmission buffer */
     if (!FIFO_Get(&TxFIFO, &SCI0DRL) || TxFIFO.NbBytes == 0)
     {       
-      /* disable interrupt due to empty buffer */
+      /* disable output compare interrupt of timer channel 7 due to empty buffer */
       Timer_Enable(TIMER_Ch7, bFALSE);
       return;
     }
   }
+  /* set up delay for next time */
+  Timer_ScheduleRoutine(channelNb, SCI0TxRoutinePeriod);
 }
 
 #endif
@@ -89,20 +72,23 @@ void SCI0TxISR(const TTimerChannel channelNb)
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
 {
 #ifndef NO_INTERRUPT
+
   TTimerSetup timerCh7;
   
-  timerCh7.outputCompare = bTRUE;
-  timerCh7.outputAction = TIMER_OUTPUT_DISCONNECT;
-  timerCh7.inputDetection = TIMER_INPUT_OFF;
+  timerCh7.outputCompare    = bTRUE;
+  timerCh7.outputAction     = TIMER_OUTPUT_DISCONNECT;
+  timerCh7.inputDetection   = TIMER_INPUT_OFF;
   timerCh7.toggleOnOverflow = bFALSE;
-  timerCh7.interruptEnable = bTRUE;
+  timerCh7.interruptEnable  = bFALSE;
   timerCh7.pulseAccumulator = bFALSE;
-  timerCh7.routine = &SCI0TxISR;
+  timerCh7.routine          = &SCI0TxISR;
   
+  /* fuel up our transmission ship docking on channel 7 */
   Timer_Init(TIMER_Ch7, &timerCh7);
   
-  timerPeriod = (UINT16)(10*busClk/baudRate);
-  //timerPeriod = 1000;
+  /* calculate bus clock cycles that is required to transmit one byte */
+  SCI0TxRoutinePeriod = (UINT16)(10*busClk/baudRate);
+
 #endif
   SCI0BD = (word)(busClk / baudRate / 16); /* baud rate */
   
@@ -175,8 +161,8 @@ BOOL SCI_OutChar(const UINT8 data)
   if (FIFO_Put(&TxFIFO, data))
   {
 #ifndef NO_INTERRUPT  
-    //SCI0CR2_SCTIE = 1;
-    Timer_Set(TIMER_Ch7, timerPeriod);
+    /* kick start our hitchhiker here by 42 */
+    Timer_Set(TIMER_Ch7, INITIAL_SCI0_TX_ISR_DELAY);
     Timer_Enable(TIMER_Ch7, bTRUE);
 #endif
     return bTRUE;

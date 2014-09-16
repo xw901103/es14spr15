@@ -2,10 +2,11 @@
  * \mainpage Xu's Embedded Software Lab 2
  *
  * \section intro_sec Introduction
- * Lab 2 is based on Lab 1 to setup bus clock to 24Mhz via Phase-Locked Loop
- * module, Watchdog for operating properly and EEPROM functions for ModCon 
- * protocol expansion. In addition, SCI baud rate has been increased to 115200
- * to adapt changes.
+ * Lab 3 is based on Lab 2 to enable interrupt features across
+ * multiple implementations. These are serial communication 
+ * interface receive, real-time clock, periodic timer via modulus 
+ * down counter and serial communication interface transmission
+ * via enhanced capture timer output compare.
  *
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
@@ -13,12 +14,14 @@
  * <br>This will program a byte in EEPROM through given data and address. 
  * * 0x08 ModCon Get EEPROM byte
  * <br>This will send current data stored in given EEPROM address.
- * * 0x09 ModCon Special ModCon version number query
- * <br>This will send current ModCon version number
+ * * 0x09 ModCon Special ModCon query
+ * <br>This will special modcon subcommand.
  * * 0x0B ModCon number get and set
- * <br>This is the accessor and mutator of ModCon number
+ * <br>This is the accessor and mutator of ModCon number.
+ * * 0x0C ModCon uptime
+ * <br>This will send current system uptime in minutes and seconds.
  * * 0x0D ModCon mode get and set
- * <br>This is the accessor and mutator of ModCon mode
+ * <br>This is the accessor and mutator of ModCon mode.
  *
  * \file main.h
  * \brief Program main entry file. 
@@ -120,8 +123,8 @@ BOOL HandleModConNumber(void);
 
 /**
  * \fn BOOL HandleModConTime(void)
- * \brief
- * \return
+ * \brief Sends out system uptime in minutes and seconds 
+ * \return TRUE if the packet has queued successfully.
  */
 BOOL HandleModConTime(void);
 

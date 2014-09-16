@@ -1,16 +1,21 @@
-// ----------------------------------------
-// Filename: clock.h
-// Description: Routines for maintaining
-//   a real-time clock
-// Author: PMcL
-// Date: 29-Mar-06
-
+/**
+ * \file clock.h
+ * \brief Routines for maintaining a real-time clock
+ * \author Xu Waycell
+ * \date 6-September-2014
+ */
 #ifndef CLOCK_H
 #define CLOCK_H
 
-// new types
 #include "global.h"
 
+#ifdef NO_INTERRUPT
+#error "Real-time clock module depends on interrupt feature enabled."
+#endif
+
+/**
+ * \brief seconds and minutes that has elapsed 
+ */
 extern UINT8 Clock_Seconds, Clock_Minutes;
 
 /**
@@ -19,6 +24,7 @@ extern UINT8 Clock_Seconds, Clock_Minutes;
  * \param prescaleRate The desired prescale rate
  * \param modulusCount modulus count of the CRG block's real-time interrupt module
  * \return TRUE if the clock was setup successfully.
+ * \warning Given parameters must be able to trigger real-time interrupt occur every 65536 microseconds.
  */
 BOOL Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount);
 

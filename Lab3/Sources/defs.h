@@ -7,7 +7,7 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#if !defined(MATH_1_KILO) && !defined(MATH_1_MEGA)
+#if !defined(MATH_1_KILO) && !defined(MATH_1_MEGA) && !defined(MATH_HALF_MEGA)
 #define MATH_1_KILO 1000
 #define MATH_1_MEGA 1000000
 #define MATH_HALF_MEGA 500000
@@ -41,6 +41,10 @@
 
 #ifndef UNUSED
 #define UNUSED(VAR) (void)VAR /* macro to avoid compiler issue */
+#endif
+
+#if !defined(DONT_PANIC)
+#define DONT_PANIC 42 /* Answer to the Ultimate Question of Life, The Universe, and Everything */
 #endif
 
 /**
