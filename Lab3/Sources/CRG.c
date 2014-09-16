@@ -56,7 +56,7 @@ BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
   byte mask = (byte)aCOPRate;
   //mask |= COPCTL_WCOP_MASK; /* enable window mode */
 #ifndef NO_DEBUG
-  //mask |= COPCTL_RSBCK_MASK; /* enable BDM mode */
+  mask |= COPCTL_RSBCK_MASK; /* enable BDM mode */
 #endif
   COPCTL = mask;
   return COPCTL == mask;

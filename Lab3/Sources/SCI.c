@@ -70,17 +70,18 @@ void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
 
 void SCI0TxISR(const TTimerChannel channelNb)
 {  
+  Timer_Set(channelNb, timerPeriod);
+  //TC7 += timerPeriod;  
   if (SCI0SR1_TDRE)
   { 
     /* try to obtain one byte from transmission buffer */
-    if (!FIFO_Get(&TxFIFO, &SCI0DRL))
+    if (!FIFO_Get(&TxFIFO, &SCI0DRL) || TxFIFO.NbBytes == 0)
     {       
       /* disable interrupt due to empty buffer */
       Timer_Enable(TIMER_Ch7, bFALSE);
       return;
     }
   }
-  Timer_Set(channelNb, timerPeriod);  
 }
 
 #endif
@@ -101,6 +102,7 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
   Timer_Init(TIMER_Ch7, &timerCh7);
   
   timerPeriod = (UINT16)(10*busClk/baudRate);
+  //timerPeriod = 1000;
 #endif
   SCI0BD = (word)(busClk / baudRate / 16); /* baud rate */
   

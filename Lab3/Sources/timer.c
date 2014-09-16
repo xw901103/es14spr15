@@ -156,6 +156,7 @@ void Timer_PeriodicTimerEnable(const BOOL enable)
 
 void Timer_Setup(void) {
   TSCR1_TEN = 1;
+  TSCR2_TCRE = 0;
   TSCR2_PR = 0; // prescale 0
   //TC7 = TCNT + 1000;
 }
@@ -214,6 +215,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV0 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         ICPAR_PA0EN = (byte)aTimerSetup->pulseAccumulator;
+        timerCh0Routine = aTimerSetup->routine;
         break;
       /* timer channel 1 */
       case TIMER_Ch1:
@@ -263,6 +265,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV1 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         ICPAR_PA1EN = (byte)aTimerSetup->pulseAccumulator;
+        timerCh1Routine = aTimerSetup->routine;
         break;
       /* timer channel 2 */
       case TIMER_Ch2:
@@ -311,7 +314,8 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         }
         TTOV_TOV2 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
-        ICPAR_PA1EN = (byte)aTimerSetup->pulseAccumulator;
+        ICPAR_PA2EN = (byte)aTimerSetup->pulseAccumulator;
+        timerCh2Routine = aTimerSetup->routine;
         break;
       /* timer channel 3 */
       case TIMER_Ch3:
@@ -361,6 +365,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV3 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         ICPAR_PA3EN = (byte)aTimerSetup->pulseAccumulator;
+        timerCh3Routine = aTimerSetup->routine;
         break;
       /* timer channel 4 */
       case TIMER_Ch4:
@@ -410,6 +415,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV4 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         /* we don't have pulse accumulator on channel 4 */
+        timerCh4Routine = aTimerSetup->routine;
         break;
       /* timer channel 5 */
       case TIMER_Ch5:
@@ -459,6 +465,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV5 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         /* we don't have pulse accumulator on channel 5 */
+        timerCh5Routine = aTimerSetup->routine;
         break;
       /* timer channel 6 */        
       case TIMER_Ch6:
@@ -508,6 +515,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV6 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         /* we don't have pulse accumulator on channel 6 */
+        timerCh6Routine = aTimerSetup->routine;
         break;        
       /* timer channel 7 */        
       case TIMER_Ch7:
@@ -557,6 +565,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV7 = (byte)aTimerSetup->toggleOnOverflow;
         Timer_Enable(channelNb, aTimerSetup->interruptEnable);
         /* we don't have pulse accumulator on channel 7 */
+        timerCh7Routine = aTimerSetup->routine;
         break;                
       default:
         break;
