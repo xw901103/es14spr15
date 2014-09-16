@@ -11,10 +11,10 @@
 
 static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
-UINT16 timerPeriod = 2083; //24Mhz*10/115200Hz
-
 #ifndef NO_INTERRUPT
-void interrupt VectorNumber_Vsci0 SCI0_ISR(void)
+static UINT16 timerPeriod = 0; //24Mhz*10/115200Hz = 2083
+
+void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
 {
   /* handle receive interrupts */
   if (SCI0CR2_RIE)
@@ -49,14 +49,27 @@ void interrupt VectorNumber_Vsci0 SCI0_ISR(void)
   //}
 }
 
-void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void) 
-{
-  TFLG1_C7F = 1;
-  TC7 = TC7 + timerPeriod;
+//void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void) 
+//{
+//  TFLG1_C7F = 1;
+//  TC7 = TC7 + timerPeriod;
   
-  DDRT_DDRT6 = 1;
-  PTT_PTT6 = !PTT_PTT6;  
+//  DDRT_DDRT6 = 1;
+//  PTT_PTT6 = !PTT_PTT6;  
 
+//  if (SCI0SR1_TDRE)
+//  { 
+    /* try to obtain one byte from transmission buffer */
+//    if (!FIFO_Get(&TxFIFO, &SCI0DRL))
+//    {       
+      /* disable interrupt due to empty buffer */
+//      Timer_Enable(TIMER_Ch7, bFALSE);
+//    }
+//  }
+//}
+
+void SCI0TxISR(const TTimerChannel channelNb)
+{  
   if (SCI0SR1_TDRE)
   { 
     /* try to obtain one byte from transmission buffer */
@@ -64,9 +77,12 @@ void interrupt VectorNumber_Vtimch7 Timer_Ch7ISR(void)
     {       
       /* disable interrupt due to empty buffer */
       Timer_Enable(TIMER_Ch7, bFALSE);
+      return;
     }
   }
+  Timer_Set(channelNb, timerPeriod);  
 }
+
 #endif
 
 void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
@@ -80,8 +96,11 @@ void SCI_Setup(const UINT32 baudRate, const UINT32 busClk)
   timerCh7.toggleOnOverflow = bFALSE;
   timerCh7.interruptEnable = bTRUE;
   timerCh7.pulseAccumulator = bFALSE;
+  timerCh7.routine = &SCI0TxISR;
   
   Timer_Init(TIMER_Ch7, &timerCh7);
+  
+  timerPeriod = (UINT16)(10*busClk/baudRate);
 #endif
   SCI0BD = (word)(busClk / baudRate / 16); /* baud rate */
   

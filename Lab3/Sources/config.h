@@ -102,6 +102,12 @@
 #warning "Modulus down counter debug EEPROM address override detected!"
 #endif
 
+#ifndef CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG
+#define CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG  CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "Timer channel 7 debug EEPROM address override detected!"
+#endif
+
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN
 #define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400 /* Begin boundary of EEPROM */
 #else

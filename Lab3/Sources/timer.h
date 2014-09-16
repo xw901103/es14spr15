@@ -41,6 +41,8 @@ typedef enum
   TIMER_Ch7
 } TTimerChannel;
 
+typedef void(*TTimerRoutine)(const TTimerChannel);
+
 typedef struct
 {
   BOOL outputCompare;
@@ -49,6 +51,7 @@ typedef struct
   BOOL toggleOnOverflow;
   BOOL interruptEnable;
   BOOL pulseAccumulator;
+  TTimerRoutine routine;
 } TTimerSetup;
 
 // ----------------------------------------
@@ -156,5 +159,9 @@ BOOL Timer_Enabled(const TTimerChannel channelNb);
 //   none
 
 void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay);
+
+void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const routinePtr);
+
+void Timer_DetachRoutine(const TTimerChannel channelNb);
 
 #endif

@@ -12,6 +12,22 @@
 #define ModulusDownCounterDebugEnable *(volatile UINT16*)CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG
 #endif
 
+#ifndef CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG
+#define TimerCh7DebugEnable *(volatile UINT16*)0x0420 /* fallback plan */
+#warning "TimerCh7DebugEnable using fallback setting 0x0420"
+#else
+#define TimerCh7DebugEnable *(volatile UINT16*)CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG
+#endif
+
+static TTimerRoutine timerCh0Routine = (TTimerRoutine) 0x0000,
+                     timerCh1Routine = (TTimerRoutine) 0x0000,
+                     timerCh2Routine = (TTimerRoutine) 0x0000,
+                     timerCh3Routine = (TTimerRoutine) 0x0000,
+                     timerCh4Routine = (TTimerRoutine) 0x0000,
+                     timerCh5Routine = (TTimerRoutine) 0x0000,
+                     timerCh6Routine = (TTimerRoutine) 0x0000,
+                     timerCh7Routine = (TTimerRoutine) 0x0000;
+
 void interrupt VectorNumber_Vtimmdcu Timer_PeriodicTimer_ISR(void) 
 {
   /* ack flag */
@@ -25,39 +41,90 @@ void interrupt VectorNumber_Vtimmdcu Timer_PeriodicTimer_ISR(void)
   }  
 }
 
-void interrupt VectorNumber_Vtimch0 Timer_Ch0ISR(void) 
+void interrupt VectorNumber_Vtimch0 TimerCh0ISR(void) 
 {
-  
+  TFLG1_C0F = 1;
+
+  if (timerCh0Routine)
+  {
+    timerCh0Routine(TIMER_Ch0);
+  }
 }
 
-void interrupt VectorNumber_Vtimch1 Timer_Ch1ISR(void) 
+void interrupt VectorNumber_Vtimch1 TimerCh1ISR(void) 
 {
-  
+  TFLG1_C1F = 1;
+
+  if (timerCh1Routine)
+  {
+    timerCh1Routine(TIMER_Ch1);
+  }
 }
 
-void interrupt VectorNumber_Vtimch2 Timer_Ch2ISR(void) 
+void interrupt VectorNumber_Vtimch2 TimerCh2ISR(void) 
 {
-  
+  TFLG1_C2F = 1;
+
+  if (timerCh2Routine)
+  {
+    timerCh2Routine(TIMER_Ch2);
+  }
 }
 
-void interrupt VectorNumber_Vtimch3 Timer_Ch3ISR(void) 
+void interrupt VectorNumber_Vtimch3 TimerCh3ISR(void) 
 {
-  
+  TFLG1_C3F = 1;
+
+  if (timerCh3Routine)
+  {
+    timerCh3Routine(TIMER_Ch3);
+  }
 }
 
-void interrupt VectorNumber_Vtimch4 Timer_Ch4ISR(void) 
+void interrupt VectorNumber_Vtimch4 TimerCh4ISR(void) 
 {
-  
+  TFLG1_C4F = 1;
+
+  if (timerCh4Routine)
+  {
+    timerCh4Routine(TIMER_Ch4);
+  }
 }
 
-void interrupt VectorNumber_Vtimch5 Timer_Ch5ISR(void) 
+void interrupt VectorNumber_Vtimch5 TimerCh5ISR(void) 
 {
-  
+  TFLG1_C5F = 1;
+
+  if (timerCh5Routine)
+  {
+    timerCh5Routine(TIMER_Ch5);
+  }
 }
 
-void interrupt VectorNumber_Vtimch6 Timer_Ch6ISR(void) 
+void interrupt VectorNumber_Vtimch6 TimerCh6ISR(void) 
 {
+  TFLG1_C6F = 1;
+
+  if (timerCh6Routine)
+  {
+    timerCh6Routine(TIMER_Ch6);
+  }
+}
+
+void interrupt VectorNumber_Vtimch7 TimerCh7ISR(void) 
+{
+  TFLG1_C7F = 1;
   
+  if (TimerCh7DebugEnable)
+  {    
+    DDRT_DDRT6 = 1;
+    PTT_PTT6 = !PTT_PTT6;  
+  }
+  
+  if (timerCh7Routine)
+  {
+    timerCh7Routine(TIMER_Ch7);
+  }
 }
 
 /*
@@ -594,4 +661,70 @@ void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay) {
       break;
   }
 
+}
+
+void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const routinePtr)
+{
+  switch(channelNb)
+  {
+    case TIMER_Ch0:
+      timerCh0Routine = routinePtr;
+      break;
+    case TIMER_Ch1:
+      timerCh1Routine = routinePtr;
+      break;
+    case TIMER_Ch2:
+      timerCh2Routine = routinePtr;
+      break;
+    case TIMER_Ch3:
+      timerCh3Routine = routinePtr;
+      break;
+    case TIMER_Ch4:
+      timerCh4Routine = routinePtr;
+      break;
+    case TIMER_Ch5:
+      timerCh5Routine = routinePtr;
+      break;
+    case TIMER_Ch6:
+      timerCh6Routine = routinePtr;
+      break;
+    case TIMER_Ch7:
+      timerCh7Routine = routinePtr;
+      break;      
+    default:
+      break;
+  }
+}
+
+void Timer_DetachRoutine(const TTimerChannel channelNb)
+{
+  switch(channelNb)
+  {
+    case TIMER_Ch0:
+      timerCh0Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch1:
+      timerCh1Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch2:
+      timerCh2Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch3:
+      timerCh3Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch4:
+      timerCh4Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch5:
+      timerCh5Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch6:
+      timerCh6Routine = (TTimerRoutine) 0x0000;
+      break;
+    case TIMER_Ch7:
+      timerCh7Routine = (TTimerRoutine) 0x0000;
+      break;      
+    default:
+      break;
+  }
 }
