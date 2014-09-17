@@ -13,9 +13,9 @@ static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
 
 #ifndef NO_INTERRUPT
 
-#define INITIAL_SCI0_TX_ISR_DELAY DONT_PANIC
-
 static UINT16 SCI0TxRoutinePeriod = 0; /* delay period of transmission process */
+
+#define INITIAL_SCI0_TX_ISR_DELAY SCI0TxRoutinePeriod
 
 /**
  * \fn void interrupt VectorNumber_Vsci0 SCI0RxISR(void)

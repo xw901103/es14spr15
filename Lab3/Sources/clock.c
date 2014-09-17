@@ -2,7 +2,7 @@
 #include <mc9s12a512.h>
 
 UINT8 Clock_Seconds = 0, Clock_Minutes = 0;
-static UINT32 Clock_MicroSeconds = 0;
+static UINT32 ClockMicroSeconds = 0;
 
 #ifdef NO_INTERRUPT
 #error "Real-time clock module depends on interrupt feature enabled."
@@ -51,7 +51,7 @@ void interrupt VectorNumber_Vrti ClockRTISR(void)
   }
   
   EnterCritical();
-  Clock_MicroSeconds += 0x00010000; /* increase 65536 microseconds */
+  ClockMicroSeconds += 0x00010000; /* increase 65536 microseconds */
   ExitCritical();
 }
 
@@ -69,7 +69,7 @@ BOOL Clock_Update(void)
   UINT8 savedCCR;
 
   /* check if one second passed */  
-  if (Clock_MicroSeconds >= MATH_1_MEGA)
+  while (ClockMicroSeconds >= MATH_1_MEGA)
   {
     EnterCritical();
     ++Clock_Seconds;    
@@ -79,7 +79,7 @@ BOOL Clock_Update(void)
       ++Clock_Minutes;
       Clock_Seconds -= 60;
     }    
-    Clock_MicroSeconds -= MATH_1_MEGA;    
+    ClockMicroSeconds -= MATH_1_MEGA;    
     ExitCritical();    
     return bTRUE;
   } 

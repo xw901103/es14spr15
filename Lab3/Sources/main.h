@@ -8,6 +8,11 @@
  * down counter and serial communication interface transmission
  * via enhanced capture timer output compare.
  *
+ * - A 2 millisecond period periodic timer will be setup via modulus down counter of ECT
+ * - A 65.536 millisecond period real-time clock of CRG will be setup
+ * - Receive routine of SCI0 will now use SCI0 interrupt
+ * - Transmission routine of SCI0 will now use timer channel 7 output compare of ECT
+ *
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
  * * 0x07 ModCon Program EEPROM byte

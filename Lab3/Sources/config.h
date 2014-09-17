@@ -18,13 +18,13 @@
 #endif
 
 #ifndef CONFIG_RTI_PRESCALERATE
-#define CONFIG_RTI_PRESCALERATE 0x07
+#define CONFIG_RTI_PRESCALERATE 0x07    /* CRG real-time clock prescale rate */
 #else
 #warning "Real time interrupt prescale rate override detected!"
 #endif
 
 #ifndef CONFIG_RTI_MODULUSCOUNT
-#define CONFIG_RTI_MODULUSCOUNT 0x0F
+#define CONFIG_RTI_MODULUSCOUNT 0x0F    /* CRG real-time clock modulus count */
 #else
 #warning "Real time interrupt modulus count override detected!"
 #endif

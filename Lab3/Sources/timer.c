@@ -230,10 +230,14 @@ void Timer_PeriodicTimerEnable(const BOOL enableTimer)
 
 void Timer_Setup(void)
 {
-  TSCR1_TEN  = 0; /* free run counter enable 1= on 0= off */
-  TSCR1_TEN  = 1; /* free run counter enable 1= on 0= off */
-  TSCR2_TCRE = 0; /* */
-  TSCR2_PR   = 0; /* prescale 0 */
+  TSCR1_TEN   = 0; /* timer enable                    1= on 0= off */
+  TSCR1_TSWAI = 0; /* timer stop in wait mode         1= on 0= off */
+  TSCR1_TSFRZ = 0; /* timer stop in freeze mode       1= on 0= off */
+  TSCR1_TFFCA = 0; /* timer fast flag clear all       1= on 0= off */
+  TSCR2_TCRE  = 0; /* timer counter reset enable      1= on 0= off */
+  TSCR2_PR    = 0; /* timer prescale factor see table 3.5 of ECT   */
+  TSCR2_TOI   = 0; /* timer overflow interrupt enable 1= on 0= off */
+  TSCR1_TEN   = 1; /* timer enable 1= on 0= off */
 }
 
 void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerSetup)
@@ -245,6 +249,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
       /* timer channel 0 */
       case TIMER_Ch0:
         TIOS_IOS0 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -266,6 +271,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -287,14 +293,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV0   = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C0I     = (byte)aTimerSetup->interruptEnable;
-        ICPAR_PA0EN = (byte)aTimerSetup->pulseAccumulator;
+        TTOV_TOV0   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C0I     = (byte)aTimerSetup->interruptEnable;  /* channel 0 interrupt enable        1= on 0=off */
+        ICPAR_PA0EN = (byte)aTimerSetup->pulseAccumulator; /* accumulator 0 enable              1= on 0=off */
         timerCh0RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 1 */
       case TIMER_Ch1:
         TIOS_IOS1 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -316,6 +323,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -337,14 +345,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV1   = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C1I     = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV1   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C1I     = (byte)aTimerSetup->interruptEnable;  /* channel 1 interrupt enable        1= on 0=off */
         ICPAR_PA1EN = (byte)aTimerSetup->pulseAccumulator;
         timerCh1RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 2 */
       case TIMER_Ch2:
         TIOS_IOS2 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -366,6 +375,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -387,14 +397,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV2   = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C2I     = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV2   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C2I     = (byte)aTimerSetup->interruptEnable;  /* channel 2 interrupt enable        1= on 0=off */
         ICPAR_PA2EN = (byte)aTimerSetup->pulseAccumulator;
         timerCh2RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 3 */
       case TIMER_Ch3:
         TIOS_IOS3 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -416,6 +427,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -437,14 +449,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV3   = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C3I     = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV3   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C3I     = (byte)aTimerSetup->interruptEnable;  /* channel 3 interrupt enable        1= on 0=off */
         ICPAR_PA3EN = (byte)aTimerSetup->pulseAccumulator;
         timerCh3RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 4 */
       case TIMER_Ch4:
         TIOS_IOS4 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -466,6 +479,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -487,14 +501,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV4 = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C4I   = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV4 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C4I   = (byte)aTimerSetup->interruptEnable;  /* channel 4 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 4 */
         timerCh4RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 5 */
       case TIMER_Ch5:
         TIOS_IOS5 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -516,6 +531,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -537,14 +553,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV5 = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C5I   = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV5 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C5I   = (byte)aTimerSetup->interruptEnable;  /* channel 5 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 5 */
         timerCh5RoutinePtr = aTimerSetup->routine;
         break;
       /* timer channel 6 */        
       case TIMER_Ch6:
         TIOS_IOS6 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -566,6 +583,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -587,14 +605,15 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV6 = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C6I   = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV6 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C6I   = (byte)aTimerSetup->interruptEnable;  /* channel 6 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 6 */
         timerCh6RoutinePtr = aTimerSetup->routine;
         break;        
       /* timer channel 7 */        
       case TIMER_Ch7:
         TIOS_IOS7 = (byte)aTimerSetup->outputCompare;
+        /* setup output action */
         switch(aTimerSetup->outputAction)
         {
           case TIMER_OUTPUT_DISCONNECT:
@@ -616,6 +635,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
+        /* setup input detection */
         switch(aTimerSetup->inputDetection)
         {
           case TIMER_INPUT_OFF:
@@ -637,8 +657,8 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
           default:
             break;
         }
-        TTOV_TOV7 = (byte)aTimerSetup->toggleOnOverflow;
-        TIE_C7I   = (byte)aTimerSetup->interruptEnable;
+        TTOV_TOV7 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
+        TIE_C7I   = (byte)aTimerSetup->interruptEnable;  /* channel 7 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 7 */
         timerCh7RoutinePtr = aTimerSetup->routine;
         break;                
