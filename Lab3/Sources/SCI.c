@@ -161,9 +161,12 @@ BOOL SCI_OutChar(const UINT8 data)
   if (FIFO_Put(&TxFIFO, data))
   {
 #ifndef NO_INTERRUPT  
-    /* kick start our hitchhiker here by 42 */
-    Timer_Set(TIMER_Ch7, INITIAL_SCI0_TX_ISR_DELAY);
-    Timer_Enable(TIMER_Ch7, bTRUE);
+    if (!Timer_Enabled(TIMER_Ch7))
+    {      
+      /* kick start our hitchhiker here by 42 */
+      Timer_Set(TIMER_Ch7, INITIAL_SCI0_TX_ISR_DELAY);
+      Timer_Enable(TIMER_Ch7, bTRUE);
+    }
 #endif
     return bTRUE;
   }
