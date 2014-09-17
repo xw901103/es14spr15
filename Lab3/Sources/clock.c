@@ -67,7 +67,8 @@ BOOL Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount)
 BOOL Clock_Update(void)
 {
   UINT8 savedCCR;
-
+  BOOL updated = bFALSE;
+  
   /* check if one second passed */  
   while (ClockMicroSeconds >= MATH_1_MEGA)
   {
@@ -81,7 +82,7 @@ BOOL Clock_Update(void)
     }    
     ClockMicroSeconds -= MATH_1_MEGA;    
     ExitCritical();    
-    return bTRUE;
+    updated = bTRUE;
   } 
-  return bFALSE;  
+  return updated;  
 }
