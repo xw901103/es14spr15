@@ -7,12 +7,12 @@
  * interface receive, real-time clock, periodic timer via modulus 
  * down counter and serial communication interface transmission
  * via enhanced capture timer output compare.
- *
+ * <br>
  * - A 2 millisecond period periodic timer will be setup via modulus down counter of ECT
  * - A 65.536 millisecond period real-time clock of CRG will be setup
  * - Receive routine of SCI0 will now use SCI0 interrupt
  * - Transmission routine of SCI0 will now use timer channel 7 output compare of ECT
- *
+ * <br>
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
  * * 0x07 ModCon Program EEPROM byte
@@ -141,14 +141,14 @@ BOOL HandleModConTime(void);
 BOOL HandleModConMode(void);
 
 /**
- * \fn BOOL Handle_ModCon_EEPROM_Program(void)
+ * \fn BOOL HandleModConEEPROMProgram(void)
  * \brief Program a byte in EEPROM by given address.
  * \return TRUE if EEPROM program successfully. 
  */
 BOOL HandleModConEEPROMProgram(void);
 
 /**
- * \fn BOOL Handle_ModCon_EEPROM_Get(void)
+ * \fn BOOL HandleModConEEPROMGet(void)
  * \brief Return byte value of given EEPROM address.
  * \return TRUE if address is validated and the packet was queued for transmission successfully.
  */

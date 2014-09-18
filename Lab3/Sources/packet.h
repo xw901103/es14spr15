@@ -45,13 +45,7 @@ extern TPacket Packet;
 //extern BOOL Packet_CommandOK;
 
 /**
- * Packet content
- */
-//extern UINT8 Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3;
-
-/**
- * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3)
+ * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
  * \brief Generates a checksum result of four given bytes.
  * \param command command byte
  * \param parameter1 first parameter byte
@@ -78,8 +72,7 @@ BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk);
 BOOL Packet_Get(void);
 
 /**
- * \fn BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3)
+ * \fn BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
  * \brief Builds a packet and places it in the transmit FIFO buffer.
  * \param command command byte
  * \param parameter1 first parameter byte

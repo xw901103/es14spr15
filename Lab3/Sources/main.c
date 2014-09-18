@@ -37,27 +37,33 @@ BOOL HandleModConSpecialVersion(void);
 BOOL HandleModConNumberGet(void);
 
 /**
- * \fn BOOL Handle_ModCon_Number_Set(void)
+ * \fn BOOL HandleModConNumberSet(void)
  * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
  * \return TRUE if write new value to EEPROM is successful.
  */
 BOOL HandleModConNumberSet(void);
 
 /**
- * \fn BOOL Handle_ModCon_Mode_Get(void)
+ * \fn BOOL HandleModConModeGet(void)
  * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
  * \return TRUE if the packet was queued for transmission successfully.
  */
 BOOL HandleModConModeGet(void);
 
 /**
- * \fn BOOL Handle_ModCon_Mode_Set(void)
+ * \fn BOOL HandleModConModeSet(void)
  * \brief Assign new value to ModCon mode through given packet then update stored EEPROM value. 
  * \return TRUE if write new value to EEPROM is successful.
  */
 BOOL HandleModConModeSet(void);
 
 #ifndef NO_DEBUG
+/**
+ * \fn void LogDebug(const UINT16 lineNumber, const UINT16 err)
+ * \brief Logs debug information including line number and error number.
+ * \param lineNumber line number of source file
+ * \param err error number refers to predefined errors
+ */
 void LogDebug(const UINT16 lineNumber, const UINT16 err)
 {
     /* break point here */
@@ -66,6 +72,11 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err)
 }
 #endif
 
+/**
+ * \fn BOOL HandleModConStartup(void)
+ * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
+ * \return TRUE if packets were queued for transmission successfully.
+ */  
 BOOL HandleModConStartup(void) 
 {
   /* it should contain zeros */
@@ -86,6 +97,11 @@ BOOL HandleModConStartup(void)
   return bFALSE;    
 }
 
+/**
+ * \fn BOOL HandleModConSpecial(void)
+ * \brief response to ModCon special commands. 
+ * \return TRUE if the command has been executed successfully.
+ */
 BOOL HandleModConSpecial(void)
 {
   if (Packet_Parameter1 == MODCON_DEBUG_INITIAL && Packet_Parameter2 == MODCON_DEBUG_TOKEN && Packet_Parameter3 == CONTROL_CR)
@@ -99,6 +115,11 @@ BOOL HandleModConSpecial(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConSpecialDebug(void)
+ * \brief Toggles ModCon debug attribute 
+ * \return TRUE if the new debugging state has been updated.
+ */
 BOOL HandleModConSpecialDebug(void) 
 {
   if (!EEPROM_Write16(&ModConDebug, !ModConDebug))
@@ -111,6 +132,11 @@ BOOL HandleModConSpecialDebug(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConSpecialVersion(void)
+ * \brief Builds a packet that contains ModCon version details and places it into transmit buffer. 
+ * \return TRUE if the packet was queued for transmission successfully.
+ */
 BOOL HandleModConSpecialVersion(void) 
 {
   if (!Packet_Put(MODCON_COMMAND_SPECIAL, MODCON_VERSION_INITIAL, MODCON_VERSION_MAJOR, MODCON_VERSION_MINOR))
@@ -123,6 +149,11 @@ BOOL HandleModConSpecialVersion(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConNumber(void)
+ * \brief response to ModCon number commands. 
+ * \return TRUE if the command has been executed successfully.
+ */
 BOOL HandleModConNumber(void)
 {
   switch(Packet_Parameter1)
@@ -143,6 +174,11 @@ BOOL HandleModConNumber(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConNumberGet(void)
+ * \brief Builds a packet that contains ModCon number and places it into transmit buffer. 
+ * \return TRUE if the packet was queued for transmission successfully.
+ */
 BOOL HandleModConNumberGet(void)
 {
   TUINT16 number;  
@@ -158,6 +194,11 @@ BOOL HandleModConNumberGet(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConNumberSet(void)
+ * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
+ * \return TRUE if write new value to EEPROM is successful.
+ */
 BOOL HandleModConNumberSet(void)
 {
   if (!EEPROM_Write16(&ModConNumber, Packet_Parameter23))
@@ -170,6 +211,11 @@ BOOL HandleModConNumberSet(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConTime(void)
+ * \brief Sends out system uptime in minutes and seconds 
+ * \return TRUE if the packet has queued successfully.
+ */
 BOOL HandleModConTime(void)
 {
   if (!Packet_Put(MODCON_COMMAND_TIME, MODCON_TIME_INITIAL, Clock_Seconds, Clock_Minutes)) 
@@ -182,6 +228,11 @@ BOOL HandleModConTime(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConMode(void)
+ * \brief response to ModCon mode commands. 
+ * \return TRUE if the command has been executed successfully.
+ */
 BOOL HandleModConMode(void)
 {
 	switch(Packet_Parameter1)
@@ -202,6 +253,11 @@ BOOL HandleModConMode(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConModeGet(void)
+ * \brief Builds a packet that contains ModCon mode and places it into transmit buffer. 
+ * \return TRUE if the packet was queued for transmission successfully.
+ */
 BOOL HandleModConModeGet(void)
 {
   TUINT16 mode;
@@ -217,6 +273,11 @@ BOOL HandleModConModeGet(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConModeSet(void)
+ * \brief Assign new value to ModCon mode through given packet then update stored EEPROM value. 
+ * \return TRUE if write new value to EEPROM is successful.
+ */
 BOOL HandleModConModeSet(void)
 {
   if (!EEPROM_Write16(&ModConMode, Packet_Parameter23))
@@ -229,6 +290,11 @@ BOOL HandleModConModeSet(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConEEPROMProgram(void)
+ * \brief Program a byte in EEPROM by given address.
+ * \return TRUE if EEPROM program successfully. 
+ */
 BOOL HandleModConEEPROMProgram(void)
 { 
   UINT8 volatile * const address = (UINT8 volatile *)Packet_Parameter12;
@@ -258,6 +324,11 @@ BOOL HandleModConEEPROMProgram(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConEEPROMGet(void)
+ * \brief Return byte value of given EEPROM address.
+ * \return TRUE if address is validated and the packet was queued for transmission successfully.
+ */
 BOOL HandleModConEEPROMGet(void)
 {
   UINT8 volatile * const address = (UINT8 volatile *)Packet_Parameter12;
@@ -276,12 +347,21 @@ BOOL HandleModConEEPROMGet(void)
   return bFALSE;
 }
 
+/**
+ * \fn void TurnOnStartupIndicator(void)
+ * \brief turn on the Port E pin 7 connected LED.
+ */
 void TurnOnStartupIndicator(void)
 {
   DDRE_BIT7= 1;   /* Port E pin 7 data direction  0= in  1= out */
   PORTE_BIT7 = 0; /* Port E pin 7 state           0= low 1= high */
 }
 
+/**
+ * \fn void Initialize(void)
+ * \brief Initializes hardware and software parameters that required for this program.
+ * \return TRUE if initialization routines executed successfully.
+ */
 BOOL Initialize(void)
 { 
   DisableInterrupts;
@@ -371,6 +451,10 @@ BOOL Initialize(void)
   return bTRUE;
 }
 
+/**
+ * \fn void Routine(void)
+ * \brief Retrieves ModCon packets and sends back packets if it is necessary.
+ */
 void Routine(void)
 {
   UINT8 ack = 0;
@@ -438,6 +522,10 @@ void Routine(void)
   }
 }
 
+/**
+ * \fn void main(void)
+ * \brief The main entry of the program will initialize runtime parameters and keep looping routine.
+ */
 void main(void)
 {
   if (!Initialize())
@@ -456,5 +544,4 @@ void main(void)
     Routine();
     CRG_DisarmCOP();
   }
-
 }

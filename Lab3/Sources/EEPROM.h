@@ -44,6 +44,13 @@
  * \return TRUE if the EEPROM was setup succesfully
  */
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk);
+
+/**
+ * \fn BOOL EEPROM_ValidateAddress(void * const address) 
+ * \brief Verify given pointer it is in the legal access range or not.
+ * \return TRUE if given EEPROM address is in the valid range.
+ */
+BOOL EEPROM_ValidateAddress(void * const address);
  
 /**
  * \fn BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
@@ -64,13 +71,6 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
  * \warning Assumes EEPROM has been initialized
  */
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
-
-/**
- * \fn BOOL EEPROM_ValidateAddress(void * const address) 
- * \brief Verify given pointer it is in the legal access range or not.
- * \return TRUE if given EEPROM address is in the valid range.
- */
-BOOL EEPROM_ValidateAddress(void * const address);
 
 /**
  * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)

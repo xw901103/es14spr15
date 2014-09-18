@@ -14,7 +14,7 @@
 #endif
 
 /**
- * \brief
+ * \brief Timer channel output actions
  */
 typedef enum
 {
@@ -25,7 +25,7 @@ typedef enum
 } TTimerOutputAction;
 
 /**
- * \brief
+ * \brief Timer channel input detections
  */
 typedef enum
 {
@@ -36,7 +36,7 @@ typedef enum
 } TTimerInputDetection;
 
 /**
- * \brief
+ * \brief Timer channel number
  */
 typedef enum
 {
@@ -51,12 +51,12 @@ typedef enum
 } TTimerChannel;
 
 /**
- * \brief
+ * \brief Timer channel attachable interrupt routine pointer
  */
 typedef void(*TTimerRoutine)(const TTimerChannel);
 
 /**
- * \brief
+ * \brief Timer channel behaviors configuration set
  */
 typedef struct
 {
@@ -145,6 +145,7 @@ void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay);
  * \param channelNb timer channel number
  * \param routinePtr function pointer
  * \see Timer_DetachRoutine
+ * \note timer channel interrupt will detach the routine if routinePtr is zero
  */
 void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const routinePtr);
 

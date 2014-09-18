@@ -1,4 +1,6 @@
 /**
+ * \file EEPROM.c
+ * \brief Routines for erasing and writing to the EEPROM
  * \author Xu Waycell
  * \date 12-August-2014
  */
@@ -16,7 +18,7 @@ const UINT8 EEPROM_COMMAND_MASS_ERASE    = 0x41;
 const UINT8 EEPROM_COMMAND_SECTOR_MODIFY = 0x60;
  
 /**
- * \fn BOOL EEPROM_Command(UINT8 command, UINT16 volatile * const address, const UINT16 data)
+ * \fn BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 data)
  * \brief Routines to execute EEPROM commands.
  * \param command Supported EEPROM command
  * \param address EEPROM address
@@ -25,6 +27,40 @@ const UINT8 EEPROM_COMMAND_SECTOR_MODIFY = 0x60;
  */
 BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 data);
 
+BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 data)
+{  
+  if (ECLKDIV_EDIVLD && EEPROM_ValidateAddress((void * const)address))
+  {      
+    /* clear PVIOL and ACCERR flags */
+    ESTAT = ESTAT_PVIOL_MASK | ESTAT_ACCERR_MASK;
+    while(!ESTAT_CBEIF)
+    {
+      /* feed watch dog */
+      __RESET_WATCHDOG(); 
+    }
+    EEPROM_WORD(address) = data;
+    ECMD = command;
+    ESTAT = ESTAT_CBEIF_MASK;
+    if (!ESTAT_PVIOL && !ESTAT_ACCERR)
+    {
+      while(!ESTAT_CCIF)
+      {
+        /* feed watchdog */
+        __RESET_WATCHDOG(); 
+      }
+      return bTRUE;
+    }
+  }
+  return bFALSE;    
+}
+
+/**
+ * \fn BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
+ * \brief Sets up the EEPROM with the correct internal clock Based on Figure 4-1 of the EETS4K Block User Guide V02.07.
+ * \param oscClk the oscillator clock frequency in Hz
+ * \param busClk the bus clock frequency in Hz
+ * \return TRUE if the EEPROM was setup succesfully
+ */
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
 {
   UINT8  PRDIV8 = 0;
@@ -60,6 +96,11 @@ BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
   return bFALSE;    
 }
 
+/**
+ * \fn BOOL EEPROM_ValidateAddress(void * const address) 
+ * \brief Verify given pointer it is in the legal access range or not.
+ * \return TRUE if given EEPROM address is in the valid range.
+ */
 BOOL EEPROM_ValidateAddress(void * const address)
 {
   /* return true if given pointer is in configed address range */
@@ -67,33 +108,14 @@ BOOL EEPROM_ValidateAddress(void * const address)
          (UINT16)address <= EEPROM_ADDRESS_END;
 }
 
-BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 data)
-{  
-  if (ECLKDIV_EDIVLD && EEPROM_ValidateAddress((void * const)address))
-  {      
-    /* clear PVIOL and ACCERR flags */
-    ESTAT = ESTAT_PVIOL_MASK | ESTAT_ACCERR_MASK;
-    while(!ESTAT_CBEIF)
-    {
-      /* feed watch dog */
-      __RESET_WATCHDOG(); 
-    }
-    EEPROM_WORD(address) = data;
-    ECMD = command;
-    ESTAT = ESTAT_CBEIF_MASK;
-    if (!ESTAT_PVIOL && !ESTAT_ACCERR)
-    {
-      while(!ESTAT_CCIF)
-      {
-        /* feed watchdog */
-        __RESET_WATCHDOG(); 
-      }
-      return bTRUE;
-    }
-  }
-  return bFALSE;    
-}
-
+/**
+ * \fn BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
+ * \brief Writes a 32-bit number to EEPROM.
+ * \param address the address of the data
+ * \param data the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 4-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
 {
   UINT16 volatile * eepromAddress = (UINT16 volatile * const)address;
@@ -109,6 +131,14 @@ BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
+ * \brief Writes a 16-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 2-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
 {
   UINT16 volatile * eepromAddress = address;
@@ -133,6 +163,14 @@ BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
+ * \brief Writes an 8-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
 {
   UINT8 volatile * eepromAddress = address;
@@ -150,6 +188,12 @@ BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
   return EEPROM_Write16((UINT16 volatile * const)eepromAddress, eepromWord.l);
 } 
 
+/**
+ * \fn BOOL EEPROM_Erase(void)  
+ * \brief Erases the entire EEPROM
+ * \return TRUE if EEPROM was erased successfully
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Erase(void)
 {
   return EEPROMCommand(EEPROM_COMMAND_MASS_ERASE, (UINT16 volatile * const)EEPROM_ADDRESS_BEGIN, 0xFFFF) &&

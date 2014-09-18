@@ -1,14 +1,14 @@
 /**
+ * \file packet.c
+ * \brief Routines to implement packet encoding and decoding for the serial port to serve ModCon protocols.
  * \author Xu Waycell
  * \date 06-August-2014
  */
 #include "packet.h"
 #include "SCI.h"
 
-TPacket Packet = {0};
-
 /* define and initialize our externs */
-//UINT8 Packet_Command = 0, Packet_Parameter1 = 0, Packet_Parameter2 = 0, Packet_Parameter3 = 0;
+TPacket Packet = {0};
 
 /* states of packet receive state machine */
 typedef enum 
@@ -21,17 +21,38 @@ typedef enum
   STATE_5        
 } PACKET_STATE;
 
+/**
+ * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Generates a checksum result of four given bytes.
+ * \param command command byte
+ * \param parameter1 first parameter byte
+ * \param parameter2 second parameter byte
+ * \param parameter3 third parameter byte
+ * \return Checksum result of given bytes.
+ */
 UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3) 
 {
   return (command ^ parameter1 ^ parameter2 ^ parameter3); 
 }
 
+/**
+ * \fn BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
+ * \brief Initializes the packets by calling the initialization routines of the supporting software modules.
+ * \param baudRate the baud rate in bits/sec
+ * \param busClk the bus clock rate in Hz
+ * \return TRUE if the packets were initialized successfully
+ */
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
 {
   SCI_Setup(baudRate, busClk);
   return bTRUE; /* no extra configs for now so we leave it here */
 }
 
+/**
+ * \fn BOOL Packet_Get(void)
+ * \brief Attempts to get a packet from the received data.
+ * \return TRUE if a valid packet was received
+ */
 BOOL Packet_Get(void)
 {
   /* temps for packet receive state machine */
@@ -98,6 +119,15 @@ BOOL Packet_Get(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Builds a packet and places it in the transmit FIFO buffer.
+ * \param command command byte
+ * \param parameter1 first parameter byte
+ * \param parameter2 second parameter byte
+ * \param parameter3 third parameter byte
+ * \return TRUE if a valid packet was queued for transmission successfully
+ */
 BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
 {  
   return SCI_OutChar(command) &&

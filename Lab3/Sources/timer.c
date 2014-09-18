@@ -1,3 +1,9 @@
+/**
+ * \file timer.c
+ * \brief Routines to implement general purpose timer and support the modulus down-counter as a periodic timer
+ * \author Xu Waycell
+ * \date 8-September-2014 
+ */
 #include "timer.h"
 #include <mc9s12a512.h>
 
@@ -212,22 +218,41 @@ void interrupt VectorNumber_Vtimch7 TimerCh7ISR(void)
   }
 }
 
+/**
+ * \fn void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk)
+ * \brief Sets the period of the periodic timer
+ * \param microSeconds number of microseconds for one period
+ * \param busClk actual bus clock rate in Hz
+ * \see Timer_PeriodicTimerEnable
+ */
 void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk)
 {
   MCCTL_MCEN  = 0; /* modules down counter enable   1= on 0= off */
   MCCTL_MODMC = 1; /* */
   MCCTL_MCEN  = 1; /* modules down counter enable   1= on 0= off */
-  MCCNT       = (word)((busClk / MATH_1_MEGA) * microSeconds); /* */ 
-  MCCTL_FLMC  = 1; /* */
-  MCCTL_MCPR  = 0; /* prescale 0 */
+  MCCNT       = (word)((busClk / MATH_1_MEGA) * microSeconds); /* counter cycles */ 
+  MCCTL_FLMC  = 1; /* force load counter register   1= on 0= off*/
+  MCCTL_MCPR  = 0; /* prescale rate see ECT data sheet */
   MCCTL_MCZI  = 0; /* modulus down interrupt enable 1= on 0= off */
 }
 
+/**
+ * \fn void Timer_PeriodicTimerEnable(const BOOL enable)
+ * \brief Enables or disables the periodic timer 
+ * \param enableTimer boolean value indicating whether to enable the timer 
+ * \see Timer_SetupPeriodicTimer
+ * \warning Assumes the timer has been set up
+ */
 void Timer_PeriodicTimerEnable(const BOOL enableTimer)
 {
   MCCTL_MCZI = (byte) enableTimer; /* modulus down counter interrupt enable 1= on 0= off */
 }
 
+/**
+ * \fn void Timer_Setup(void)
+ * \brief Sets up the Enhanced Capture Timer unit for operations with the timers
+ * \see Timer_Init
+ */
 void Timer_Setup(void)
 {
   TSCR1_TEN   = 0; /* timer enable                    1= on 0= off */
@@ -237,9 +262,23 @@ void Timer_Setup(void)
   TSCR2_TCRE  = 0; /* timer counter reset enable      1= on 0= off */
   TSCR2_PR    = 0; /* timer prescale factor see table 3.5 of ECT   */
   TSCR2_TOI   = 0; /* timer overflow interrupt enable 1= on 0= off */
-  TSCR1_TEN   = 1; /* timer enable 1= on 0= off */
+  TSCR1_TEN   = 1; /* timer enable                    1= on 0= off */
 }
 
+/**
+ * \fn void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerSetup)
+ * \brief Sets up a timer channel 
+ * \param channelNb timer channel number
+ * \param aTimerSetup a structure containing the parameters to be used in setting up the timer channel:
+ * - TTimerSetup
+ * |- outputCompare is TRUE when the timer should be configured as an output, otherwise it is configured as an input
+ * |- outputAction is the action to take on a successful output compare
+ * |- inputDetection is the type of input capture detection
+ * |- toggleOnOverflow is TRUE when the timer should toggle on overflow
+ * |- interruptEnable is TRUE to enable interrupts
+ * |- routine is the function that will be executed once an interrupt triggered
+ * \see Timer_Setup
+ */
 void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerSetup)
 {
   if (aTimerSetup)
@@ -296,7 +335,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV0   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C0I     = (byte)aTimerSetup->interruptEnable;  /* channel 0 interrupt enable        1= on 0=off */
         ICPAR_PA0EN = (byte)aTimerSetup->pulseAccumulator; /* accumulator 0 enable              1= on 0=off */
-        timerCh0RoutinePtr = aTimerSetup->routine;
+        timerCh0RoutinePtr = aTimerSetup->routine;         /* set channel 0 routine */
         break;
       /* timer channel 1 */
       case TIMER_Ch1:
@@ -347,8 +386,8 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         }
         TTOV_TOV1   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C1I     = (byte)aTimerSetup->interruptEnable;  /* channel 1 interrupt enable        1= on 0=off */
-        ICPAR_PA1EN = (byte)aTimerSetup->pulseAccumulator;
-        timerCh1RoutinePtr = aTimerSetup->routine;
+        ICPAR_PA1EN = (byte)aTimerSetup->pulseAccumulator; /* accumulator 1 enable              1= on 0=off */
+        timerCh1RoutinePtr = aTimerSetup->routine;         /* set channel 1 routine */
         break;
       /* timer channel 2 */
       case TIMER_Ch2:
@@ -399,8 +438,8 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         }
         TTOV_TOV2   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C2I     = (byte)aTimerSetup->interruptEnable;  /* channel 2 interrupt enable        1= on 0=off */
-        ICPAR_PA2EN = (byte)aTimerSetup->pulseAccumulator;
-        timerCh2RoutinePtr = aTimerSetup->routine;
+        ICPAR_PA2EN = (byte)aTimerSetup->pulseAccumulator; /* accumulator 2 enable              1= on 0=off */
+        timerCh2RoutinePtr = aTimerSetup->routine;         /* set channel 2 routine */
         break;
       /* timer channel 3 */
       case TIMER_Ch3:
@@ -451,8 +490,8 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         }
         TTOV_TOV3   = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C3I     = (byte)aTimerSetup->interruptEnable;  /* channel 3 interrupt enable        1= on 0=off */
-        ICPAR_PA3EN = (byte)aTimerSetup->pulseAccumulator;
-        timerCh3RoutinePtr = aTimerSetup->routine;
+        ICPAR_PA3EN = (byte)aTimerSetup->pulseAccumulator; /* accumulator 3 enable              1= on 0=off */
+        timerCh3RoutinePtr = aTimerSetup->routine;         /* set channel 3 routine */
         break;
       /* timer channel 4 */
       case TIMER_Ch4:
@@ -504,7 +543,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV4 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C4I   = (byte)aTimerSetup->interruptEnable;  /* channel 4 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 4 */
-        timerCh4RoutinePtr = aTimerSetup->routine;
+        timerCh4RoutinePtr = aTimerSetup->routine;       /* set channel 4 routine */
         break;
       /* timer channel 5 */
       case TIMER_Ch5:
@@ -556,7 +595,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV5 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C5I   = (byte)aTimerSetup->interruptEnable;  /* channel 5 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 5 */
-        timerCh5RoutinePtr = aTimerSetup->routine;
+        timerCh5RoutinePtr = aTimerSetup->routine;       /* set channel 5 routine */
         break;
       /* timer channel 6 */        
       case TIMER_Ch6:
@@ -608,7 +647,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV6 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C6I   = (byte)aTimerSetup->interruptEnable;  /* channel 6 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 6 */
-        timerCh6RoutinePtr = aTimerSetup->routine;
+        timerCh6RoutinePtr = aTimerSetup->routine;       /* set channel 6 routine */
         break;        
       /* timer channel 7 */        
       case TIMER_Ch7:
@@ -660,7 +699,7 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
         TTOV_TOV7 = (byte)aTimerSetup->toggleOnOverflow; /* toggle output compare on overflow 1= on 0=off */
         TIE_C7I   = (byte)aTimerSetup->interruptEnable;  /* channel 7 interrupt enable        1= on 0=off */
         /* we don't have pulse accumulator on channel 7 */
-        timerCh7RoutinePtr = aTimerSetup->routine;
+        timerCh7RoutinePtr = aTimerSetup->routine;       /* set channel 7 routine */
         break;                
       default:
         break;
@@ -674,8 +713,16 @@ void Timer_Init(const TTimerChannel channelNb, const TTimerSetup * const aTimerS
   }
 }
 
+/**
+ * \fn void Timer_Enable(const TTimerChannel channelNb, const BOOL enableInt)
+ * \brief Enables or disables a timer channel interrupt 
+ * \param channelNb timer channel number
+ * \param enableInt boolean value indicating whether to enable the interrupt on the timer channel
+ * \see Timer_Enabled
+ */
 void Timer_Enable(const TTimerChannel channelNb, const BOOL enableInt)
 {
+  /* enable/disable selected timer channel interrupt */
   switch(channelNb)
   {
     case TIMER_Ch0:
@@ -707,42 +754,61 @@ void Timer_Enable(const TTimerChannel channelNb, const BOOL enableInt)
   }
 }
 
+/**
+ * \fn BOOL Timer_Enabled(const TTimerChannel channelNb)
+ * \brief Returns the status of a timer
+ * \param channelNb timer channel number
+ * \return a Boolean value indicating whether the channel is enabled
+ * \see Timer_Enable
+ */
 BOOL Timer_Enabled(const TTimerChannel channelNb)
 {
+  /* return a boolean value of selected timer channel interrupt enable register */
   switch(channelNb)
   {
     case TIMER_Ch0:
-      return (BOOL)TIE_C0I;
+      return (BOOL)TIE_C0I; /* timer channel 0 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch1:
-      return (BOOL)TIE_C1I;
+      return (BOOL)TIE_C1I; /* timer channel 1 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch2:
-      return (BOOL)TIE_C2I;
+      return (BOOL)TIE_C2I; /* timer channel 2 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch3:
-      return (BOOL)TIE_C3I;
+      return (BOOL)TIE_C3I; /* timer channel 3 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch4:
-      return (BOOL)TIE_C4I;
+      return (BOOL)TIE_C4I; /* timer channel 4 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch5:
-      return (BOOL)TIE_C5I;
+      return (BOOL)TIE_C5I; /* timer channel 5 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch6:
-      return (BOOL)TIE_C6I;
+      return (BOOL)TIE_C6I; /* timer channel 6 interrupt enable 1= on 0= off */
       break;
     case TIMER_Ch7:
-      return (BOOL)TIE_C7I;
+      return (BOOL)TIE_C7I; /* timer channel 7 interrupt enable 1= on 0= off */
       break;
     default:
       break;
   }
+  /* if this happened, go back to check your design */
   return bFALSE;  
 }
 
+/**
+ * \fn void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay)
+ * \brief Sets a timer channel to generate an interrupt after a certain number of bus clock cycles.
+ * \param channelNb timer channel number
+ * \param busClkCyclesDelay the number of bus clock cycles to wait until an interrupt is triggered
+ * \see Timer_Enable
+ * \see Timer_Enabled
+ * \warning TCn = TCNT + busClkCyclesDelay
+ */
 void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay)
 {
+  /* assign the sum of free run counter and bus clock cycles to selected compare register */
   switch(channelNb)
   {
     case TIMER_Ch0:
@@ -775,8 +841,17 @@ void Timer_Set(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay)
 
 }
 
+/**
+ * \fn void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const routinePtr)
+ * \brief attach a function to given timer channel
+ * \param channelNb timer channel number
+ * \param routinePtr function pointer
+ * \see Timer_DetachRoutine
+ * \note timer channel interrupt will detach the routine if routinePtr is zero
+ */
 void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const routinePtr)
 {
+  /* set routine pointer to selected channel */
   switch(channelNb)
   {
     case TIMER_Ch0:
@@ -808,8 +883,15 @@ void Timer_AttachRoutine(const TTimerChannel channelNb, TTimerRoutine const rout
   }
 }
 
+/**
+ * \fn void Timer_DetachRoutine(const TTimerChannel channelNb)
+ * \brief detach function of given timer channel
+ * \param channelNb timer channel number
+ * \see Timer_AttachRoutine
+ */
 void Timer_DetachRoutine(const TTimerChannel channelNb)
 {
+  /* set null pointer to selected timer channel routine pointer */
   switch(channelNb)
   {
     case TIMER_Ch0:
@@ -841,8 +923,16 @@ void Timer_DetachRoutine(const TTimerChannel channelNb)
   }
 }
 
+/**
+ * \fn void Timer_ScheduleRoutine(const TTimerChannle channelNb, const UINT16 busClkCyclesDelay)
+ * \brief Sets a timer channel to generate an interrupt to run attached routine after a certain number of bus clock cycles.
+ * \param channelNb timer channel number
+ * \param busClkCyclesDelay the number of bus clock cycles to wait until an interrupt is triggered
+ * \warning TCn += busClkCyclesDelay 
+ */
 void Timer_ScheduleRoutine(const TTimerChannel channelNb, const UINT16 busClkCyclesDelay)
 {
+  /* add bus clock cycles to selected timer channel compare register */
   switch(channelNb)
   {
     case TIMER_Ch0:

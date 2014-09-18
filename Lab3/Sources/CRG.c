@@ -1,3 +1,9 @@
+/**
+ * \file CRG.c
+ * \brief Routines for setting up the clock and reset generator
+ * \author Xu Waycell
+ * \date 13-August-2014
+ */
 #include "CRG.h"
 #include "mc9s12a512.h"
 
@@ -5,6 +11,16 @@
 const UINT8 COP_ARM    = 0x55;
 const UINT8 COP_DISARM = 0xAA;
 
+/**
+ * \fn BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
+ * \brief Sets up the PLL to generate a certain bus clock.
+ * \param busClk the desired bus clock rate in Hz
+ * \param oscClk the oscillator clock in Hz 
+ * \param refClk the reference clock in Hz
+ * \return TRUE if the bus clock was setup successfully
+ * \warning Assumes that refClk divides oscClk evenly
+ * \warning Assumes that refClk divides busClk evenly
+ */
 BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
 {
   UINT16 waitCount = 0;
@@ -51,6 +67,12 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
+ * \brief Sets up the COP to reset within a certain number of milliseconds.
+ * \param aCOPRate the desired COP rate, corresponding to Table 3.3 in the CRG Block User Guide
+ * \return TRUE if the COP was setup successfully
+ */
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
 {
   byte mask = (byte)aCOPRate;
@@ -62,16 +84,34 @@ BOOL CRG_SetupCOP(const TCOPRate aCOPRate)
   return COPCTL == mask;
 }
 
+/**
+ * \fn void CRG_ArmCOP(void)
+ * \brief Arm watchdog to start reset sequence.
+ * \see CRG_DisarmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_ArmCOP(void)
 {
   ARMCOP = COP_ARM;    
 }
 
+/**
+ * \fn void CRG_DisarmCOP(void)
+ * \brief Disarm watchdog to finish reset sequence.
+ * \see CRG_ArmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_DisarmCOP(void)
 {
   ARMCOP = COP_DISARM;    
 }
 
+/**
+ * \fn void CRG_ResetCOP(void)
+ * \brief Reset watchdog immediately.
+ * \see CRG_ArmCOP
+ * \see CRG_DisarmCOP
+ */
 void CRG_ResetCOP(void)
 {
   __RESET_WATCHDOG();   
