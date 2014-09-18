@@ -1,15 +1,13 @@
-// ----------------------------------------
-// Filename: SPI.h
-// Description: I/O routines for MC9S12 serial
-//   peripheral interface 
-// Author: PMcL
-// Date: 13-Feb-07
-
+/**
+ * \file SPI.h
+ * \brief I/O routines for MC9S12 serial peripheral interface 
+ * \author Xu Waycell
+ * \date 14-September-2014
+ */
 #ifndef SPI_H
 #define SPI_H
 
-// new types
-#include "types.h"
+#include "global.h"
 
 typedef struct
 {
@@ -41,21 +39,20 @@ typedef struct
 // Conditions:
 //   none
 // ----------------------------------------
-
+/**
+ * \fn void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
+ * \brief
+ * \param aSPISetup
+ * \param busClk the bus clock rate in Hz
+ */
 void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk);
  
-// ----------------------------------------
-// SPI_ExchangeChar
-//
-// Transmits a byte and retrieves a received byte from the SPI
-// Input:
-//   dataTx is a byte to transmit
-//   dataRx is a pointer to a byte to receive
-// Output:
-//   none
-// Conditions:
-//   Assumes SPI has been set up
-
+/**
+ * \fn void SPI_ExchangeChar(const UINT8 dataTx, UINT8 * const dataRx)
+ * \param dataTx A byte to transmit
+ * \param dataRx A pointer to a byte to receive
+ * \warning Assumes SPI has been set up 
+ */
 void SPI_ExchangeChar(const UINT8 dataTx, UINT8 * const dataRx);
 
 #endif

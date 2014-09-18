@@ -1,16 +1,15 @@
-// ----------------------------------------
-// Filename: packet.h
-// Description: Routines to implement packet
-//   encoding and decoding for the serial port
-// Author: PMcL
-// Date: 13-Mar-06
-
+/**
+ * \file packet.h
+ * \brief Routines to implement packet encoding and decoding for the serial port to serve ModCon protocols.
+ * \author Xu Waycell
+ * \date 06-August-2014
+ */
 #ifndef PACKET_H
 #define PACKET_H
 
-// new types
-#include "types.h"
+#include "global.h"
 
+/* Packet structure */
 typedef struct
 {
   UINT8 command;
@@ -48,55 +47,46 @@ typedef enum
   PACKET_SYNCHRONOUS
 } TPacketMode;
 
-// Packet structure
 extern TPacket Packet;
-extern BOOL Packet_CommandOK;
+//extern BOOL Packet_CommandOK;
 extern TPacketMode Packet_Mode;
 
-// ----------------------------------------
-// Packet_Setup
-// 
-// Sets up the packets by calling the
-// initialization routines of the supporting
-// software modules
-// Input:
-//   baudRate is the baud rate in bits/sec
-//   busClk is the bus clock rate in Hz
-// Output:
-//   TRUE if the packets were initialized successfully
-// Conditions:
-//   none
+/**
+ * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Generates a checksum result of four given bytes.
+ * \param command command byte
+ * \param parameter1 first parameter byte
+ * \param parameter2 second parameter byte
+ * \param parameter3 third parameter byte
+ * \return Checksum result of given bytes.
+ */
+UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
+/**
+ * \fn BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk)
+ * \brief Initializes the packets by calling the initialization routines of the supporting software modules.
+ * \param baudRate the baud rate in bits/sec
+ * \param busClk the bus clock rate in Hz
+ * \return TRUE if the packets were initialized successfully
+ */
 BOOL Packet_Setup(const UINT32 baudRate, const UINT32 busClk);
 
-// ----------------------------------------
-// Packet_Get
-// 
-// Attempts to get a packet from the receive buffer
-// Input:
-//   none
-// Output:
-//   TRUE if a valid packet was retrieved from the receive buffer
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL Packet_Get(void)
+ * \brief Attempts to get a packet from the received data.
+ * \return TRUE if a valid packet was received
+ */
 BOOL Packet_Get(void);
 
-// ----------------------------------------
-// Packet_Put
-// 
-// Builds a packet and places it in the transmit buffer
-// Input:
-//   command is the packet command byte
-//   parameter1 is the packet parameter1 byte
-//   parameter2 is the packet parameter2 byte
-//   parameter3 is the packet parameter3 byte
-// Output:
-//   TRUE if the packet was placed in the transmit buffer
-// Conditions:
-//   none
-
-BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, 
-  const UINT8 parameter2, const UINT8 parameter3);
+/**
+ * \fn BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)
+ * \brief Builds a packet and places it in the transmit FIFO buffer.
+ * \param command command byte
+ * \param parameter1 first parameter byte
+ * \param parameter2 second parameter byte
+ * \param parameter3 third parameter byte
+ * \return TRUE if a valid packet was queued for transmission successfully
+ */
+BOOL Packet_Put(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3);
 
 #endif

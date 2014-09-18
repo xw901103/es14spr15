@@ -1,117 +1,93 @@
-// ----------------------------------------
-// Filename: EEPROM.h
-// Description: Routines for erasing and
-//   writing to the EEPROM
-// Author: PMcL
-// Date: 16-Mar-06
-
+/**
+ * \file EEPROM.h
+ * \brief Routines for erasing and writing to the EEPROM
+ * \author Xu Waycell
+ * \date 13-August-2014
+ */
 #ifndef EEPROM_H
 #define EEPROM_H
 
-// new types
-#include "types.h"
+#include "global.h"
 
-// EEPROM data access
-#define _EB(EEPROM_ADDRESS)	  *(UINT8 volatile *)(EEPROM_ADDRESS)
-#define _EI(EEPROM_ADDRESS)	  *(INT16 volatile *)(EEPROM_ADDRESS)
-#define _EW(EEPROM_ADDRESS)	  *(UINT16 volatile *)(EEPROM_ADDRESS)
-#define _EL(EEPROM_ADDRESS)	  *(INT32 volatile *)(EEPROM_ADDRESS)
-#define _ES(EEPROM_ADDRESS)	  *(UINT32 volatile *)(EEPROM_ADDRESS)
+/**
+ * EEPROM address begin boundary
+ */
+#ifndef CONFIG_EEPROM_ADDRESS_BEGIN
+#define EEPROM_ADDRESS_BEGIN 0x0400 /* fallback plan */
+#warning "EEPROM_ADDRESS_BEGIN using fallback setting 0x0400"
+#else
+#define EEPROM_ADDRESS_BEGIN CONFIG_EEPROM_ADDRESS_BEGIN
+#endif
 
-// ----------------------------------------
-// EEPROM addresses
-// ----------------------------------------
+/**
+ * EEPROM address end boundary
+ */
+#ifndef CONFIG_EEPROM_ADDRESS_END
+#define EEPROM_ADDRESS_END 0x07FF /* fallback plan */
+#warning "EEPROM_ADDRESS_END using fallback setting 0x07FF"
+#else
+#define EEPROM_ADDRESS_END CONFIG_EEPROM_ADDRESS_END
+#endif
 
-// ModCon parameters
-#define    sModConNb        _EW(0x400)
-#define    sModConMode      _EW(0x402)
-#define    sControlMode     _EW(0x404)          
-#define    sNbAnalogInputs  _EW(0x406)
-#define    sNbAnalogOutputs _EW(0x408)
+/* EEPROM data access */
+#define EEPROM_BYTE(EEPROM_ADDRESS)	   *(UINT8 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_INTEGER(EEPROM_ADDRESS) *(INT16 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_WORD(EEPROM_ADDRESS)	   *(UINT16 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_LONG(EEPROM_ADDRESS)	   *(INT32 volatile *)(EEPROM_ADDRESS)
+#define EEPROM_SECTOR(EEPROM_ADDRESS)	 *(UINT32 volatile *)(EEPROM_ADDRESS)
 
-// Time periods
-#define    sAnalogPeriod    _EW(0x410)
-#define    sPacketPeriod    _EW(0x412)
-
-// Debug flag
-#define    Debug            _EW(0x420)
-
-// EEPROM erased flag
-#define    EEPROMErasedFlag _EW(0x430)
-                            
-// ----------------------------------------
-// EEPROM_Setup
-// 
-// Sets up the EEPROM with the correct internal clock
-// Based on Figure 4-1 of the EETS4K Block User Guide V02.07
-// Input:
-//  oscClk is the oscillator clock frequency in Hz
-//  busClk is the bus clock frequency in Hz
-// Output:
-//   TRUE if the EEPROM was setup succesfully
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk)
+ * \brief Sets up the EEPROM with the correct internal clock Based on Figure 4-1 of the EETS4K Block User Guide V02.07.
+ * \param oscClk the oscillator clock frequency in Hz
+ * \param busClk the bus clock frequency in Hz
+ * \return TRUE if the EEPROM was setup succesfully
+ */
 BOOL EEPROM_Setup(const UINT32 oscClk, const UINT32 busClk);
- 
-// ----------------------------------------
-// EEPROM_Write32
-// 
-// Writes a 32-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if address is not aligned to a 4-byte boundary
-//   or if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
 
+/**
+ * \fn BOOL EEPROM_ValidateAddress(void * const address) 
+ * \brief Verify given pointer it is in the legal access range or not.
+ * \return TRUE if given EEPROM address is in the valid range.
+ */
+BOOL EEPROM_ValidateAddress(void * const address);
+ 
+/**
+ * \fn BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data)
+ * \brief Writes a 32-bit number to EEPROM.
+ * \param address the address of the data
+ * \param data the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 4-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write32(UINT32 volatile * const address, const UINT32 data);
  
-// ----------------------------------------
-// EEPROM_Write16
-// 
-// Writes a 16-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if address is not aligned to a 2-byte boundary
-//   or if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data)
+ * \brief Writes a 16-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if address is not aligned to a 2-byte boundary or if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write16(UINT16 volatile * const address, const UINT16 data);
 
-// ----------------------------------------
-// EEPROM_Write8
-// 
-// Writes an 8-bit number to EEPROM
-// Input:
-//   address is the address of the data,
-//   data is the data to write
-// Output:
-//   TRUE if EEPROM was written successfully
-//   FALSE if there is a programming error
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data)
+ * \brief Writes an 8-bit number to EEPROM
+ * \param address is the address of the data,
+ * \param data is the data to write
+ * \return TRUE if EEPROM was written successfully; FALSE if there is a programming error
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Write8(UINT8 volatile * const address, const UINT8 data);
 
-// ----------------------------------------
-// EEPROM_Erase
-// 
-// Erases the entire EEPROM
-// Input:
-//   none
-// Output:
-//   TRUE if EEPROM was erased successfully
-// Conditions:
-//   Assumes EEPROM has been initialized
-
+/**
+ * \fn BOOL EEPROM_Erase(void)  
+ * \brief Erases the entire EEPROM
+ * \return TRUE if EEPROM was erased successfully
+ * \warning Assumes EEPROM has been initialized
+ */
 BOOL EEPROM_Erase(void);
 
 #endif

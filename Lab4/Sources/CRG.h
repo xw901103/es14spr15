@@ -9,9 +9,16 @@
 
 #include "global.h"
 
+#ifndef NO_INTERRUPT
+typedef void(*TRTIRoutine)(void);
+#endif
+
+/**
+ * \brief Watchdog timeout rate
+ */
 typedef enum
 {
-  COP_DISABLED = 0,
+  COP_DISABLED  = 0,
   COP_RATE_2_14 = 1,
   COP_RATE_2_16 = 2,
   COP_RATE_2_18 = 3,
@@ -41,8 +48,52 @@ BOOL CRG_SetupPLL(const UINT32 busClk, const UINT32 oscClk, const UINT32 refClk)
  */
 BOOL CRG_SetupCOP(const TCOPRate aCOPRate);
 
+#ifndef NO_INTERRUPT
+/**
+ * \fn void CRG_SetupRTI(const UINT8 prescaleRate, const UINT8 modulusCount)
+ * \brief Sets up the RTI as a periodic timer
+ * \param prescaleRate The desired prescale rate
+ * \param modulusCount modulus count of the CRG block's real-time interrupt module
+ * \note Desired prescale rate and modulus count, corresponding to Table 3.2 in the CRG Block User Guide.
+ */
+void CRG_SetupRTI(const UINT8 prescaleRate, const UINT8 modulusCount);
+
+/**
+ * \fn void CRG_AttachRTIRoutine(TRTIRoutine routine)
+ * \brief
+ * \param routine
+ */
+void CRG_AttachRTIRoutine(TRTIRoutine routine);
+
+/**
+ * \fn void CRG_DetachRTIRoutine()
+ * \brief
+ */
+void CRG_DetachRTIRoutine();
+#endif
+
+/**
+ * \fn void CRG_ArmCOP(void)
+ * \brief Arm watchdog to start reset sequence.
+ * \see CRG_DisarmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_ArmCOP(void);
+
+/**
+ * \fn void CRG_DisarmCOP(void)
+ * \brief Disarm watchdog to finish reset sequence.
+ * \see CRG_ArmCOP
+ * \see CRG_ResetCOP
+ */
 void CRG_DisarmCOP(void);
+
+/**
+ * \fn void CRG_ResetCOP(void)
+ * \brief Reset watchdog immediately.
+ * \see CRG_ArmCOP
+ * \see CRG_DisarmCOP
+ */
 void CRG_ResetCOP(void);
 
 #endif

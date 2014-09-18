@@ -8,8 +8,7 @@
 #ifndef ANALOG_H
 #define ANALOG_H
 
-// new types
-#include "types.h"
+#include "global.h"
 
 // Maximum number of channels
 #define NB_INPUT_CHANNELS 8
@@ -21,7 +20,14 @@ extern TUINT16 NbAnalogOutputs;
 
 typedef enum
 {
-  Ch1, Ch2, Ch3, Ch4, Ch5, Ch6, Ch7, Ch8
+  Ch1,
+  Ch2,
+  Ch3,
+  Ch4,
+  Ch5,
+  Ch6,
+  Ch7,
+  Ch8
 } TChannelNb;
 
 typedef struct

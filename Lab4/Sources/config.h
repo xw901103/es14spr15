@@ -7,10 +7,26 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* uncomment to disable */
+//#define NO_DEBUG     /* disable debug */
+//#define NO_INTERRUPT /* disable interrupts NOTE: some modules heavily depend on it. */
+
 #ifndef CONFIG_OSCCLK
 #define CONFIG_OSCCLK 16000000 /* Oscillator clock in hz */
 #else
 #warning "Oscillator clock override detected!"
+#endif
+
+#ifndef CONFIG_RTI_PRESCALERATE
+#define CONFIG_RTI_PRESCALERATE 0x07    /* CRG real-time clock prescale rate */
+#else
+#warning "Real time interrupt prescale rate override detected!"
+#endif
+
+#ifndef CONFIG_RTI_MODULUSCOUNT
+#define CONFIG_RTI_MODULUSCOUNT 0x0F    /* CRG real-time clock modulus count */
+#else
+#warning "Real time interrupt modulus count override detected!"
 #endif
 
 #ifndef CONFIG_BAUDRATE
@@ -31,8 +47,14 @@
 #warning "Bus clock override detected!"
 #endif
 
-#ifndef CONFIG_COPRATE
-#define CONFIG_COPRATE COP_RATE_2_14    /* Predefined COP rate */
+#ifndef CONFIG_TIMER_PERIOD
+#define CONFIG_TIMER_PERIOD 2000          /* Timer period in microseconds */
+#else
+#warning "Timer period override detected!"
+#endif
+
+#ifndef CONFIG_COP_RATE
+#define CONFIG_COP_RATE COP_RATE_2_14    /* Predefined COP rate */
 #else
 #warning "COP rate override detected!"
 #endif
@@ -50,16 +72,101 @@
 #endif
 
 
-#ifndef CONFIG_EEPROM_OFFSET_MODCON_NUMBER
-#define CONFIG_EEPROM_OFFSET_MODCON_NUMBER  0 //16bits, offset in byte
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_NUMBER
+#define CONFIG_EEPROM_ADDRESS_MODCON_NUMBER 0x0400 /* 16-bits ModCon number EEPROM address */
 #else
-#warning "ModCon number EEPROM offset override detected!"
+#warning "ModCon number EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_OFFSET_MODCON_MODE
-#define CONFIG_EEPROM_OFFSET_MODCON_MODE  2   //16bits, offset in byte
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_MODE
+#define CONFIG_EEPROM_ADDRESS_MODCON_MODE 0x0402 /* 16-bits ModCon mode EEPROM address */
 #else
-#warning "ModCon mode EEPROM offset override detected!"
+#warning "ModCon mode EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_CONTROL_MODE
+#define CONFIG_EEPROM_ADDRESS_MODCON_CONTROL_MODE 0x0404 /* 16-bits ModCon control mode EEPROM address */
+#else
+#warning "ModCon control mode EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_INPUTS_NUMBER
+#define CONFIG_EEPROM_ADDRESS_ANALOG_INPUTS_NUMBER 0x0406 /* 16-bits Analog inputs number EEPROM address */
+#else
+#warning "Analog inputs number EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_OUTPUTS_NUMBER
+#define CONFIG_EEPROM_ADDRESS_ANALOG_OUTPUTS_NUMBER 0x0408 /* 16-bits Analog outputs number EEPROM address */
+#else
+#warning "Analog outputs number EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_PERIOD
+#define CONFIG_EEPROM_ADDRESS_ANALOG_PERIOD 0x0410 /* 16-bits Analog period EEPROM address */
+#else
+#warning "Analog period EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_PACKET_PERIOD
+#define CONFIG_EEPROM_ADDRESS_PACKET_PERIOD 0x0412 /* 16-bits Packet period EEPROM address */
+#else
+#warning "Packet period EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_DEBUG
+#define CONFIG_EEPROM_ADDRESS_MODCON_DEBUG 0x0420 /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "ModCon debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_RTI_DEBUG
+#define CONFIG_EEPROM_ADDRESS_RTI_DEBUG CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "RTI debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG
+#define CONFIG_EEPROM_ADDRESS_MODULUS_DOWN_COUNTER_DEBUG CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "Modulus down counter debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG
+#define CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG CONFIG_EEPROM_ADDRESS_MODCON_DEBUG /* 16-bits ModCon debug EEPROM address */
+#else
+#warning "Timer channel 7 debug EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_EEPROM_ERASED
+#define CONFIG_EEPROM_ADDRESS_EEPROM_ERASED 0x0430 /* 16-bits EEPROM erased EEPROM address */
+#else
+#warning "EEPROM erased EEPROM address override detected!"
+#endif
+
+
+#ifndef CONFIG_EEPROM_ADDRESS_BEGIN
+#define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400 /* Begin boundary of EEPROM */
+#else
+#warning "EEPROM address begin boundary override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_END
+#define CONFIG_EEPROM_ADDRESS_END 0x07FF /* End boundary of EEPROM */
+#else
+#warning "EEPROM address end boundary override detected!"
+#endif
+
+#ifndef CONFIG_MODCON_EEPROM_ADDRESS_BEGIN
+#define CONFIG_MODCON_EEPROM_ADDRESS_BEGIN 0x0400 /* Acceptable ModCon EEPROM begin boundary */
+#else
+#warning "ModCon acceptable EEPROM address begin boundary override detected!"
+#endif
+
+#ifndef CONFIG_MODCON_EEPROM_ADDRESS_END
+#define CONFIG_MODCON_EEPROM_ADDRESS_END 0x1000 /* Acceptable ModCon EEPROM end boundary */
+#else
+#warning "ModCon acceptable EEPROM address end boundary override detected!"
 #endif
 
 #endif
