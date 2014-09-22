@@ -52,12 +52,12 @@ void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
  */
 void SPI_ExchangeChar(const UINT8 dataTx, UINT8 * const dataRx)
 {
-  if (dataRx && SPI0SR_SPIF)
-  {
-    *dataRx = SPI0DR;
-  }
   if (SPI0SR_SPTEF)
   {    
     SPI0DR = dataTx;
+  }
+  if (dataRx && SPI0SR_SPIF)
+  {
+    *dataRx = SPI0DR;
   }
 }

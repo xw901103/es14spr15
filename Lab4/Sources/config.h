@@ -48,7 +48,7 @@
 #endif
 
 #ifndef CONFIG_TIMER_PERIOD
-#define CONFIG_TIMER_PERIOD 2000          /* Timer period in microseconds */
+#define CONFIG_TIMER_PERIOD 10000          /* Timer period in microseconds */
 #else
 #warning "Timer period override detected!"
 #endif
@@ -84,8 +84,8 @@
 #warning "ModCon mode EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_MODCON_CONTROL_MODE
-#define CONFIG_EEPROM_ADDRESS_MODCON_CONTROL_MODE 0x0404 /* 16-bits ModCon control mode EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_PROTOCOL_MODE
+#define CONFIG_EEPROM_ADDRESS_MODCON_PROTOCOL_MODE 0x0404 /* 16-bits ModCon protocol mode EEPROM address */
 #else
 #warning "ModCon control mode EEPROM address override detected!"
 #endif

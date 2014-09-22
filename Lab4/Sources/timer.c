@@ -25,6 +25,8 @@
 #define TimerCh7DebugEnable *(volatile UINT16*)CONFIG_EEPROM_ADDRESS_TIMER_CH7_DEBUG
 #endif
 
+static TTimerPeriodicTimerRoutine timerPeriodicTimerRoutinePtr = (TTimerPeriodicTimerRoutine) 0x0000;
+
 static TTimerRoutine timerCh0RoutinePtr = (TTimerRoutine) 0x0000,
                      timerCh1RoutinePtr = (TTimerRoutine) 0x0000,
                      timerCh2RoutinePtr = (TTimerRoutine) 0x0000,
@@ -102,7 +104,12 @@ void interrupt VectorNumber_Vtimmdcu TimerPeriodicTimerISR(void)
     DDRT_DDRT4 = 1;
     /* toggle pin 4 */
     PTT_PTT4 = !PTT_PTT4;
-  }  
+  }
+  
+  if (timerPeriodicTimerRoutinePtr)
+  {    
+    timerPeriodicTimerRoutinePtr();
+  }
 }
 
 void interrupt VectorNumber_Vtimch0 TimerCh0ISR(void) 
@@ -230,10 +237,21 @@ void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk)
   MCCTL_MCEN  = 0; /* modules down counter enable   1= on 0= off */
   MCCTL_MODMC = 1; /* */
   MCCTL_MCEN  = 1; /* modules down counter enable   1= on 0= off */
-  MCCNT       = (word)((busClk / MATH_1_MEGA) * microSeconds); /* counter cycles */ 
+  // TODO: auto select suitable prescale rate
+  MCCTL_MCPR  = 3; /* prescale rate see ECT data sheet */
+  MCCNT       = (word)((busClk / MATH_1_MEGA) * microSeconds / 16); /* counter cycles */ 
   MCCTL_FLMC  = 1; /* force load counter register   1= on 0= off*/
-  MCCTL_MCPR  = 0; /* prescale rate see ECT data sheet */
   MCCTL_MCZI  = 0; /* modulus down interrupt enable 1= on 0= off */
+}
+
+void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr)
+{
+  timerPeriodicTimerRoutinePtr = routinePtr;
+}
+
+void Timer_DetachPeriodicTimerRoutine(void)
+{
+  timerPeriodicTimerRoutinePtr = (TTimerPeriodicTimerRoutine) 0x0000;
 }
 
 /**

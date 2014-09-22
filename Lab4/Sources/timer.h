@@ -55,6 +55,8 @@ typedef enum
  */
 typedef void(*TTimerRoutine)(const TTimerChannel);
 
+typedef void(*TTimerPeriodicTimerRoutine)(void);
+
 /**
  * \brief Timer channel behaviors configuration set
  */
@@ -86,6 +88,10 @@ void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk);
  * \warning Assumes the timer has been set up
  */
 void Timer_PeriodicTimerEnable(const BOOL enableTimer);
+
+void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr);
+
+void Timer_DetachPeriodicTimerRoutine(void);
 
 /**
  * \fn void Timer_Setup(void)

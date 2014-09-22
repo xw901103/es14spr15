@@ -39,15 +39,16 @@
 #include "global.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
-const UINT8 MODCON_COMMAND_STARTUP        = 0x04; /* ModCon protocol startup command */
-const UINT8 MODCON_COMMNAD_EEPROM_PROGRAM = 0x07; /* ModCon protocol EEPROM program command */
-const UINT8 MODCON_COMMAND_EEPROM_GET     = 0x08; /* ModCon protocol EEPROM get command */
-const UINT8 MODCON_COMMAND_SPECIAL        = 0x09; /* ModCon protocol special command */
-const UINT8 MODCON_COMMAND_PROTOCOL       = 0x0A; /* ModCon protocol protocol command */
-const UINT8 MODCON_COMMAND_NUMBER         = 0x0B; /* ModCon protocol number command */
-const UINT8 MODCON_COMMAND_TIME           = 0x0C; /* ModCon protocol time command */
-const UINT8 MODCON_COMMAND_MODE           = 0x0D; /* ModCon protocol mode command */
-const UINT8 MODCON_COMMAND_ANALOG_INPUT   = 0x50; /* ModCon protocol analog input command */
+const UINT8 MODCON_COMMAND_STARTUP             = 0x04; /* ModCon protocol startup command */
+const UINT8 MODCON_COMMNAD_EEPROM_PROGRAM      = 0x07; /* ModCon protocol EEPROM program command */
+const UINT8 MODCON_COMMAND_EEPROM_GET          = 0x08; /* ModCon protocol EEPROM get command */
+const UINT8 MODCON_COMMAND_SPECIAL             = 0x09; /* ModCon protocol special command */
+const UINT8 MODCON_COMMAND_PROTOCOL_MODE       = 0x0A; /* ModCon protocol protocol mode command */
+const UINT8 MODCON_COMMAND_NUMBER              = 0x0B; /* ModCon protocol number command */
+const UINT8 MODCON_COMMAND_TIME                = 0x0C; /* ModCon protocol time command */
+const UINT8 MODCON_COMMAND_MODE                = 0x0D; /* ModCon protocol mode command */
+const UINT8 MODCON_COMMAND_ANALOG_INPUT_VALUE  = 0x50; /* ModCon protocol analog input command */
+const UINT8 MODCON_COMMAND_ANALOG_OUTPUT_VALUE = 0x51;
 
 const UINT8 MODCON_DEBUG_INITIAL = 'd';
 const UINT8 MODCON_DEBUG_TOKEN   = 'j';
@@ -56,6 +57,11 @@ const UINT8 MODCON_VERSION_INITIAL = 'v';
 const UINT8 MODCON_VERSION_TOKEN   = 'x'; /* TODO: rename it for better functionality reflection */
 const UINT8 MODCON_VERSION_MAJOR   =  1 ;
 const UINT8 MODCON_VERSION_MINOR   =  0 ;
+
+const UINT8 MODCON_PROTOCOL_MODE_GET = 1;
+const UINT8 MODCON_PROTOCOL_MODE_SET = 2;
+const UINT8 MODCON_PROTOCOL_MODE_ASYNCHRONOUS = 0;
+const UINT8 MODCON_PROTOCOL_MODE_SYNCHRONOUS  = 1;
 
 const UINT8 MODCON_NUMBER_GET = 1;
 const UINT8 MODCON_NUMBER_SET = 2;
@@ -90,6 +96,12 @@ const UINT8 MODCON_MODE_SET = 2;
 #endif
 
 /**
+ * ModCon protocol mode
+ */
+#define DEFAULT_MODCON_PROTOCOL_MODE MODCON_PROTOCOL_MODE_ASYNCHRONOUS
+#define ModConProtocolMode EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_PROTOCOL_MODE)
+
+/**
  * ModCon number
  */
 #define DEFAULT_MODCON_NUMBER 29
@@ -122,11 +134,11 @@ BOOL HandleModConStartup(void);
 BOOL HandleModConSpecial(void);
 
 /**
- * \fn BOOL HandleModConProtocol(void)
- * \brief response to ModCon protocol commands. 
+ * \fn BOOL HandleModConProtocolMode(void)
+ * \brief response to ModCon protocol mode commands. 
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConProtocol(void);
+BOOL HandleModConProtocolMode(void);
 
 /**
  * \fn BOOL HandleModConNumber(void)
@@ -150,6 +162,13 @@ BOOL HandleModConTime(void);
 BOOL HandleModConMode(void);
 
 /**
+ * \fn BOOL HandleModConAnalogInputValue(void)
+ * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
+ * \return TRUE if the command has been executed successfully.
+ */
+BOOL HandleModConAnalogInputValue(void);
+
+/**
  * \fn BOOL HandleModConEEPROMProgram(void)
  * \brief Program a byte in EEPROM by given address.
  * \return TRUE if EEPROM program successfully. 
@@ -162,12 +181,6 @@ BOOL HandleModConEEPROMProgram(void);
  * \return TRUE if address is validated and the packet was queued for transmission successfully.
  */
 BOOL HandleModConEEPROMGet(void);
-
-/**
- * \fn void TurnOnStartupIndicator(void)
- * \brief turn on the Port E pin 7 connected LED.
- */
-void TurnOnStartupIndicator(void);
 
 /**
  * \fn void Initialize(void)

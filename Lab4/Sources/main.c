@@ -11,6 +11,7 @@
 #include "clock.h"
 #include "timer.h"
 #include "EEPROM.h"
+#include "analog.h"
 #include "packet.h"
 
 #include <mc9s12a512.h>
@@ -28,6 +29,20 @@ BOOL HandleModConSpecialDebug(void);
  * \return TRUE if the packet was queued for transmission successfully.
  */
 BOOL HandleModConSpecialVersion(void);
+
+/**
+ * \fn BOOL HandleModConProtocolModeGet(void)
+ * \brief
+ * \return TRUE if the command has been executed successfully.
+ */
+BOOL HandleModConProtocolModeGet(void);
+
+/**
+ * \fn BOOL HandleModConProtocolModeSet(void)
+ * \brief
+ * \return TRUE if the command has been executed successfully.
+ */
+BOOL HandleModConProtocolModeSet(void);
 
 /**
  * \fn BOOL HandleModConNumberGet(void)
@@ -56,6 +71,14 @@ BOOL HandleModConModeGet(void);
  * \return TRUE if write new value to EEPROM is successful.
  */
 BOOL HandleModConModeSet(void);
+
+/**
+ * \fn void TurnOnStartupIndicator(void)
+ * \brief turn on the Port E pin 7 connected LED.
+ */
+void TurnOnStartupIndicator(void);
+
+void SampleAnalog(void);
 
 #ifndef NO_DEBUG
 /**
@@ -91,6 +114,7 @@ BOOL HandleModConStartup(void)
       return bFALSE;    
     }
     return HandleModConSpecialVersion() &&
+           HandleModConProtocolModeGet() &&
            HandleModConNumberGet() &&
            HandleModConModeGet();
   }
@@ -150,12 +174,59 @@ BOOL HandleModConSpecialVersion(void)
 }
 
 /**
- * \fn BOOL HandleModConProtocol(void)
+ * \fn BOOL HandleModConProtocolMode(void)
  * \brief response to ModCon protocol commands. 
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConProtocol(void)
+BOOL HandleModConProtocolMode(void)
 {
+  /* parameter3 is not acceptable */    
+  if (!Packet_Parameter3)
+  {    
+    switch(Packet_Parameter1)
+    {
+      case MODCON_PROTOCOL_MODE_GET:
+        /* when get parameter2 is not acceptable */    
+        if (!Packet_Parameter2)
+        {
+          return HandleModConProtocolModeGet();
+        }
+        break;
+      case MODCON_PROTOCOL_MODE_SET:
+        return HandleModConProtocolModeSet();
+        break;
+      default:
+        break;
+    }
+  }
+  return bFALSE;
+}
+
+BOOL HandleModConProtocolModeGet(void)
+{
+  if (!Packet_Put(MODCON_COMMAND_PROTOCOL_MODE, MODCON_PROTOCOL_MODE_GET, (UINT8)ModConProtocolMode ,0))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+    return bFALSE;
+  }
+  return bTRUE;
+}
+
+BOOL HandleModConProtocolModeSet(void)
+{
+  if (Packet_Parameter2 == MODCON_PROTOCOL_MODE_ASYNCHRONOUS || Packet_Parameter2 == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
+  {
+    if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)Packet_Parameter2))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;
+    }
+    return bTRUE;  
+  }
   return bFALSE;
 }
 
@@ -301,6 +372,23 @@ BOOL HandleModConModeSet(void)
 }
 
 /**
+ * \fn BOOL HandleModConAnalogInputValue(void)
+ * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
+ * \return TRUE if the command has been executed successfully.
+ */
+BOOL HandleModConAnalogInputValue(void)
+{
+  if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, 0, Analog_Input[0].Value.s.Lo, Analog_Input[0].Value.s.Hi))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+    return bFALSE;
+  }
+  return bTRUE;
+}
+
+/**
  * \fn BOOL HandleModConEEPROMProgram(void)
  * \brief Program a byte in EEPROM by given address.
  * \return TRUE if EEPROM program successfully. 
@@ -367,6 +455,12 @@ void TurnOnStartupIndicator(void)
   PORTE_BIT7 = 0; /* Port E pin 7 state           0= low 1= high */
 }
 
+void SampleAnalog(void) 
+{
+  Analog_Get(0);
+  UNUSED(HandleModConAnalogInputValue()); 
+}
+
 /**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
@@ -388,6 +482,9 @@ BOOL Initialize(void)
     
   Timer_Setup();
   Timer_SetupPeriodicTimer(CONFIG_TIMER_PERIOD, CONFIG_BUSCLK);
+  Timer_AttachPeriodicTimerRoutine(&SampleAnalog);
+
+  Analog_Setup(CONFIG_BUSCLK);
   
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {
@@ -396,7 +493,7 @@ BOOL Initialize(void)
 #endif
     return bFALSE;
 	}
-	
+		
   if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
@@ -413,6 +510,17 @@ BOOL Initialize(void)
     return bFALSE;
   }
       
+  if (ModConProtocolMode == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConProtocolMode, DEFAULT_MODCON_PROTOCOL_MODE))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;
+    }
+  }
+
   if (ModConNumber == 0xFFFF)
   {
     if (!EEPROM_Write16(&ModConNumber, DEFAULT_MODCON_NUMBER))
@@ -488,8 +596,8 @@ void Routine(void)
       case MODCON_COMMAND_SPECIAL:
         bad = !HandleModConSpecial();
         break;
-      case MODCON_COMMAND_PROTOCOL:
-        bad = !HandleModConProtocol();
+      case MODCON_COMMAND_PROTOCOL_MODE:
+        bad = !HandleModConProtocolMode();
         break;
       case MODCON_COMMAND_NUMBER:
         bad = !HandleModConNumber();
