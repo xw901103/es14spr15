@@ -162,11 +162,12 @@ BOOL HandleModConTime(void);
 BOOL HandleModConMode(void);
 
 /**
- * \fn BOOL HandleModConAnalogInputValue(void)
+ * \fn BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
  * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
+ * \param channelNb analog input channel number
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConAnalogInputValue(void);
+BOOL HandleModConAnalogInputValue(const UINT8 channelNb);
 
 /**
  * \fn BOOL HandleModConEEPROMProgram(void)

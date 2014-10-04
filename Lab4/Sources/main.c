@@ -372,13 +372,13 @@ BOOL HandleModConModeSet(void)
 }
 
 /**
- * \fn BOOL HandleModConAnalogInputValue(void)
+ * \fn BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
  * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConAnalogInputValue(void)
+BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
 {
-  if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, 0, Analog_Input[0].Value.s.Lo, Analog_Input[0].Value.s.Hi))
+  if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, channelNb, Analog_Input[channelNb].Value.s.Lo, Analog_Input[channelNb].Value.s.Hi))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -457,8 +457,25 @@ void TurnOnStartupIndicator(void)
 
 void SampleAnalog(void) 
 {
-  Analog_Get(0);
-  UNUSED(HandleModConAnalogInputValue()); 
+  BOOL mutated = bFALSE;
+  mutated = Analog_Get(0);
+  if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
+  {  	
+  	UNUSED(HandleModConAnalogInputValue(0)); 
+  }
+  else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
+  {
+  	UNUSED(HandleModConAnalogInputValue(0));   	
+  }
+  mutated = Analog_Get(1);
+  if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
+  {  	
+  	UNUSED(HandleModConAnalogInputValue(1)); 
+  }
+  else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
+  {
+  	UNUSED(HandleModConAnalogInputValue(1));   	
+  }  
 }
 
 /**
