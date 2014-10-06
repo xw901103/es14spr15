@@ -37,6 +37,13 @@
 #define MAIN_H
 
 #include "global.h"
+#include "CRG.h"
+#include "clock.h"
+#include "timer.h"
+#include "EEPROM.h"
+#include "analog.h"
+#include "packet.h"
+#include "utils.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
 const UINT8 MODCON_COMMAND_STARTUP             = 0x04; /* ModCon protocol startup command */
@@ -48,7 +55,7 @@ const UINT8 MODCON_COMMAND_NUMBER              = 0x0B; /* ModCon protocol number
 const UINT8 MODCON_COMMAND_TIME                = 0x0C; /* ModCon protocol time command */
 const UINT8 MODCON_COMMAND_MODE                = 0x0D; /* ModCon protocol mode command */
 const UINT8 MODCON_COMMAND_ANALOG_INPUT_VALUE  = 0x50; /* ModCon protocol analog input command */
-const UINT8 MODCON_COMMAND_ANALOG_OUTPUT_VALUE = 0x51;
+const UINT8 MODCON_COMMAND_ANALOG_OUTPUT_VALUE = 0x51; /* ModCon protocol analog output command */
 
 const UINT8 MODCON_DEBUG_INITIAL = 'd';
 const UINT8 MODCON_DEBUG_TOKEN   = 'j';
@@ -148,11 +155,11 @@ BOOL HandleModConProtocolMode(void);
 BOOL HandleModConNumber(void);
 
 /**
- * \fn BOOL HandleModConTime(void)
+ * \fn BOOL HandleModConUptime(void)
  * \brief Sends out system uptime in minutes and seconds 
  * \return TRUE if the packet has queued successfully.
  */
-BOOL HandleModConTime(void);
+BOOL HandleModConUptime(void);
 
 /**
  * \fn BOOL HandleModConMode(void)
@@ -162,12 +169,12 @@ BOOL HandleModConTime(void);
 BOOL HandleModConMode(void);
 
 /**
- * \fn BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
+ * \fn BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
  * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
  * \param channelNb analog input channel number
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConAnalogInputValue(const UINT8 channelNb);
+BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb);
 
 /**
  * \fn BOOL HandleModConEEPROMProgram(void)

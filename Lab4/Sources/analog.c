@@ -36,31 +36,78 @@ void Analog_Setup(const UINT32 busClk) {
   NbAnalogOutputs.l = 0;
 }
 
-BOOL Analog_Get(const UINT8 channelNb) {
-  UINT8 data1 = 0, data2 = 0, data3 = 0;
+BOOL Analog_Get(const TAnalogChannel channelNb) {
+  UINT8 index = 0xFF, data1 = 0, data2 = 0, data3 = 0;
   TINT16 value;
-    
-  data1 = 0x06 | (0x01 & (channelNb >> 2)); /* 0 0 0 0 0 START SGL/DIFF D2 */
-  data2 = 0xC0 & (channelNb << 6); 			/* D1 D0 X X X X X X */  
   
+  switch(channelNb) 
+  {
+    case ANALOG_INPUT_Ch1:
+      index = 0;
+      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch2:
+      index = 1;
+      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch3:
+      index = 2;
+      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch4:
+      index = 3;
+      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch5:
+      index = 4;
+      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch6:
+      index = 5;
+      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch7:
+      index = 6;
+      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    case ANALOG_INPUT_Ch8:
+      index = 7;
+      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      data2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      break;
+    default:
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_ARGUMENT);
+#endif    
+      return bFALSE;
+      break;
+  }
+    
   PTH = 0x30;
-  SPI_ExchangeChar(data1, &data1);
-  SPI_ExchangeChar(data2, &data2);
-  SPI_ExchangeChar(data3, &data3);    
+  SPI_ExchangeChar(data1, &data1); /* X  | X  | X  | X  | X   | X   | X  | X  */
+  SPI_ExchangeChar(data2, &data2); /* X  | X  | X  | 0  | B11 | B10 | B9 | B8 */
+  SPI_ExchangeChar(data3, &data3); /* B7 | B6 | B5 | B4 | B3  | B2  | B1 | B0 */   
   PTH = 0x70;
   
-  value.s.Hi = data2 & 0x0F;
+  value.s.Hi = data2 & 0b00001111;
   value.s.Lo = data3;
   value.l = ADC_OFFSET - value.l;
       
-  Analog_Input[channelNb].Value3 = Analog_Input[channelNb].Value2;  
-  Analog_Input[channelNb].Value2 = Analog_Input[channelNb].Value1;  
-  Analog_Input[channelNb].Value1 = value.l;  
-  Analog_Input[channelNb].OldValue.l = Analog_Input[channelNb].Value.l;
+  Analog_Input[index].Value3 = Analog_Input[index].Value2;  
+  Analog_Input[index].Value2 = Analog_Input[index].Value1;  
+  Analog_Input[index].Value1 = value.l;  
+  Analog_Input[index].OldValue.l = Analog_Input[index].Value.l;
       
-  Analog_Input[channelNb].Value.l = FindMedianOfThreeNumbers(Analog_Input[channelNb].Value1,
-  															 Analog_Input[channelNb].Value2,
-  															 Analog_Input[channelNb].Value3);
+  Analog_Input[index].Value.l = FindMedianOfThreeNumbers(Analog_Input[index].Value1,
+  															                         Analog_Input[index].Value2,
+  															                         Analog_Input[index].Value3);
   
-  return Analog_Input[channelNb].Value.l != Analog_Input[channelNb].OldValue.l;  
+  return Analog_Input[index].Value.l != Analog_Input[index].OldValue.l;  
 }

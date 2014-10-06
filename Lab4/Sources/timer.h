@@ -89,8 +89,17 @@ void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk);
  */
 void Timer_PeriodicTimerEnable(const BOOL enableTimer);
 
+/**
+ * \fn void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr)
+ * \param routinePtr
+ * \brief
+ */
 void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr);
 
+/**
+ * \fn void Timer_DetachPeriodicTimerRoutine(void)
+ * \brief
+ */
 void Timer_DetachPeriodicTimerRoutine(void);
 
 /**

@@ -18,31 +18,16 @@ typedef struct
   UINT32 baudRate;
 } TSPISetup;
 
-// ----------------------------------------
-// SPI_Setup
-// 
-// Sets up the Serial Peripheral Interface
-// Input:
-//   aSPISetup is a structure containing the parameters to 
-//     be used in setting up the SPI:
-//       isMaster is a Boolean value indicating whether the SPI is master or slave
-//       activeLowClocks is a Boolean value indicating whether the clock is active
-//         low or active high
-//       evenEdgeClockPhase is a Boolean value indicating whether the data is clocked
-//         on even or odd edges
-//       LSBFirst is a Boolean value indicating whether the data is transferred LSB
-//         first or MSB first
-//       baudRate is the baud rate in bits/sec of the SPI clock
-//   busClk is the bus clock rate in Hz
-// Output:
-//   none
-// Conditions:
-//   none
-// ----------------------------------------
 /**
  * \fn void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
- * \brief
- * \param aSPISetup
+ * \brief Sets up the Serial Peripheral Interface
+ * \param aSPISetup a structure containing the parameters to be used in setting up the SPI:
+ * - TSPISetup
+ * |- isMaster is a Boolean value indicating whether the SPI is master or slave
+ * |- activeLowClocks is a Boolean value indicating whether the clock is active low or active high
+ * |- evenEdgeClockPhase is a Boolean value indicating whether the data is clocked on even or odd edges
+ * |- LSBFirst is a Boolean value indicating whether the data is transferred LSB first or MSB first
+ * |- baudRate the baud rate in bits/sec of the SPI clock
  * \param busClk the bus clock rate in Hz
  */
 void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk);

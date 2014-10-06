@@ -6,14 +6,6 @@
  */
 
 #include "main.h"
-#include "utils.h"
-#include "CRG.h"
-#include "clock.h"
-#include "timer.h"
-#include "EEPROM.h"
-#include "analog.h"
-#include "packet.h"
-
 #include <mc9s12a512.h>
 
 /**
@@ -78,6 +70,10 @@ BOOL HandleModConModeSet(void);
  */
 void TurnOnStartupIndicator(void);
 
+/**
+ * \fn void SampleAnalog(void)
+ * \brief
+ */
 void SampleAnalog(void);
 
 #ifndef NO_DEBUG
@@ -202,6 +198,10 @@ BOOL HandleModConProtocolMode(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConProtocolModeGet(void)
+ * \brief
+ */
 BOOL HandleModConProtocolModeGet(void)
 {
   if (!Packet_Put(MODCON_COMMAND_PROTOCOL_MODE, MODCON_PROTOCOL_MODE_GET, (UINT8)ModConProtocolMode ,0))
@@ -214,6 +214,10 @@ BOOL HandleModConProtocolModeGet(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConProtocolModeSet(void)
+ * \brief
+ */
 BOOL HandleModConProtocolModeSet(void)
 {
   if (Packet_Parameter2 == MODCON_PROTOCOL_MODE_ASYNCHRONOUS || Packet_Parameter2 == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
@@ -293,11 +297,11 @@ BOOL HandleModConNumberSet(void)
 }
 
 /**
- * \fn BOOL HandleModConTime(void)
+ * \fn BOOL HandleModConUptime(void)
  * \brief Sends out system uptime in minutes and seconds 
  * \return TRUE if the packet has queued successfully.
  */
-BOOL HandleModConTime(void)
+BOOL HandleModConUptime(void)
 {
   if (!Packet_Put(MODCON_COMMAND_TIME, MODCON_TIME_INITIAL, Clock_Seconds, Clock_Minutes)) 
   {
@@ -372,13 +376,49 @@ BOOL HandleModConModeSet(void)
 }
 
 /**
- * \fn BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
+ * \fn BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
  * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
  * \return TRUE if the command has been executed successfully.
  */
-BOOL HandleModConAnalogInputValue(const UINT8 channelNb)
+BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
 {
-  if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, channelNb, Analog_Input[channelNb].Value.s.Lo, Analog_Input[channelNb].Value.s.Hi))
+  UINT8 index = 0xFF;
+  
+  switch(channelNb)
+  {
+    case ANALOG_INPUT_Ch1:
+      index = 0;
+      break;
+    case ANALOG_INPUT_Ch2:
+      index = 1;
+      break;
+    case ANALOG_INPUT_Ch3:
+      index = 2;
+      break;
+    case ANALOG_INPUT_Ch4:
+      index = 3;
+      break;
+    case ANALOG_INPUT_Ch5:
+      index = 4;
+      break;
+    case ANALOG_INPUT_Ch6:
+      index = 5;
+      break;
+    case ANALOG_INPUT_Ch7:
+      index = 6;
+      break;
+    case ANALOG_INPUT_Ch8:
+      index = 7;
+      break;
+    default:
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_INVALID_ARGUMENT);
+#endif
+      return bFALSE;
+      break;
+  }
+  
+  if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, index, Analog_Input[index].Value.s.Lo, Analog_Input[index].Value.s.Hi))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -455,26 +495,32 @@ void TurnOnStartupIndicator(void)
   PORTE_BIT7 = 0; /* Port E pin 7 state           0= low 1= high */
 }
 
+/**
+ * \fn void SampleAnalog(void)
+ * \brief
+ */
 void SampleAnalog(void) 
 {
   BOOL mutated = bFALSE;
-  mutated = Analog_Get(0);
+  
+  mutated = Analog_Get(ANALOG_INPUT_Ch1);
   if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
   {  	
-  	UNUSED(HandleModConAnalogInputValue(0)); 
+  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch1)); 
   }
   else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
   {
-  	UNUSED(HandleModConAnalogInputValue(0));   	
+  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch1));   	
   }
-  mutated = Analog_Get(1);
+  
+  mutated = Analog_Get(ANALOG_INPUT_Ch2);
   if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
   {  	
-  	UNUSED(HandleModConAnalogInputValue(1)); 
+  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch2)); 
   }
   else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
   {
-  	UNUSED(HandleModConAnalogInputValue(1));   	
+  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch2));   	
   }  
 }
 
@@ -591,7 +637,7 @@ void Routine(void)
   
   if (Clock_Update())
   {
-    bad = !HandleModConTime();
+    bad = !HandleModConUptime();
   }
     
   if (Packet_Get())

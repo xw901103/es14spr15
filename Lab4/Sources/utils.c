@@ -8,7 +8,7 @@
 
 /**
  * \fn UINT16 ForgeWord(const UINT8 msb, const UINT8 lsb)
- * \brief
+ * \brief Merges two unsigned 8-bits into a unsigned 16-bits number.
  * \param msb Most significant byte
  * \param lsb Least significant byte
  * \return A 16-bits word combained by most and least significant parts.

@@ -25,18 +25,19 @@
 #endif
 
 #if !defined(ERR_INVALID_POINTER) && !defined(ERR_FIFO_PUT) && !defined(ERR_PACKET_SETUP) && !defined(ERR_PACKET_PUT)
-#define ERR_NO_ERROR        0x0000 /* all good */
-#define ERR_INVALID_POINTER 0xBAD1 /* given pointer is not valid */
-#define ERR_FIFO_PUT        0xBAD2 /* cannot put a byte into FIFO buffer */
-#define ERR_PACKET_SETUP    0xBAD3 /* packet initialization failure */
-#define ERR_PACKET_PUT      0xBAD4 /* cannot put a packet into transmission queue */
-#define ERR_CRGPLL_SETUP    0xBAD5 /* clock and reset generator phase-locked loop initialization failure */
-#define ERR_CRGCOP_SETUP    0xBAD6 /* clock and reset generator computer operating properly initialization failure */
-#define ERR_EEPROM_SETUP    0xBAD7 /* EEPROM initialization failure */
-#define ERR_EEPROM_WRITE    0xBAD8 /* EEPROM program failure */
-#define ERR_EEPROM_ERASE    0xBAD9 /* EEPROM erase failure */
-#define ERR_CRITICAL        0xBADC /* critical error */
-#define ERR_BAD_FOOD        0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
+#define ERR_NO_ERROR         0x0000 /* all good */
+#define ERR_INVALID_POINTER  0xBAD1 /* given pointer is not valid */
+#define ERR_FIFO_PUT         0xBAD2 /* cannot put a byte into FIFO buffer */
+#define ERR_PACKET_SETUP     0xBAD3 /* packet initialization failure */
+#define ERR_PACKET_PUT       0xBAD4 /* cannot put a packet into transmission queue */
+#define ERR_CRGPLL_SETUP     0xBAD5 /* clock and reset generator phase-locked loop initialization failure */
+#define ERR_CRGCOP_SETUP     0xBAD6 /* clock and reset generator computer operating properly initialization failure */
+#define ERR_EEPROM_SETUP     0xBAD7 /* EEPROM initialization failure */
+#define ERR_EEPROM_WRITE     0xBAD8 /* EEPROM program failure */
+#define ERR_EEPROM_ERASE     0xBAD9 /* EEPROM erase failure */
+#define ERR_INVALID_ARGUMENT 0xBADA /* invalid argument */
+#define ERR_CRITICAL         0xBADC /* critical error */
+#define ERR_BAD_FOOD         0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 
 #ifndef UNUSED
