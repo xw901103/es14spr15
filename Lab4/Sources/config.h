@@ -29,10 +29,16 @@
 #warning "Real time interrupt modulus count override detected!"
 #endif
 
-#ifndef CONFIG_BAUDRATE
-#define CONFIG_BAUDRATE 115200          /* SCI baud rate in bits/sec */
+#ifndef CONFIG_SCI_BAUDRATE
+#define CONFIG_SCI_BAUDRATE 115200      /* SCI baud rate in bits/sec */
 #else
-#warning "Baudrate override detected!"
+#warning "SCI baudrate override detected!"
+#endif
+
+#ifndef CONFIG_SPI_BAUDRATE
+#define CONFIG_SPI_BAUDRATE 1000000     /* SPI baud rate in bits/sec */
+#else
+#warning "SPI baudrate override detected!"
 #endif
 
 #ifndef CONFIG_REFCLK

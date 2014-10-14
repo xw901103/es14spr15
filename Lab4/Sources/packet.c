@@ -8,8 +8,7 @@
 #include "SCI.h"
 
 /* define and initialize our externs */
-TPacket Packet = {0};
-TPacketMode Packet_Mode;
+TPacket Packet = { 0 };
 
 /* states of packet receive state machine */
 typedef enum 

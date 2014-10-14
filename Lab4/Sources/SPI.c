@@ -7,6 +7,18 @@
 #include "SPI.h"
 #include <mc9s12a512.h>
 
+/**
+ * \fn void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
+ * \brief Sets up the Serial Peripheral Interface
+ * \param aSPISetup a structure containing the parameters to be used in setting up the SPI:
+ * - TSPISetup
+ * |- isMaster is a Boolean value indicating whether the SPI is master or slave
+ * |- activeLowClocks is a Boolean value indicating whether the clock is active low or active high
+ * |- evenEdgeClockPhase is a Boolean value indicating whether the data is clocked on even or odd edges
+ * |- LSBFirst is a Boolean value indicating whether the data is transferred LSB first or MSB first
+ * |- baudRate the baud rate in bits/sec of the SPI clock
+ * \param busClk the bus clock rate in Hz
+ */
 void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
 {
   UINT16 divisor = 0;
@@ -14,7 +26,7 @@ void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
   
   if (aSPISetup)
   {
-    SPI0CR1_SPE = 0;
+    SPI0CR1_SPE = 0; /* SPI System Enable 1= on 0= off */
 
     divisor = (UINT16)(busClk / aSPISetup->baudRate);
     while (divisor % 2 == 0)
@@ -27,14 +39,19 @@ void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
     SPI0BR_SPR  = (byte)(spr - 1);
     SPI0BR_SPPR = (byte)(sppr - 1);
     
-    SPI0CR1_SPIE  = 0;
-    SPI0CR1_MSTR  = (byte)aSPISetup->isMaster;
-    SPI0CR1_SPTIE = 0;
-    SPI0CR1_CPOL  = (byte)aSPISetup->activeLowClock;
-    SPI0CR1_CPHA  = (byte)aSPISetup->evenEdgeClock;
-    SPI0CR1_SSOE  = 0;
-    SPI0CR1_LSBFE = (byte)aSPISetup->LSBFirst;
-    SPI0CR1_SPE   = 1;        
+    SPI0CR1_SPIE  = 0;                               /* SPI Interrupt Enable          1= on     0= off   */
+    SPI0CR1_MSTR  = (byte)aSPISetup->isMaster;       /* SPI Master/Slave Mode Select  1= master 0= slave */
+    SPI0CR1_SPTIE = 0;                               /* SPI Transmit Interrupt Enable 1= on     0= off   */
+    SPI0CR1_CPOL  = (byte)aSPISetup->activeLowClock; /* SPI Clock Polarity            1= low    0= high  */
+    SPI0CR1_CPHA  = (byte)aSPISetup->evenEdgeClock;  /* SPI Clock Phase               1= even   0= odd   */
+    SPI0CR1_SSOE  = 0;                               /* Slave Select Output Enable    1= on     0= off   */
+    SPI0CR1_LSBFE = (byte)aSPISetup->LSBFirst;       /* SPI LSB-First Enable          1= on     0= off   */
+    SPI0CR1_SPE   = 1;                               /* SPI System Enable             1= on     0= off   */
+    
+    //SPI0CR2_SPC0    = 0; /* Serial Pin Control 0                                 1= on 0= off */
+    //SPI0CR2_SPISWAI = 0; /* SPI Stop in Wait Mode                                1= on 0= off */               
+    //SPI0CR2_BIDIROE = 0; /* Output enable in the Bidirectional mode of operation 1= on 0= off */               
+    //SPI0CR2_MODFEN  = 0; /* Mode Fault Enable                                    1= on 0= off */ 
   }
   else
   {
@@ -52,11 +69,11 @@ void SPI_Setup(const TSPISetup * const aSPISetup, const UINT32 busClk)
  */
 void SPI_ExchangeChar(const UINT8 dataTx, UINT8 * const dataRx)
 {
-  /* send out */
+  /* send byte out */
   while(!SPI0SR_SPTEF);
   SPI0DR = dataTx;
   
-  /* receive in */
+  /* receive in byte */
   if (dataRx)
   {
   	while(!SPI0SR_SPIF);

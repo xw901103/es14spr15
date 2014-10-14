@@ -9,9 +9,7 @@
 #include "utils.h"
 #include <mc9s12a512.h>
 
-TUINT16 NbAnalogInputs;
-TUINT16 NbAnalogOutputs;
-TAnalogInput Analog_Input[NB_INPUT_CHANNELS];
+TAnalogInput Analog_Input[NB_INPUT_CHANNELS] = { 0 };
 
 #define ADC_OFFSET 0x0800
 
@@ -27,18 +25,11 @@ void Analog_Setup(const UINT32 busClk) {
   spiSetup.activeLowClock = bFALSE;
   spiSetup.evenEdgeClock = bTRUE;
   spiSetup.LSBFirst = bFALSE;
-  spiSetup.baudRate = MATH_1_MEGA; // TODO: set it in config.h
-  
-  DDRH = DDRH | (DDRH_DDRH4_MASK | DDRH_DDRH5_MASK | DDRH_DDRH6_MASK);
-  /* select SPICS3 */
-  //PTH_PTH4 = 1;
-  //PTH_PTH5 = 1;
-  //PTH_PTH6 = 0;
-  PTH = 0x70;
-  SPI_Setup(&spiSetup, busClk);
+  spiSetup.baudRate = SPI_BAUDRATE;
 
-  NbAnalogInputs.l = 0;
-  NbAnalogOutputs.l = 0;
+  EnableSPI0CS();  
+  SPI0CS = SPI0CS_NULL;
+  SPI_Setup(&spiSetup, busClk);
 }
 
 /**
@@ -49,50 +40,50 @@ void Analog_Setup(const UINT32 busClk) {
  * \warning Assumes that the ADC has been set up   
  */
 BOOL Analog_Get(const TAnalogChannel channelNb) {
-  UINT8 index = 0xFF, data1 = 0, data2 = 0, data3 = 0;
+  UINT8 index = 0xFF, cache1 = 0, cache2 = 0, cache3 = 0;
   TINT16 value;
   
   switch(channelNb) 
   {
     case ANALOG_INPUT_Ch1:
       index = 0;
-      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch2:
       index = 1;
-      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch3:
       index = 2;
-      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch4:
       index = 3;
-      data1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000110; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch5:
       index = 4;
-      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b00000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch6:
       index = 5;
-      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b01000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch7:
       index = 6;
-      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b10000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     case ANALOG_INPUT_Ch8:
       index = 7;
-      data1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
-      data2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
+      cache1 = 0b00000111; /* 0  | 0  | 0 | 0 | 0 | START | SGL/DIFF | D2 */
+      cache2 = 0b11000000; /* D1 | D0 | X | X | X | X     | X        | X  */
       break;
     default:
 #ifndef NO_DEBUG
@@ -102,14 +93,14 @@ BOOL Analog_Get(const TAnalogChannel channelNb) {
       break;
   }
     
-  PTH = 0x30;
-  SPI_ExchangeChar(data1, &data1); /* X  | X  | X  | X  | X   | X   | X  | X  */
-  SPI_ExchangeChar(data2, &data2); /* X  | X  | X  | 0  | B11 | B10 | B9 | B8 */
-  SPI_ExchangeChar(data3, &data3); /* B7 | B6 | B5 | B4 | B3  | B2  | B1 | B0 */   
-  PTH = 0x70;
+  SPI0CS = SPI0CS_ADC;     /* select ADC chip as our listener */
+  SPI_ExchangeChar(cache1, &cache1); /* X  | X  | X  | X  | X   | X   | X  | X  */
+  SPI_ExchangeChar(cache2, &cache2); /* X  | X  | X  | 0  | B11 | B10 | B9 | B8 */
+  SPI_ExchangeChar(cache3, &cache3); /* B7 | B6 | B5 | B4 | B3  | B2  | B1 | B0 */   
+  SPI0CS = SPI0CS_NULL; /* */
   
-  value.s.Hi = data2 & 0b00001111;
-  value.s.Lo = data3;
+  value.s.Hi = cache2 & 0b00001111;
+  value.s.Lo = cache3;
   value.l = ADC_OFFSET - value.l;
       
   Analog_Input[index].Value3 = Analog_Input[index].Value2;  

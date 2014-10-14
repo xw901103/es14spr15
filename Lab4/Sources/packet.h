@@ -48,8 +48,6 @@ typedef enum
 } TPacketMode;
 
 extern TPacket Packet;
-//extern BOOL Packet_CommandOK;
-extern TPacketMode Packet_Mode;
 
 /**
  * \fn UINT8 Packet_Checksum(const UINT8 command, const UINT8 parameter1, const UINT8 parameter2, const UINT8 parameter3)

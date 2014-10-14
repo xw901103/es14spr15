@@ -1,17 +1,14 @@
 /**
- * \mainpage Xu's Embedded Software Lab 2
+ * \mainpage Xu's Embedded Software Lab 4
  *
  * \section intro_sec Introduction
- * Lab 3 is based on Lab 2 to enable interrupt features across
- * multiple implementations. These are serial communication 
- * interface receive, real-time clock, periodic timer via modulus 
- * down counter and serial communication interface transmission
- * via enhanced capture timer output compare.
+ * Lab 4 is based on Lab 3 to interface a ADC chip via SPI bus to enable
+ * analog input sampling.
  * <br>
- * - A 2 millisecond period periodic timer will be setup via modulus down counter of ECT
- * - A 65.536 millisecond period real-time clock of CRG will be setup
- * - Receive routine of SCI0 will now use SCI0 interrupt
- * - Transmission routine of SCI0 will now use timer channel 7 output compare of ECT
+ * - A 10 millisecond period periodic analog input sampling rate will be using.
+ * - SPI bus will be set up on 1Mhz baudrate.
+ * - A simple three records median filter will be using for signal process.
+ * - Protocol mode will be using for synchronous/asynchronous mode.
  * <br>
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
@@ -21,12 +18,16 @@
  * <br>This will send current data stored in given EEPROM address.
  * * 0x09 ModCon Special ModCon query
  * <br>This will special modcon subcommand.
+ * * 0x0A ModCon protocol mode get and set
+ * <br>This is the accessor and mutator of ModCon protocol mode.
  * * 0x0B ModCon number get and set
  * <br>This is the accessor and mutator of ModCon number.
  * * 0x0C ModCon uptime
  * <br>This will send current system uptime in minutes and seconds.
  * * 0x0D ModCon mode get and set
  * <br>This is the accessor and mutator of ModCon mode.
+ * * 0x50 ModCon analog input value
+ * <br>This will send analog input channel number and its current value.
  *
  * \file main.h
  * \brief Program main entry file. 

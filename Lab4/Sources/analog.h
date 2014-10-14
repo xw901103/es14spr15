@@ -9,13 +9,16 @@
 
 #include "global.h"
 
-// Maximum number of channels
-#define NB_INPUT_CHANNELS 8
+/* maximum number of channels */
+#define NB_INPUT_CHANNELS  8
 #define NB_OUTPUT_CHANNELS 4
 
-// Number of channels used
-//extern TUINT16 NbAnalogInputs;
-//extern TUINT16 NbAnalogOutputs;
+#ifndef CONFIG_SPI_BAUDRATE
+#define SPI_BAUDRATE MATH_1_MEGA /* fallback plan */
+#warning "SPI baudrate using fallback setting 1MHz"
+#else
+#define SPI_BAUDRATE CONFIG_SPI_BAUDRATE
+#endif
 
 typedef enum
 {
@@ -38,7 +41,7 @@ typedef enum
 typedef struct
 {
   TINT16 Value, OldValue;
-  INT16 Value1, Value2, Value3;		// variables for median filtering
+  INT16 Value1, Value2, Value3; /* variables for median filtering */
 } TAnalogInput;
 
 extern TAnalogInput Analog_Input[NB_INPUT_CHANNELS];

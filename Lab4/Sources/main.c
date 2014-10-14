@@ -206,7 +206,8 @@ BOOL HandleModConProtocolMode(void)
 
 /**
  * \fn BOOL HandleModConProtocolModeGet(void)
- * \brief
+ * \brief Builds a packet that contains ModCon protocol mode and places it into transmit buffer.
+ * \return TRUE if the packet was queued for transmission successfully.
  */
 BOOL HandleModConProtocolModeGet(void)
 {
@@ -222,7 +223,8 @@ BOOL HandleModConProtocolModeGet(void)
 
 /**
  * \fn BOOL HandleModConProtocolModeSet(void)
- * \brief
+ * \brief Assign new value to ModCon protocol mode through given packet by updating stored EEPROM value.
+ * \return TRUE if write new value to EEPROM is successful.
  */
 BOOL HandleModConProtocolModeSet(void)
 {
@@ -287,7 +289,7 @@ BOOL HandleModConNumberGet(void)
 
 /**
  * \fn BOOL HandleModConNumberSet(void)
- * \brief Assign new value to ModCon number through given packet then update stored EEPROM value. 
+ * \brief Assign new value to ModCon number through given packet by updating stored EEPROM value. 
  * \return TRUE if write new value to EEPROM is successful.
  */
 BOOL HandleModConNumberSet(void)
@@ -383,13 +385,14 @@ BOOL HandleModConModeSet(void)
 
 /**
  * \fn BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
- * \brief Builds a packet that contains current ModCon analog input value and places it into transmit buffer. 
+ * \brief Builds a packet that contains current ModCon analog input value of selected channel and places it into transmit buffer. 
  * \return TRUE if the command has been executed successfully.
  */
 BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
 {
   UINT8 index = 0xFF;
   
+  /* NOTE: channel enums might not be in numberic order */
   switch(channelNb)
   {
     case ANALOG_INPUT_Ch1:
@@ -507,16 +510,18 @@ void TurnOnStartupIndicator(void)
  */
 void SampleAnalogInputChannels(void) 
 {
-  /* lookup tables */
+  /* lookup tables for input analog channel enums and switch mask mapping */
   static const UINT8
-  inputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { 0x01, 
-                                                           0x02, 
-                                                           0x04, 
-                                                           0x08, 
-                                                           0x10, 
-                                                           0x20, 
-                                                           0x40,
-                                                           0x80 },
+  /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
+  inputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { 0b00000001,
+                                                           0b00000010, 
+                                                           0b00000100, 
+                                                           0b00001000, 
+                                                           0b00010000, 
+                                                           0b00100000, 
+                                                           0b01000000,
+                                                           0b10000000 },
+  /* NOTE: channel enums might not be in numeric order */
   inputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_INPUT_Ch1,
                                                        ANALOG_INPUT_Ch2,
                                                        ANALOG_INPUT_Ch3,
@@ -534,12 +539,14 @@ void SampleAnalogInputChannels(void)
     {      
       mutated = Analog_Get(inputChannelNumberLookupTable[index]);
       if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
-      {  	
+      { 
+        /* NOTE: debug is inside HandleModConAnalogInputValue */ 	
   	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index])); 
       }
       else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
       {
-  	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index]));   	
+        /* NOTE: debug is inside HandleModConAnalogInputValue */
+  	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index]));    
       }
     }
   }
@@ -570,7 +577,7 @@ BOOL Initialize(void) /* TODO: check following statements */
     return bFALSE;
 	}
 		
-  if (!Packet_Setup(CONFIG_BAUDRATE, CONFIG_BUSCLK))
+  if (!Packet_Setup(CONFIG_SCI_BAUDRATE, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_SETUP);
