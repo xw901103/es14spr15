@@ -37,13 +37,7 @@
 #define MAIN_H
 
 #include "global.h"
-#include "CRG.h"
-#include "clock.h"
-#include "timer.h"
-#include "EEPROM.h"
 #include "analog.h"
-#include "packet.h"
-#include "utils.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
 const UINT8 MODCON_COMMAND_STARTUP             = 0x04; /* ModCon protocol startup command */

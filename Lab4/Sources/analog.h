@@ -1,10 +1,9 @@
-// ----------------------------------------
-// Filename: analog.h
-// Description: Routines for setting up and
-//   reading from the ADC/DAC
-// Author: PMcL
-// Date: 14-Feb-07
-
+/**
+ * \file analog.h
+ * \brief Routines for setting up and reading from the ADC/DAC
+ * \author Xu Waycell
+ * \date 14-September-2014
+ */
 #ifndef ANALOG_H
 #define ANALOG_H
 
@@ -15,8 +14,8 @@
 #define NB_OUTPUT_CHANNELS 4
 
 // Number of channels used
-extern TUINT16 NbAnalogInputs;
-extern TUINT16 NbAnalogOutputs;
+//extern TUINT16 NbAnalogInputs;
+//extern TUINT16 NbAnalogOutputs;
 
 typedef enum
 {
@@ -26,14 +25,14 @@ typedef enum
   ANALOG_OUTPUT_Ch3 = 0x02,
   ANALOG_OUTPUT_Ch4 = 0x03,
   /* analog interface input channels */
-  ANALOG_INPUT_Ch1  = 0x10,
-  ANALOG_INPUT_Ch2  = 0x11,
-  ANALOG_INPUT_Ch3  = 0x12,
-  ANALOG_INPUT_Ch4  = 0x13,
-  ANALOG_INPUT_Ch5  = 0x14,
-  ANALOG_INPUT_Ch6  = 0x15,
-  ANALOG_INPUT_Ch7  = 0x16,
-  ANALOG_INPUT_Ch8  = 0x17
+  ANALOG_INPUT_Ch1  = 0x80,
+  ANALOG_INPUT_Ch2  = 0x81,
+  ANALOG_INPUT_Ch3  = 0x82,
+  ANALOG_INPUT_Ch4  = 0x83,
+  ANALOG_INPUT_Ch5  = 0x84,
+  ANALOG_INPUT_Ch6  = 0x85,
+  ANALOG_INPUT_Ch7  = 0x86,
+  ANALOG_INPUT_Ch8  = 0x87
 } TAnalogChannel;
 
 typedef struct
@@ -44,30 +43,20 @@ typedef struct
 
 extern TAnalogInput Analog_Input[NB_INPUT_CHANNELS];
 
-// ----------------------------------------
-// Analog_Setup
-// 
-// Sets up the ADC and DAC
-// Input:
-//   none
-// Output:
-//   none
-// Conditions:
-//   none
-
+/**
+ * \fn void Analog_Setup(const UINT32 busClk)
+ * \brief Sets up the ADC and DAC
+ * \param busClk the bus clock rate in Hz 
+ */
 void Analog_Setup(const UINT32 busClk);
 
-// ----------------------------------------
-// Analog_Get
-// 
-// Gets an analog input channel's value based on the mode
-// Input:
-//   channelNb is the number of the anlog input channel to read
-// Output:
-//   a Boolean value indicating if the channel was read successfully
-// Conditions:
-//   Assumes that the ADC has been set up
-
+/**
+ * \fn BOOL Analog_Get(const TAnalogChannel channelNb)
+ * \brief Gets an analog input channel's value 
+ * \param channelNb the number of the anlog input channel to read
+ * \return a Boolean value indicating if the channel reading was changed
+ * \warning Assumes that the ADC has been set up   
+ */
 BOOL Analog_Get(const TAnalogChannel channelNb);
 
 #endif

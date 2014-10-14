@@ -6,6 +6,12 @@
  */
 
 #include "main.h"
+#include "CRG.h"
+#include "clock.h"
+#include "timer.h"
+#include "EEPROM.h"
+#include "packet.h"
+#include "utils.h"
 #include <mc9s12a512.h>
 
 /**
@@ -71,10 +77,10 @@ BOOL HandleModConModeSet(void);
 void TurnOnStartupIndicator(void);
 
 /**
- * \fn void SampleAnalog(void)
- * \brief
+ * \fn void SampleAnalogInputChannels(void)
+ * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
-void SampleAnalog(void);
+void SampleAnalogInputChannels(void);
 
 #ifndef NO_DEBUG
 /**
@@ -491,15 +497,15 @@ BOOL HandleModConEEPROMGet(void)
  */
 void TurnOnStartupIndicator(void)
 {
-  DDRE_BIT7= 1;   /* Port E pin 7 data direction  0= in  1= out */
+  DDRE_BIT7 = 1;   /* Port E pin 7 data direction  0= in  1= out */
   PORTE_BIT7 = 0; /* Port E pin 7 state           0= low 1= high */
 }
 
 /**
- * \fn void SampleAnalog(void)
- * \brief
+ * \fn void SampleAnalogInputChannels(void)
+ * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
-void SampleAnalog(void) 
+void SampleAnalogInputChannels(void) 
 {
   BOOL mutated = bFALSE;
   
@@ -545,7 +551,7 @@ BOOL Initialize(void)
     
   Timer_Setup();
   Timer_SetupPeriodicTimer(CONFIG_TIMER_PERIOD, CONFIG_BUSCLK);
-  Timer_AttachPeriodicTimerRoutine(&SampleAnalog);
+  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
 
   Analog_Setup(CONFIG_BUSCLK);
   

@@ -15,6 +15,11 @@ TAnalogInput Analog_Input[NB_INPUT_CHANNELS];
 
 #define ADC_OFFSET 0x0800
 
+/**
+ * \fn void Analog_Setup(const UINT32 busClk)
+ * \brief Sets up the ADC and DAC
+ * \param busClk the bus clock rate in Hz 
+ */
 void Analog_Setup(const UINT32 busClk) {
   TSPISetup spiSetup;
   
@@ -36,6 +41,13 @@ void Analog_Setup(const UINT32 busClk) {
   NbAnalogOutputs.l = 0;
 }
 
+/**
+ * \fn BOOL Analog_Get(const TAnalogChannel channelNb)
+ * \brief Gets an analog input channel's value 
+ * \param channelNb the number of the anlog input channel to read
+ * \return a Boolean value indicating if the channel reading was changed
+ * \warning Assumes that the ADC has been set up   
+ */
 BOOL Analog_Get(const TAnalogChannel channelNb) {
   UINT8 index = 0xFF, data1 = 0, data2 = 0, data3 = 0;
   TINT16 value;
