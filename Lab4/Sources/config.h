@@ -47,11 +47,13 @@
 #warning "Bus clock override detected!"
 #endif
 
+/* RESERVED BEGIN */
 #ifndef CONFIG_TIMER_PERIOD
 #define CONFIG_TIMER_PERIOD 10000          /* Timer period in microseconds */
 #else
 #warning "Timer period override detected!"
 #endif
+/* RESERVED END */
 
 #ifndef CONFIG_COP_RATE
 #define CONFIG_COP_RATE COP_RATE_2_14    /* Predefined COP rate */
@@ -90,29 +92,31 @@
 #warning "ModCon control mode EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_INPUTS_NUMBER
-#define CONFIG_EEPROM_ADDRESS_ANALOG_INPUTS_NUMBER 0x0406 /* 16-bits Analog inputs number EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_INPUT_CHANNEL_SWITCH
+#define CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_INPUT_CHANNEL_SWITCH 0x0406 /* 16-bits Analog inputs number EEPROM address */
 #else
-#warning "Analog inputs number EEPROM address override detected!"
+#warning "ModCon analog input channel switch EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_OUTPUTS_NUMBER
-#define CONFIG_EEPROM_ADDRESS_ANALOG_OUTPUTS_NUMBER 0x0408 /* 16-bits Analog outputs number EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_OUTPUT_CHANNEL_SWITCH
+#define CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_OUTPUT_CHANNEL_SWITCH 0x0408 /* 16-bits Analog outputs number EEPROM address */
 #else
-#warning "Analog outputs number EEPROM address override detected!"
+#warning "ModCon analog output channel switch EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_ANALOG_PERIOD
-#define CONFIG_EEPROM_ADDRESS_ANALOG_PERIOD 0x0410 /* 16-bits Analog period EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_SAMPLING_RATE
+#define CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_SAMPLING_RATE 0x0410 /* 16-bits Analog period EEPROM address */
 #else
-#warning "Analog period EEPROM address override detected!"
+#warning "ModCon analog sampling rate EEPROM address override detected!"
 #endif
 
+/* RESERVED BEGIN */
 #ifndef CONFIG_EEPROM_ADDRESS_PACKET_PERIOD
 #define CONFIG_EEPROM_ADDRESS_PACKET_PERIOD 0x0412 /* 16-bits Packet period EEPROM address */
 #else
 #warning "Packet period EEPROM address override detected!"
 #endif
+/* RESERVED END */
 
 #ifndef CONFIG_EEPROM_ADDRESS_MODCON_DEBUG
 #define CONFIG_EEPROM_ADDRESS_MODCON_DEBUG 0x0420 /* 16-bits ModCon debug EEPROM address */
@@ -138,10 +142,10 @@
 #warning "Timer channel 7 debug EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_EEPROM_ERASED
-#define CONFIG_EEPROM_ADDRESS_EEPROM_ERASED 0x0430 /* 16-bits EEPROM erased EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_EEPROM_ERASED_FLAG
+#define CONFIG_EEPROM_ADDRESS_EEPROM_ERASED_FLAG 0x0430 /* 16-bits EEPROM erased EEPROM address */
 #else
-#warning "EEPROM erased EEPROM address override detected!"
+#warning "EEPROM erased flag EEPROM address override detected!"
 #endif
 
 

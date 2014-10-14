@@ -507,27 +507,42 @@ void TurnOnStartupIndicator(void)
  */
 void SampleAnalogInputChannels(void) 
 {
+  /* lookup tables */
+  static const UINT8
+  inputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { 0x01, 
+                                                           0x02, 
+                                                           0x04, 
+                                                           0x08, 
+                                                           0x10, 
+                                                           0x20, 
+                                                           0x40,
+                                                           0x80 },
+  inputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_INPUT_Ch1,
+                                                       ANALOG_INPUT_Ch2,
+                                                       ANALOG_INPUT_Ch3,
+                                                       ANALOG_INPUT_Ch4,
+                                                       ANALOG_INPUT_Ch5,
+                                                       ANALOG_INPUT_Ch6,
+                                                       ANALOG_INPUT_Ch7,
+                                                       ANALOG_INPUT_Ch8 };
   BOOL mutated = bFALSE;
+  UINT8 index = 0;
   
-  mutated = Analog_Get(ANALOG_INPUT_Ch1);
-  if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
-  {  	
-  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch1)); 
-  }
-  else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
+  for (index = 0; index < NB_INPUT_CHANNELS; ++index) 
   {
-  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch1));   	
+    if (ModConAnalogInputChannelSwitch & inputChannelSwitchMaskLookupTable[index])
+    {      
+      mutated = Analog_Get(inputChannelNumberLookupTable[index]);
+      if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
+      {  	
+  	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index])); 
+      }
+      else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
+      {
+  	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index]));   	
+      }
+    }
   }
-  
-  mutated = Analog_Get(ANALOG_INPUT_Ch2);
-  if (ModConProtocolMode == MODCON_PROTOCOL_MODE_SYNCHRONOUS)
-  {  	
-  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch2)); 
-  }
-  else if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS && mutated)
-  {
-  	UNUSED(HandleModConAnalogInputValue(ANALOG_INPUT_Ch2));   	
-  }  
 }
 
 /**
@@ -535,7 +550,7 @@ void SampleAnalogInputChannels(void)
  * \brief Initializes hardware and software parameters that required for this program.
  * \return TRUE if initialization routines executed successfully.
  */
-BOOL Initialize(void)
+BOOL Initialize(void) /* TODO: check following statements */
 { 
   DisableInterrupts;
  
@@ -546,15 +561,7 @@ BOOL Initialize(void)
 #endif
     return bFALSE;
   }
-  
-  Clock_Setup(CONFIG_RTI_PRESCALERATE, CONFIG_RTI_MODULUSCOUNT);
     
-  Timer_Setup();
-  Timer_SetupPeriodicTimer(CONFIG_TIMER_PERIOD, CONFIG_BUSCLK);
-  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
-
-  Analog_Setup(CONFIG_BUSCLK);
-  
   if (!EEPROM_Setup(CONFIG_OSCCLK, CONFIG_BUSCLK))
   {
 #ifndef NO_DEBUG
@@ -611,6 +618,39 @@ BOOL Initialize(void)
       return bFALSE;
     }
   }
+  
+  if (ModConAnalogInputChannelSwitch == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConAnalogInputChannelSwitch, DEFAULT_MODCON_ANALOG_INPUT_CHANNEL_SWITCH))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;      
+    }
+  }
+
+  if (ModConAnalogOutputChannelSwitch == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConAnalogOutputChannelSwitch, DEFAULT_MODCON_ANALOG_OUTPUT_CHANNEL_SWITCH))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;      
+    }
+  }
+
+  if (ModConAnalogSamplingRate == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConAnalogSamplingRate, DEFAULT_MODCON_ANALOG_SAMPLING_RATE))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;      
+    }
+  }
 
   if (ModConDebug == 0xFFFF)
   {
@@ -622,6 +662,14 @@ BOOL Initialize(void)
       return bFALSE;
     }
   }
+  
+  Clock_Setup(CONFIG_RTI_PRESCALERATE, CONFIG_RTI_MODULUSCOUNT);
+    
+  Timer_Setup();
+  Timer_SetupPeriodicTimer(ModConAnalogSamplingRate, CONFIG_BUSCLK);
+  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
+
+  Analog_Setup(CONFIG_BUSCLK);  
   
   Timer_PeriodicTimerEnable(bTRUE);
   
