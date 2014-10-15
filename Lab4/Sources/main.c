@@ -237,6 +237,8 @@ BOOL HandleModConProtocolModeSet(void)
 #endif
       return bFALSE;
     }
+    /* send back current protocol mode to confirm */
+    UNUSED(HandleModConProtocolModeGet());
     return bTRUE;  
   }
   return bFALSE;

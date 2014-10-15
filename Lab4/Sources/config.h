@@ -148,12 +148,13 @@
 #warning "Timer channel 7 debug EEPROM address override detected!"
 #endif
 
+/* RESERVED BEGIN */
 #ifndef CONFIG_EEPROM_ADDRESS_EEPROM_ERASED_FLAG
 #define CONFIG_EEPROM_ADDRESS_EEPROM_ERASED_FLAG 0x0430 /* 16-bits EEPROM erased EEPROM address */
 #else
 #warning "EEPROM erased flag EEPROM address override detected!"
 #endif
-
+/* RESERVED END */
 
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN
 #define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400 /* Begin boundary of EEPROM */

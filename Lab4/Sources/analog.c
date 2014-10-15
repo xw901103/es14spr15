@@ -43,6 +43,8 @@ BOOL Analog_Get(const TAnalogChannel channelNb) {
   UINT8 index = 0xFF, cache1 = 0, cache2 = 0, cache3 = 0;
   TINT16 value;
   
+  /* load hardware related data into caches for SPI exchanging */
+  /* NOTE: channel enums might not be in numeric order         */
   switch(channelNb) 
   {
     case ANALOG_INPUT_Ch1:
@@ -97,7 +99,7 @@ BOOL Analog_Get(const TAnalogChannel channelNb) {
   SPI_ExchangeChar(cache1, &cache1); /* X  | X  | X  | X  | X   | X   | X  | X  */
   SPI_ExchangeChar(cache2, &cache2); /* X  | X  | X  | 0  | B11 | B10 | B9 | B8 */
   SPI_ExchangeChar(cache3, &cache3); /* B7 | B6 | B5 | B4 | B3  | B2  | B1 | B0 */   
-  SPI0CS = SPI0CS_NULL; /* */
+  SPI0CS = SPI0CS_NULL;    /* deselect any chip */
   
   value.s.Hi = cache2 & 0b00001111;
   value.s.Lo = cache3;

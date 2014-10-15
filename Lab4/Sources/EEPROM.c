@@ -38,9 +38,11 @@ BOOL EEPROMCommand(UINT8 command, UINT16 volatile * const address, const UINT16 
       /* feed watch dog */
       __RESET_WATCHDOG(); 
     }
-    EEPROM_WORD(address) = data;
-    ECMD = command;
+        
+    EEPROM_WORD(address) = data;        
+    ECMD = command;    
     ESTAT = ESTAT_CBEIF_MASK;
+    
     if (!ESTAT_PVIOL && !ESTAT_ACCERR)
     {
       while(!ESTAT_CCIF)
