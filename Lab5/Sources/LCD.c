@@ -173,6 +173,9 @@ BOOL StatusCheck(const TLCDStatus statusMask)
     LCD_STATUS = PORTA;
     LCD_RD = 1;
     safetyCount++;
+    
+    __RESET_WATCHDOG();
+    
   } while (((LCD_STATUS & statusMask) != statusMask) && (safetyCount < STATUS_COUNT_MAX));
 
   // Turn Port A into an output port
@@ -420,6 +423,12 @@ BOOL LCD_OutString(const char *str)
 
   // Write string using auto mode
   return WriteAuto(nbBytes, str, bTRUE);
+}
+
+BOOL LCD_OutFrame(const char frame[8][16]) 
+{
+  
+  return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(128, (const char*)frame, bTRUE);
 }
 
 // ----------------------------------------
