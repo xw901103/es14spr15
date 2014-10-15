@@ -3,8 +3,9 @@
  *
  * \section intro_sec Introduction
  * Lab 4 is based on Lab 3 to interface a ADC chip via SPI bus to enable
- * analog input sampling.
+ * analog input sampling every 10 ms period.
  * <br>
+ * - Uptime will be updated every second
  * - A 10 millisecond period periodic analog input sampling rate will be using.
  * - SPI bus will be set up on 1Mhz baudrate.
  * - A simple three records median filter will be using for signal process.

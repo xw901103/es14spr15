@@ -92,13 +92,13 @@ void Timer_PeriodicTimerEnable(const BOOL enableTimer);
 /**
  * \fn void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr)
  * \param routinePtr
- * \brief
+ * \brief Attach a routine to periodic timer interrupt service routine.
  */
 void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr);
 
 /**
  * \fn void Timer_DetachPeriodicTimerRoutine(void)
- * \brief
+ * \brief Detach a routine to periodic timer interrupt service routine.
  */
 void Timer_DetachPeriodicTimerRoutine(void);
 

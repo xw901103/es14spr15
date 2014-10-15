@@ -244,11 +244,20 @@ void Timer_SetupPeriodicTimer(const UINT16 microSeconds, const UINT32 busClk)
   MCCTL_MCZI  = 0; /* modulus down interrupt enable 1= on 0= off */
 }
 
+/**
+ * \fn void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr)
+ * \param routinePtr
+ * \brief Attach a routine to periodic timer interrupt service routine.
+ */
 void Timer_AttachPeriodicTimerRoutine(TTimerPeriodicTimerRoutine const routinePtr)
 {
   timerPeriodicTimerRoutinePtr = routinePtr;
 }
 
+/**
+ * \fn void Timer_DetachPeriodicTimerRoutine(void)
+ * \brief Detach a routine to periodic timer interrupt service routine.
+ */
 void Timer_DetachPeriodicTimerRoutine(void)
 {
   timerPeriodicTimerRoutinePtr = (TTimerPeriodicTimerRoutine) 0x0000;
