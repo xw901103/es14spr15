@@ -173,13 +173,13 @@ BOOL StatusCheck(const TLCDStatus statusMask)
     LCD_STATUS = PORTA;
     LCD_RD = 1;
     safetyCount++;
-    
-    __RESET_WATCHDOG();
-    
+        
   } while (((LCD_STATUS & statusMask) != statusMask) && (safetyCount < STATUS_COUNT_MAX));
 
   // Turn Port A into an output port
   DDRA = 0xFF;
+
+  __RESET_WATCHDOG();
 
   if (safetyCount < STATUS_COUNT_MAX)
     return bTRUE;
@@ -252,19 +252,15 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   return success;
 }
 
-// ----------------------------------------
-// LCD_Setup
-// 
-// Sets up the graphical LCD
-// Input:
-//   none
-// Output:
-//   return bTRUE if the LCD was successfully set up, else bFALSE
-// Conditions:
-//   none
-
-BOOL LCD_Setup(void)
+/**
+ * \fn BOOL LCD_Setup(void)
+ * \brief Sets up the graphical LCD
+ * \return bTRUE if the LCD was successfully set up, else bFALSE
+ */
+ BOOL LCD_Setup(void)
 {
+  /* Toshiba T6963 */
+  
   UINT16 delay;
   BOOL success;
 
@@ -333,17 +329,13 @@ BOOL LCD_Setup(void)
   return success;
 }
 
-// ----------------------------------------
-// LCD_OutChar
-// 
-// Writes a character to the LCD and increments the address pointer
-// Input:
-//   data is a byte to be written to the LCD
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL LCD_OutChar(const UINT8 data)
+ * \brief Writes a character to the LCD and increments the address pointer
+ * \param data A byte to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
 BOOL LCD_OutChar(const UINT8 data)
 {
   // Converts ASCII to LCD's "ROM 0101"
@@ -379,7 +371,7 @@ BOOL WriteAuto(const UINT16 nbBytes, const char *data, const BOOL convert)
   success = SendCommand(LCD_CMD_SET_DATA_AUTO_WRITE, 0, 0, 0);  
   if (!success)
     return success;
-  
+      
   // Write data bytes
   for (byteNb = 0; byteNb < nbBytes; byteNb++)
   {
@@ -397,17 +389,14 @@ BOOL WriteAuto(const UINT16 nbBytes, const char *data, const BOOL convert)
   return success;
 }
 
-// ----------------------------------------
-// LCD_OutString
-// 
-// Writes a string to the LCD
-// Input:
-//   str is a string to be written to the LCD
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL LCD_OutString(const char *str)
+ * \brief Writes a string to the LCD
+ * \param str A string to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ * \warning Given string has to end with \0
+ */
 BOOL LCD_OutString(const char *str)
 {
   const char *strPtr = str;
@@ -427,21 +416,15 @@ BOOL LCD_OutString(const char *str)
 
 BOOL LCD_OutFrame(const char frame[8][16]) 
 {
-  
   return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(128, (const char*)frame, bTRUE);
 }
 
-// ----------------------------------------
-// LCD_Clear
-// 
-// Clears the LCD
-// Input:
-//   none
-// Output:
-//   returns bTRUE if the clear was successful, otherwise FALSE
-// Conditions:
-//   Assumes LCD has been set up
-
+/**
+ * \fn BOOL LCD_Clear(void)
+ * \brief Clears the LCD 
+ * \return bTRUE if the clear was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
 BOOL LCD_Clear(void)
 {
   UINT8 lineNb;

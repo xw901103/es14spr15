@@ -1,51 +1,35 @@
-// ----------------------------------------
-// Filename: LCD.h
-// Description: Routines to implement 
-//   writing and reading from the graphical
-//   LCD via PORTA and PORTB
-// Author: PMcL
-// Date: 08-Jun-12
-
+/**
+ * \file LCD.h
+ * \brief Routines to implement writing and reading from the graphical LCD via PORTA and PORTB.
+ * \author
+ * \date
+ */
 #include "types.h"
 
-
-// ----------------------------------------
-// LCD_Setup
-// 
-// Sets up the graphical LCD
-// Input:
-//   none
-// Output:
-//   return bTRUE if the LCD was successfully set up, else bFALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL LCD_Setup(void)
+ * \brief Sets up the graphical LCD
+ * \return bTRUE if the LCD was successfully set up, else bFALSE
+ */
 BOOL LCD_Setup(void);
 
-// ----------------------------------------
-// LCD_OutChar
-// 
-// Writes a character to the LCD and increments the address pointer
-// Input:
-//   data is a byte to be written to the LCD
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL LCD_OutChar(const UINT8 data)
+ * \brief Writes a character to the LCD and increments the address pointer
+ * \param data A byte to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
 BOOL LCD_OutChar(const UINT8 data);
 
-// ----------------------------------------
-// LCD_OutString
-// 
-// Writes a string to the LCD
-// Input:
-//   str is a string to be written to the LCD
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL LCD_OutString(const char *str)
+ * \brief Writes a string to the LCD
+ * \param str A string to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ * \warning Given string has to end with \0
+ */
 BOOL LCD_OutString(const char *str);
 
 BOOL LCD_OutFrame(const char frame[8][16]);
