@@ -516,14 +516,14 @@ void SampleAnalogInputChannels(void)
   /* lookup tables for input analog channel enums and switch mask mapping */
   static const UINT8
   /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
-  inputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { 0b00000001,
-                                                           0b00000010, 
-                                                           0b00000100, 
-                                                           0b00001000, 
-                                                           0b00010000, 
-                                                           0b00100000, 
-                                                           0b01000000,
-                                                           0b10000000 },
+  inputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1,
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2, 
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3, 
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4, 
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5, 
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6, 
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7,
+                                                           MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8 },
   /* NOTE: channel enums might not be in numeric order */
   inputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_INPUT_Ch1,
                                                        ANALOG_INPUT_Ch2,

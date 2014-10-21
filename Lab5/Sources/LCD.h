@@ -4,7 +4,7 @@
  * \author
  * \date
  */
-#include "types.h"
+#include "global.h"
 
 /**
  * \fn BOOL LCD_Setup(void)

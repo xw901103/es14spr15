@@ -1,19 +1,11 @@
-// ----------------------------------------
-// Filename: LCD.c
-// Description: Routines to implement 
-//   writing and reading from the graphical
-//   LCD via PORTA and PORTB
-// Author: PMcL
-// Date: 08-Jun-12
-
-// derivative information
-#include <mc9s12a512.h>     
-
-// new types
-#include "types.h"
-
-// Graphical LCD
+/**
+ * \file LCD.c
+ * \brief Routines to implement writing and reading from the graphical LCD via PORTA and PORTB
+ * \author
+ * \date 
+ */
 #include "LCD.h"
+#include <mc9s12a512.h>     
 
 #define LCD_WR                          PORTB_BIT0
 #define LCD_RD                          PORTB_BIT1
