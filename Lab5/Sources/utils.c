@@ -42,3 +42,21 @@ INT16 FindMedianOfThreeNumbers(const INT16 a, const INT16 b, const INT16 c)
   /* if not a or b then c */
   return c;
 }
+
+void SwapBytes(UINT8 * const lhs, UINT8 * const rhs) 
+{
+  UINT8 cache = 0;
+  
+  if (lhs && rhs)
+  {
+    cache = *lhs;
+    *lhs = *rhs;
+    *rhs = cache;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}

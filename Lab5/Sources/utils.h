@@ -28,4 +28,6 @@ UINT16 ForgeWord(const UINT8 msb, const UINT8 lsb);
  */
 INT16 FindMedianOfThreeNumbers(const INT16 a, const INT16 b, const INT16 c); 
 
+void SwapBytes(UINT8 * const lhs, UINT8 * const rhs);
+
 #endif

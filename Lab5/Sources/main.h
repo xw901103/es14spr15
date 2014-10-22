@@ -40,6 +40,7 @@
 
 #include "global.h"
 #include "analog.h"
+#include "HMI.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
 const UINT8 MODCON_COMMAND_STARTUP             = 0x04; /* ModCon protocol startup command */
@@ -73,6 +74,8 @@ const UINT8 MODCON_TIME_INITIAL = 'i';
 
 const UINT8 MODCON_MODE_GET = 1;
 const UINT8 MODCON_MODE_SET = 2;
+
+const THMIContext MODCON_HMI_CONTEXT = {0};
 
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
@@ -261,7 +264,8 @@ const char testFrame[8][16] =
 
 char systemFrame[8][16] = 
 {
-  {' ', 'U', 'P', 'T', 'I', 'M', 'E', ' ', '0', '0', ':', '0', '0', ':', '0', '0'},
+//  {' ', 'U', 'P', 'T', 'I', 'M', 'E', ' ', '0', '0', ':', '0', '0', ':', '0', '0'},
+  {'P', 'A', 'N', 'E', 'L', 'T', 'S', ' ', '0', '0', ':', '0', '0', ':', '0', '0'},
   {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
   {' ', ' ', 'N', 'U', 'M', 'B', 'E', 'R', ':', '0', '0', '0', '0', '0', ' ', ' '},
   {' ', 'V', 'E', 'R', 'S', 'I', 'O', 'N', ':', '0', '.', '0', ' ', ' ', ' ', ' '},

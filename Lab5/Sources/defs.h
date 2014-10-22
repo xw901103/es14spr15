@@ -38,6 +38,7 @@
 #define ERR_INVALID_ARGUMENT 0xBADA /* invalid argument */
 #define ERR_LCD_SETUP        0xBADB /* LCD initialization failure */
 #define ERR_CRITICAL         0xBADC /* critical error */
+#define ERR_HMI_SETUP        0xBADD /* HMI initialization failure */
 #define ERR_BAD_FOOD         0xBADF /* 0xBAADF00D if you knew it, you are obsoleted */
 #endif
 

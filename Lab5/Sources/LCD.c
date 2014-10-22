@@ -406,7 +406,7 @@ BOOL LCD_OutString(const char *str)
   return WriteAuto(nbBytes, str, bTRUE);
 }
 
-BOOL LCD_OutFrame(const char frame[8][16]) 
+BOOL LCD_OutFrame(const UINT8 frame[8][16]) 
 {
   return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(128, (const char*)frame, bTRUE);
 }

@@ -32,7 +32,7 @@ BOOL LCD_OutChar(const UINT8 data);
  */
 BOOL LCD_OutString(const char *str);
 
-BOOL LCD_OutFrame(const char frame[8][16]);
+BOOL LCD_OutFrame(const UINT8 frame[8][16]);
 
 // ----------------------------------------
 // LCD_Clear

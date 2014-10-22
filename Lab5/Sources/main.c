@@ -11,7 +11,8 @@
 #include "timer.h"
 #include "EEPROM.h"
 #include "packet.h"
-#include "LCD.h"
+//#include "LCD.h"
+//#include "HMI.h"
 #include "utils.h"
 #include <mc9s12a512.h>
 
@@ -588,10 +589,10 @@ BOOL Initialize(void) /* TODO: check following statements */
     return bFALSE;
   }
 
-  if (!LCD_Setup())
+  if (!HMI_Setup(&MODCON_HMI_CONTEXT))
   {
 #ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_LCD_SETUP);
+    DEBUG(__LINE__, ERR_HMI_SETUP);
 #endif
     return bFALSE;
   }  
@@ -902,7 +903,7 @@ void UpdateFrame()
     systemFrame[0][0] = ' ';  
   */
 
-  UNUSED(LCD_OutFrame(systemFrame));       
+  //UNUSED(LCD_OutFrame(systemFrame));       
 }
 
 /**
