@@ -32,18 +32,8 @@ typedef enum
  */
 typedef enum
 {
-<<<<<<< Updated upstream
   HMI_RENDERER_DIRTY,     /* redraw when screen is dirty */
   HMI_RENDERER_CONTINUITY /* redraw continuity */
-=======
-<<<<<<< HEAD
-  HMI_RENDER_MODE_DIRTY,     /* redraw when screen is dirty */
-  HMI_RENDER_MODE_CONTINUITY /* redraw continuity */
-=======
-  HMI_RENDERER_DIRTY,     /* redraw when screen is dirty */
-  HMI_RENDERER_CONTINUITY /* redraw continuity */
->>>>>>> FETCH_HEAD
->>>>>>> Stashed changes
 } THMIRenderMode;
 
 /**
@@ -55,7 +45,6 @@ typedef struct
   UINT16 width;
   UINT16 height;
 } THMIFrame;
-<<<<<<< Updated upstream
 
 typedef void(*THMIInputHandler)(THMIKey);
 
@@ -78,49 +67,6 @@ typedef enum
   FILL_PARENT
 } THMISizePolicy;
 
-=======
-<<<<<<< HEAD
-
-typedef void(*THMIInputHandler)(THMIKey);
-
-/**
- * \brief HMI menu item
- */
-typedef struct 
-{
-  UINT8 title[HMI_PANEL_TITLE_SIZE];
-  UINT16 value;
-} THMIMenuItem;
-
-typedef struct
-{
-  THMIMenuItem items[16];
-  UINT16 itemCount;
-} THMIMenu;
-=======
-
-typedef void(*THMIInputHandler)(THMIKey);
-
-/**
- * \brief HMI widget
- */
- 
-typedef enum
-{
-  STATIC,
-  LABEL,
-  TIME,
-  MENU,
-  MENUITEM
-} THMIWidgetType;
-
-typedef enum
-{
-  STATIC_SIZE,
-  FILL_PARENT
-} THMISizePolicy;
-
->>>>>>> Stashed changes
 typedef struct
 {
   UINT8 width;
@@ -130,10 +76,6 @@ typedef struct
   void* extension;
   THMIInputHandler inputHandler;
 } THMIWidget;
-<<<<<<< Updated upstream
-=======
->>>>>>> FETCH_HEAD
->>>>>>> Stashed changes
 
 /**
  * \brief HMI panel
@@ -143,27 +85,9 @@ typedef struct
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
   THMIInputHandler inputHandler;
-<<<<<<< Updated upstream
   THMIWidget* centralWidget;
   void(*update)();
-=======
-<<<<<<< HEAD
-  THMIMenu* menuPtr;
-=======
-  THMIWidget* centralWidget;
-  void(*update)();
->>>>>>> FETCH_HEAD
->>>>>>> Stashed changes
 } THMIPanel;
-
-/**
- * \brief HMI setup
- */
-typedef struct
-{
-  THMIRenderMode renderMode;
-  THMIFrame frameTemplate;  
-} THMISetup;
 
 /**
  * \brief HMI context
@@ -172,27 +96,11 @@ typedef struct
 {
   THMIRenderMode renderMode;
   THMIFrame frameTemplate;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-  
-  THMIFrame* renderFrameBufferPtr;
-  THMIFrame* screenFrameBufferPtr;
-  
-=======
->>>>>>> FETCH_HEAD
->>>>>>> Stashed changes
   UINT8 parentPanelId;
   UINT8 previousPanelId;
   UINT8 currentPanelId;
   UINT8 idlePanelId;
-  
-  UINT16 seconds;
-  UINT16 minutes;
-  UINT16 hours;
-  
   UINT16 idleTimeCount;
-  
   UINT8 fps;
   BOOL isDirty; // bool for determine the screen needs to redraw
 } THMIContext;
@@ -203,7 +111,7 @@ typedef struct
  * \param aHMIContext
  * \return
  */
-BOOL HMI_Setup(const THMISetup* const aHMISetup);
+BOOL HMI_Setup(const THMIContext* const aHMIContext);
 
 void HMI_Poll(void);
 
@@ -216,27 +124,11 @@ void HMI_Poll(void);
 const THMIContext * const HMI_GetContext(void);
 
 THMIKey HMI_GetKeyEvent(void);
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 
 /**
  * \fn BOOL HMI_RenderFrame(void)
  */
 BOOL HMI_RenderFrame(void);
-
-void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
-=======
->>>>>>> Stashed changes
-
-/**
- * \fn BOOL HMI_RenderFrame(void)
- */
-BOOL HMI_RenderFrame(void);
-<<<<<<< Updated upstream
-=======
->>>>>>> FETCH_HEAD
->>>>>>> Stashed changes
 
 void HMI_AppendPanel(const THMIPanel* const aHMIPanel);
 
