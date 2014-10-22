@@ -32,8 +32,8 @@ typedef enum
  */
 typedef enum
 {
-  HMI_RENDERER_DIRTY,     /* redraw when screen is dirty */
-  HMI_RENDERER_CONTINUITY /* redraw continuity */
+  HMI_RENDER_MODE_DIRTY,     /* redraw when screen is dirty */
+  HMI_RENDER_MODE_CONTINUITY /* redraw continuity */
 } THMIRenderMode;
 
 /**
@@ -49,33 +49,19 @@ typedef struct
 typedef void(*THMIInputHandler)(THMIKey);
 
 /**
- * \brief HMI widget
+ * \brief HMI menu item
  */
- 
-typedef enum
+typedef struct 
 {
-  STATIC,
-  LABEL,
-  TIME,
-  MENU,
-  MENUITEM
-} THMIWidgetType;
-
-typedef enum
-{
-  STATIC_SIZE,
-  FILL_PARENT
-} THMISizePolicy;
+  UINT8 title[HMI_PANEL_TITLE_SIZE];
+  UINT16 value;
+} THMIMenuItem;
 
 typedef struct
 {
-  UINT8 width;
-  UINT8 height;
-  THMISizePolicy sizePolicy;
-  THMIWidgetType type;  
-  void* extension;
-  THMIInputHandler inputHandler;
-} THMIWidget;
+  THMIMenuItem items[16];
+  UINT16 itemCount;
+} THMIMenu;
 
 /**
  * \brief HMI panel
@@ -85,9 +71,17 @@ typedef struct
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
   THMIInputHandler inputHandler;
-  THMIWidget* centralWidget;
-  void(*update)();
+  THMIMenu* menuPtr;
 } THMIPanel;
+
+/**
+ * \brief HMI setup
+ */
+typedef struct
+{
+  THMIRenderMode renderMode;
+  THMIFrame frameTemplate;  
+} THMISetup;
 
 /**
  * \brief HMI context
@@ -96,11 +90,21 @@ typedef struct
 {
   THMIRenderMode renderMode;
   THMIFrame frameTemplate;
+  
+  THMIFrame* renderFrameBufferPtr;
+  THMIFrame* screenFrameBufferPtr;
+  
   UINT8 parentPanelId;
   UINT8 previousPanelId;
   UINT8 currentPanelId;
   UINT8 idlePanelId;
+  
+  UINT16 seconds;
+  UINT16 minutes;
+  UINT16 hours;
+  
   UINT16 idleTimeCount;
+  
   UINT8 fps;
   BOOL isDirty; // bool for determine the screen needs to redraw
 } THMIContext;
@@ -111,7 +115,7 @@ typedef struct
  * \param aHMIContext
  * \return
  */
-BOOL HMI_Setup(const THMIContext* const aHMIContext);
+BOOL HMI_Setup(const THMISetup* const aHMISetup);
 
 void HMI_Poll(void);
 
@@ -129,6 +133,8 @@ THMIKey HMI_GetKeyEvent(void);
  * \fn BOOL HMI_RenderFrame(void)
  */
 BOOL HMI_RenderFrame(void);
+
+void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
 
 void HMI_AppendPanel(const THMIPanel* const aHMIPanel);
 

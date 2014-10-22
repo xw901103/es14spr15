@@ -589,7 +589,7 @@ BOOL Initialize(void) /* TODO: check following statements */
     return bFALSE;
   }
 
-  if (!HMI_Setup(&MODCON_HMI_CONTEXT))
+  if (!HMI_Setup(&MODCON_HMI_SETUP))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_HMI_SETUP);
@@ -688,7 +688,10 @@ BOOL Initialize(void) /* TODO: check following statements */
   Timer_SetupPeriodicTimer(ModConAnalogSamplingRate, CONFIG_BUSCLK);
   Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
 
-  Analog_Setup(CONFIG_BUSCLK);  
+  Analog_Setup(CONFIG_BUSCLK);
+  
+  HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
+  HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);  
   
   Timer_PeriodicTimerEnable(bTRUE);
   
@@ -699,6 +702,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   return bTRUE;
 }
 
+/*
 UINT8 menuId = 0, idleCount = 0;
 UINT16 debounceCount = 0;
 
@@ -888,7 +892,6 @@ void UpdateFrame()
     systemFrame[5][14] = ' ';
     systemFrame[5][15] = ' ';
   }
-  /*
   if (PORTK_BIT2)
     systemFrame[0][0] = '2';  
   else if (PORTK_BIT3)
@@ -901,10 +904,11 @@ void UpdateFrame()
     systemFrame[0][0] = '7';
   else
     systemFrame[0][0] = ' ';  
-  */
 
   //UNUSED(LCD_OutFrame(systemFrame));       
 }
+*/
+
 
 /**
  * \fn void Routine(void)
@@ -917,19 +921,22 @@ void Routine(void)
     
   if (Clock_Update())
   {
-    if (++idleCount >= 10) 
-    {
-      menuId = 0;
-    }
-    UpdateFrame();    
+    //if (++idleCount >= 10) 
+    //{
+    //  menuId = 0;
+    //}
+    //UpdateFrame();
+    //HMI_RenderFrame();
+    HMI_SetTime(Clock_Minutes / 60, Clock_Minutes % 60, Clock_Seconds);    
     bad = !HandleModConUptime();
   }
   
-  DDRK = DDRK & (DDRK_BIT0_MASK | DDRK_BIT1_MASK);
+  //DDRK = DDRK & (DDRK_BIT0_MASK | DDRK_BIT1_MASK);
   
-  if (debounceCount > 0)
-    --debounceCount;
+  //if (debounceCount > 0)
+  //  --debounceCount;
   
+  /*
   if (PORTK_BIT2 && debounceCount == 0)
   { 
     idleCount = 0;
@@ -948,6 +955,7 @@ void Routine(void)
   {
     idleCount = 0;
   }
+   */
     
   if (Packet_Get())
   { 
@@ -1019,7 +1027,8 @@ void main(void)
 
   TurnOnStartupIndicator(); 
 
-  UpdateFrame();
+  //UpdateFrame();
+  //HMI_RenderFrame();
   
   /* queue startup packets for transmission */
   UNUSED(HandleModConStartup());

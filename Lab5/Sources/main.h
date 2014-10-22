@@ -75,7 +75,60 @@ const UINT8 MODCON_TIME_INITIAL = 'i';
 const UINT8 MODCON_MODE_GET = 1;
 const UINT8 MODCON_MODE_SET = 2;
 
-const THMIContext MODCON_HMI_CONTEXT = {0};
+void IdlePanelInputHandler(THMIKey key)
+{
+  if (key == HMI_KEY_SET)
+  {
+    HMI_ShowPanel(1);
+  }
+}
+
+const THMIPanel MODCON_HMI_IDLE_PANEL = 
+{
+  0,
+  {
+    'I','D','L','E',' ',' ',' '
+  },
+  &IdlePanelInputHandler,
+  0
+};
+
+void SettingPanelInputHandler(THMIKey key)
+{
+  if (key == HMI_KEY_SET)
+  {
+    HMI_ClosePanel();
+  }
+}
+
+const THMIPanel MODCON_HMI_SETTING_PANEL = 
+{
+  1,
+  {
+    'S','E','T','T','I','N','G'
+  },
+  &SettingPanelInputHandler,
+  0
+};
+
+const THMISetup MODCON_HMI_SETUP =
+{
+  HMI_RENDER_MODE_CONTINUITY,
+  {
+    {
+      {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+      {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
+      {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+      {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+      {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+      {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+      {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
+      {'S', 'E', 'T', ' ', 'D', 'A', 'T', 'A', ' ', '<', ' ', '>', ' ', 'S', 'E', 'L'}    
+    },
+    16,
+    8
+  }
+};
 
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
