@@ -182,6 +182,7 @@ THMIKey HMI_GetKeyEvent(void)
 BOOL HMI_RenderFrame(void)
 { 
   static UINT8 timerTick = ' ';
+  static UINT8 beginningMenuItemIndex = 0;
    
   THMIFrame * frameBufferPtr = 0;
   const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
@@ -204,6 +205,21 @@ BOOL HMI_RenderFrame(void)
     for (i = 0; i < HMI_PANEL_TITLE_SIZE; ++i)
     {
       frameBufferPtr->data[0][i] = panelPtr->title[i];
+    }
+    
+    if (panelPtr->menuPtr)
+    {
+      for(i = beginningMenuItemIndex; i < (beginningMenuItemIndex + 4); ++i)
+      {
+        if (panelPtr->menuPtr->itemPtr[i])
+        {
+          for (j = 0; j < HMI_MENU_ITEM_TITLE_SIZE; ++j)
+          {
+            /* TODO: use configurable setting for panel area starting row */
+            frameBufferPtr->data[2+i][j] = panelPtr->menuPtr->itemPtr[i]->title[j];
+          }
+        }
+      }
     }
   }
   

@@ -75,6 +75,70 @@ const UINT8 MODCON_TIME_INITIAL = 'i';
 const UINT8 MODCON_MODE_GET = 1;
 const UINT8 MODCON_MODE_SET = 2;
 
+THMIMenuItem MODCON_HMI_MENU_ITEM_VERSION =
+{
+  {'V', 'E', 'R', 'S', 'I', 'O', 'N'},
+  0
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_NUMBER =
+{
+  {'N', 'U', 'M', 'B', 'E', 'R'},
+  0
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_DEBUG =
+{
+  {'D', 'E', 'B', 'U', 'G'},
+  0
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_PROTOCOL =
+{
+  {'P', 'R', 'O', 'T', 'O', 'C', 'O', 'L'},
+  0
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT =
+{
+  {'B', 'K', 'L', 'I', 'G', 'H', 'T'},
+  0
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_CONTRAST =
+{
+  {'C', 'O', 'N', 'T', 'R', 'A', 'S', 'T'},
+  0
+};
+
+THMIMenu MODCON_HMI_MENU_IDLE =
+{
+  {
+    &MODCON_HMI_MENU_ITEM_VERSION,
+    &MODCON_HMI_MENU_ITEM_NUMBER,
+    &MODCON_HMI_MENU_ITEM_PROTOCOL,
+    &MODCON_HMI_MENU_ITEM_DEBUG,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00
+  }
+};
+
+THMIMenu MODCON_HMI_MENU_SETTING =
+{
+  {
+    &MODCON_HMI_MENU_ITEM_VERSION,
+    &MODCON_HMI_MENU_ITEM_NUMBER,
+    &MODCON_HMI_MENU_ITEM_PROTOCOL,
+    &MODCON_HMI_MENU_ITEM_DEBUG,
+    &MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT,
+    &MODCON_HMI_MENU_ITEM_LCD_CONTRAST,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00  
+  }
+};
+
 void IdlePanelInputHandler(THMIKey key)
 {
   if (key == HMI_KEY_SET)
@@ -90,7 +154,7 @@ const THMIPanel MODCON_HMI_IDLE_PANEL =
     'I','D','L','E',' ',' ',' '
   },
   &IdlePanelInputHandler,
-  0
+  &MODCON_HMI_MENU_IDLE
 };
 
 void SettingPanelInputHandler(THMIKey key)
@@ -108,7 +172,7 @@ const THMIPanel MODCON_HMI_SETTING_PANEL =
     'S','E','T','T','I','N','G'
   },
   &SettingPanelInputHandler,
-  0
+  &MODCON_HMI_MENU_SETTING
 };
 
 const THMISetup MODCON_HMI_SETUP =
@@ -291,6 +355,7 @@ void Routine(void);
  */
 void main(void);
 
+/*
 const char blankFrame[8][16] = 
 {
   {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -327,5 +392,6 @@ char systemFrame[8][16] =
   {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
   {'S', 'E', 'T', ' ', 'D', 'A', 'T', 'A', ' ', '<', ' ', '>', ' ', 'S', 'E', 'L'}
 };
+ */
 
 #endif

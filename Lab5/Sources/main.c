@@ -927,7 +927,8 @@ void Routine(void)
     //}
     //UpdateFrame();
     //HMI_RenderFrame();
-    HMI_SetTime(Clock_Minutes / 60, Clock_Minutes % 60, Clock_Seconds);    
+    /* hours from 0 to 23; minutes from 0 to 59; seconds from 0 to 59 */
+    HMI_SetTime((Clock_Minutes / 60) % 24, Clock_Minutes % 60, Clock_Seconds);    
     bad = !HandleModConUptime();
   }
   

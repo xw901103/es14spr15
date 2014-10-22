@@ -10,6 +10,7 @@
 #include "global.h"
 
 #define HMI_PANEL_TITLE_SIZE 7
+#define HMI_MENU_ITEM_TITLE_SIZE 16
 #define HMI_PANEL_SIZE 256
 #define HMI_FRAME_MAXIMUM_HEIGHT 8
 #define HMI_FRAME_MAXIMUM_WIDTH  16
@@ -53,14 +54,13 @@ typedef void(*THMIInputHandler)(THMIKey);
  */
 typedef struct 
 {
-  UINT8 title[HMI_PANEL_TITLE_SIZE];
+  UINT8 title[16];
   UINT16 value;
 } THMIMenuItem;
 
 typedef struct
 {
-  THMIMenuItem items[16];
-  UINT16 itemCount;
+  THMIMenuItem* itemPtr[8];
 } THMIMenu;
 
 /**
@@ -93,12 +93,16 @@ typedef struct
   
   THMIFrame* renderFrameBufferPtr;
   THMIFrame* screenFrameBufferPtr;
-  
+   
   UINT8 parentPanelId;
   UINT8 previousPanelId;
   UINT8 currentPanelId;
   UINT8 idlePanelId;
-  
+ 
+  /* TODO: think a better way to resolve menu scrolling */
+  UINT8 selectedMenuItemId;
+  UINT8 beginningMenuItemId;
+   
   UINT16 seconds;
   UINT16 minutes;
   UINT16 hours;
