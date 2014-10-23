@@ -48,6 +48,16 @@ typedef struct
 } THMIFrame;
 
 typedef void(*THMIInputHandler)(THMIKey);
+typedef void(*THMIMenuItemUpdater)(void);
+typedef void(*THMIPanelUpdater)(void);
+typedef void(*THMIMenuItemValueMutator)(void);
+
+typedef enum 
+{
+  HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
+  HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
+  HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN
+} THMIMenuItemValueType;
 
 /**
  * \brief HMI menu item
@@ -56,11 +66,24 @@ typedef struct
 {
   UINT8 title[16];
   UINT16 value;
+  UINT16 mutatedValue;
+  BOOL useMutatedValue;  
+  THMIMenuItemValueType valueType;
+  THMIMenuItemUpdater updater;
+  THMIMenuItemValueMutator mutator;
 } THMIMenuItem;
+
+typedef enum
+{
+  HMI_MENU_TYPE_STATIC,
+  HMI_MENU_TYPE_SETTING
+} THMIMenuType;
 
 typedef struct
 {
+  THMIMenuType type;
   THMIMenuItem* itemPtr[8];
+  UINT8 startingMenuItemIndex;
 } THMIMenu;
 
 /**
@@ -71,6 +94,7 @@ typedef struct
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
   THMIInputHandler inputHandler;
+  THMIPanelUpdater updater;
   THMIMenu* menuPtr;
 } THMIPanel;
 
@@ -80,7 +104,9 @@ typedef struct
 typedef struct
 {
   THMIRenderMode renderMode;
-  THMIFrame frameTemplate;  
+  THMIFrame frameTemplate;
+  UINT8 idlePanelId;
+  UINT16 maxIdleTimeCount;  
 } THMISetup;
 
 /**
@@ -93,6 +119,9 @@ typedef struct
   
   THMIFrame* renderFrameBufferPtr;
   THMIFrame* screenFrameBufferPtr;
+  
+  //THMIMenuItem* focusedMenuItemPtr;
+  //THMIMenuItem* selectedMenuItemPtr;
    
   UINT8 parentPanelId;
   UINT8 previousPanelId;
@@ -101,16 +130,23 @@ typedef struct
  
   /* TODO: think a better way to resolve menu scrolling */
   UINT8 selectedMenuItemId;
+  UINT8 focusedMenuItemId;
+  
   UINT8 beginningMenuItemId;
    
   UINT16 seconds;
   UINT16 minutes;
   UINT16 hours;
   
+  UINT16 maxIdleTimeCount;
   UINT16 idleTimeCount;
   
   UINT8 fps;
   BOOL isDirty; // bool for determine the screen needs to redraw
+
+  BOOL isFocusedOnMenuItem;
+  UINT8 focusedMenuItemIndex;
+  
 } THMIContext;
 
 /**
@@ -147,5 +183,15 @@ void HMI_RemovePanel(const UINT8 panelId);
 void HMI_ShowPanel(const UINT8 panelId);
 
 void HMI_ClosePanel(void);
+
+void HMI_ResetIdleCount(void);
+
+UINT8 HMI_GetSelectedMenuItemIndex(void);
+void HMI_SetSelectedMenuItemIndex(UINT8 index);
+void HMI_ClearSelectedMenuItemIndex(void);
+
+UINT8 HMI_GetFocusedMenuItemIndex(void);
+void HMI_SetFocusedMenuItemIndex(UINT8 index);
+void HMI_ClearFocusedMenuItemIndex(void);
 
 #endif

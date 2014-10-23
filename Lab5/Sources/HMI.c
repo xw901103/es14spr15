@@ -70,7 +70,13 @@ BOOL HMI_Setup(const THMISetup * const aHMISetup)
       }
       HMIContext.frameTemplate.width = aHMISetup->frameTemplate.width;
       HMIContext.frameTemplate.height = aHMISetup->frameTemplate.height;
-      HMIContext.idlePanelId = 0;
+      
+      HMIContext.focusedMenuItemId = 0xFF;
+      HMIContext.selectedMenuItemId = 0xFF;
+      
+      HMIContext.idlePanelId = aHMISetup->idlePanelId;
+      HMIContext.idleTimeCount = 0;
+      HMIContext.maxIdleTimeCount = aHMISetup->maxIdleTimeCount;
       HMIContext.parentPanelId = 0;
       HMIContext.currentPanelId = 0;
       HMIContext.previousPanelId = 0;
@@ -180,16 +186,19 @@ THMIKey HMI_GetKeyEvent(void)
 
 /* return true if display frame successfully */
 BOOL HMI_RenderFrame(void)
-{ 
+{
+  static UINT8 animationCount = 0;
   static UINT8 timerTick = ' ';
-  static UINT8 beginningMenuItemIndex = 0;
+  //static UINT8 beginningMenuItemIndex = 0;
    
   THMIFrame * frameBufferPtr = 0;
   const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
-  UINT8 i = 0, j = 0;
+  UINT16 menuItemValue = 0;
+  UINT8 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
   
   frameBufferPtr = HMIContext.renderFrameBufferPtr;
-  
+  ++animationCount;
+    
   for (j = 0; j < HMIContext.frameTemplate.height; ++j)
   {
     for (i = 0; i < HMIContext.frameTemplate.width; ++i)
@@ -209,14 +218,95 @@ BOOL HMI_RenderFrame(void)
     
     if (panelPtr->menuPtr)
     {
-      for(i = beginningMenuItemIndex; i < (beginningMenuItemIndex + 4); ++i)
+      switch(panelPtr->menuPtr->type)
       {
-        if (panelPtr->menuPtr->itemPtr[i])
+        case HMI_MENU_TYPE_STATIC:
+          menuItemTitleInitialPosition = 0;
+          menuItemValueInitialPosition = 0;
+          break;
+        case HMI_MENU_TYPE_SETTING:
+          menuItemTitleInitialPosition = 1;
+          menuItemValueInitialPosition = 1;
+          break;
+        default:
+          menuItemTitleInitialPosition = 0;
+          menuItemValueInitialPosition = 0;
+          break;
+      };
+      
+      for(i = 0; i < 4; ++i)
+      {
+        menuItemIndex = panelPtr->menuPtr->startingMenuItemIndex + i;
+        if (panelPtr->menuPtr->itemPtr[menuItemIndex])
         {
           for (j = 0; j < HMI_MENU_ITEM_TITLE_SIZE; ++j)
           {
             /* TODO: use configurable setting for panel area starting row */
-            frameBufferPtr->data[2+i][j] = panelPtr->menuPtr->itemPtr[i]->title[j];
+            if (panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j] > 0)
+            {              
+              frameBufferPtr->data[2+i][menuItemTitleInitialPosition + j] = panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j];
+            }
+          }
+          if (panelPtr->menuPtr->itemPtr[menuItemIndex]->useMutatedValue)
+          {
+            menuItemValue = panelPtr->menuPtr->itemPtr[menuItemIndex]->mutatedValue;
+          }
+          else
+          {
+            menuItemValue = panelPtr->menuPtr->itemPtr[menuItemIndex]->value;
+          }
+          switch(panelPtr->menuPtr->itemPtr[menuItemIndex]->valueType)
+          {
+            case HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER:
+              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue % 10) + '0';
+              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue % 100) / 10 + '0';
+              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = (menuItemValue % 1000) / 100 + '0';
+              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue % 10000) /1000 + '0';
+              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = (menuItemValue % 100000) /10000 + '0';          
+              break;
+            case HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN:
+              if (menuItemValue)
+              {
+                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'T';                          
+                frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'R';
+                frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'U';
+                frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'E';
+              }
+              else
+              {
+                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'F';                          
+                frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'A';
+                frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'L';
+                frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'S';
+                frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'E';
+              }
+              break;
+            case HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER:
+              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'V';
+              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = menuItemValue + '0';
+              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = '.';
+              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = menuItemValue + '0';                                                    
+              break;
+            default:
+              break;
+          }
+          
+          /* put [] beside focused menu item */
+          if (HMIContext.selectedMenuItemId == menuItemIndex)
+          {
+            if (animationCount % 4 <= 1)
+            {              
+              frameBufferPtr->data[2+i][9] = '[';
+              frameBufferPtr->data[2+i][15] = ']';
+            }
+          }
+          else if (HMIContext.focusedMenuItemId == menuItemIndex)
+          {
+            if (animationCount % 4 <= 1)
+            {              
+              frameBufferPtr->data[2+i][0] = '[';
+              frameBufferPtr->data[2+i][15] = ']'; 
+            }
           }
         }
       }
@@ -258,13 +348,51 @@ BOOL HMI_RenderFrame(void)
 
 void HMI_Poll(void) 
 {
+  //static THMIMenu* cachedMenuPtr = (THMIMenu*)0x00;
   const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
   THMIKey key = HMI_GetKeyEvent();
-
+  UINT8 i = 0;
+  
+  if (++HMIContext.idleTimeCount >= HMIContext.maxIdleTimeCount)
+  {
+    HMI_ResetIdleCount();
+    HMI_ShowPanel(HMIContext.idlePanelId);
+    panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
+  }
+  
   if (panelPtr)
   {
+    if (panelPtr->menuPtr)
+    {
+      //if (cachedMenuPtr != panelPtr->menuPtr)
+      //{
+      //  cachedMenuPtr = panelPtr->menuPtr; 
+        if (panelPtr->menuPtr->type == HMI_MENU_TYPE_SETTING)
+        {
+          if (HMIContext.focusedMenuItemId == 0xFF)
+          {
+            HMIContext.focusedMenuItemId = panelPtr->menuPtr->startingMenuItemIndex;
+          }
+        }
+        for (i = 0; i < 8; ++i)
+        {
+          if (panelPtr->menuPtr->itemPtr[i])
+          {
+            if (panelPtr->menuPtr->itemPtr[i]->updater)
+            {
+              if (!panelPtr->menuPtr->itemPtr[i]->useMutatedValue)
+              {                
+                panelPtr->menuPtr->itemPtr[i]->updater();
+              }
+            }
+          }
+        }
+      //}
+    }
+    
     if (key != HMI_KEY_NULL && panelPtr->inputHandler)
     {
+      HMI_ResetIdleCount();
       panelPtr->inputHandler(key);      
     }
   }
@@ -300,10 +428,59 @@ void HMI_ShowPanel(const UINT8 panelId)
 {
   HMIContext.previousPanelId = HMIContext.currentPanelId;
   HMIContext.currentPanelId = panelId;
+  
+  HMIContext.focusedMenuItemId = 0xFF;
+  HMIContext.selectedMenuItemId = 0xFF;
+  
+  if (HMIPanelLookupTable[HMIContext.currentPanelId])
+  {
+    if (HMIPanelLookupTable[HMIContext.currentPanelId]->updater)
+    {      
+      HMIPanelLookupTable[HMIContext.currentPanelId]->updater();
+    }
+  }
 }
 
 void HMI_ClosePanel(void) 
-{
+{ 
   HMIContext.previousPanelId = HMIContext.currentPanelId;
   HMIContext.currentPanelId = HMIContext.parentPanelId;
+
+  HMIContext.focusedMenuItemId = 0xFF;
+  HMIContext.selectedMenuItemId = 0xFF;
+}
+
+void HMI_ResetIdleCount(void)
+{
+  HMIContext.idleTimeCount = 0;
+}
+
+UINT8 HMI_GetSelectedMenuItemIndex(void)
+{
+  return HMIContext.selectedMenuItemId;
+}
+
+void HMI_SetSelectedMenuItemIndex(UINT8 index)
+{
+  HMIContext.selectedMenuItemId = index;
+}
+
+void HMI_ClearSelectedMenuItemIndex(void)
+{
+  HMIContext.selectedMenuItemId = 0xFF;
+}
+
+UINT8 HMI_GetFocusedMenuItemIndex(void)
+{
+  return HMIContext.focusedMenuItemId;
+}
+
+void HMI_SetFocusedMenuItemIndex(UINT8 index)
+{
+  HMIContext.focusedMenuItemId = index;
+}
+
+void HMI_ClearFocusedMenuItemIndex(void)
+{
+  HMIContext.focusedMenuItemId = 0xFF;
 }

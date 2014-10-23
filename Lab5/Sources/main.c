@@ -1041,3 +1041,34 @@ void main(void)
     CRG_DisarmCOP();
   }
 }
+
+/* TODO: organize following menu item updater */
+void UpdateMenuItemVersion(void)
+{
+  MODCON_HMI_MENU_ITEM_VERSION.value = MODCON_VERSION_MAJOR;
+}
+
+void UpdateMenuItemNumber(void)
+{
+  MODCON_HMI_MENU_ITEM_NUMBER.value = ModConNumber;
+}
+
+void UpdateMenuItemDebug(void)
+{
+  MODCON_HMI_MENU_ITEM_DEBUG.value = ModConDebug; 
+}
+
+void UpdateMenuItemProtocol(void)
+{
+  MODCON_HMI_MENU_ITEM_PROTOCOL.value = ModConProtocolMode;
+}
+
+void UpdateMenuItemBacklight(void)
+{
+  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value = 0;
+}
+
+void UpdateMenuItemContrast(void)
+{
+  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value = 0;
+}
