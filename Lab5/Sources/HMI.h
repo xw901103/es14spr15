@@ -65,7 +65,7 @@ typedef enum
 typedef struct 
 {
   UINT8 title[16];
-  UINT16 value;
+  UINT16 value; /* TODO: use type THMIMenuItemValue */
   UINT16 mutatedValue;
   BOOL useMutatedValue;  
   THMIMenuItemValueType valueType;
