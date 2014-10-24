@@ -15,6 +15,9 @@
 #define HMI_FRAME_MAXIMUM_HEIGHT 8
 #define HMI_FRAME_MAXIMUM_WIDTH  16
 
+#define HMI_DIALOG_MAXIMUM_HEIGHT 4
+#define HMI_DIALOG_MAXIMUM_WIDTH 16
+
 /**
  * \brief HMI buttons
  */
@@ -47,10 +50,15 @@ typedef struct
   UINT16 height;
 } THMIFrame;
 
-typedef void(*THMIInputHandler)(THMIKey);
+typedef BOOL(*THMIInputHandler)(THMIKey);
 typedef void(*THMIMenuItemUpdater)(void);
 typedef void(*THMIPanelUpdater)(void);
 typedef void(*THMIMenuItemValueMutator)(void);
+
+typedef struct
+{
+  UINT8 text[HMI_DIALOG_MAXIMUM_HEIGHT][HMI_DIALOG_MAXIMUM_WIDTH];
+} THMIDialog;
 
 typedef enum 
 {
@@ -59,15 +67,36 @@ typedef enum
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN
 } THMIMenuItemValueType;
 
+typedef union
+{
+  UINT16 l;
+  struct
+  {
+    UINT8 Hi;
+    UINT8 Lo;
+  } s;
+  struct
+  {
+    UINT8;
+    UINT8 Boolean;    
+  } b;
+  struct
+  {
+    UINT8 Major;
+    UINT8 Minor;
+  } v;
+} THMIMenuItemValue;
 /**
  * \brief HMI menu item
  */
 typedef struct 
 {
   UINT8 title[16];
-  UINT16 value; /* TODO: use type THMIMenuItemValue */
-  UINT16 mutatedValue;
-  BOOL useMutatedValue;  
+  THMIMenuItemValue value; /* TODO: use type THMIMenuItemValue */
+  THMIMenuItemValue minimumValue;
+  THMIMenuItemValue maximumValue;
+  THMIMenuItemValue mutatedValue;
+  BOOL useMutatedValue; /* TODO: add mutable boolean indicator */  
   THMIMenuItemValueType valueType;
   THMIMenuItemUpdater updater;
   THMIMenuItemValueMutator mutator;
@@ -83,6 +112,7 @@ typedef struct
 {
   THMIMenuType type;
   THMIMenuItem* itemPtr[8];
+  UINT8 itemCount;
   UINT8 startingMenuItemIndex;
 } THMIMenu;
 
@@ -91,11 +121,13 @@ typedef struct
  */
 typedef struct 
 {
+  /* TODO: add panel type */
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
   THMIInputHandler inputHandler;
   THMIPanelUpdater updater;
   THMIMenu* menuPtr;
+  THMIDialog* dialogPtr;
 } THMIPanel;
 
 /**
@@ -176,7 +208,7 @@ BOOL HMI_RenderFrame(void);
 
 void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
 
-void HMI_AppendPanel(const THMIPanel* const aHMIPanel);
+void HMI_AppendPanel(THMIPanel* const aHMIPanel);
 
 void HMI_RemovePanel(const UINT8 panelId);
 

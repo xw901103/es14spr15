@@ -164,6 +164,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_VERSION =
 {
   {'V', 'E', 'R', 'S', 'I', 'O', 'N'},
   0,
+  0x0000, /* minimum */
+  0xFFFF, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
@@ -175,6 +177,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_NUMBER =
 {
   {'N', 'U', 'M', 'B', 'E', 'R'},
   0,
+  0x0000, /* minimum */
+  0xFFFF, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
@@ -186,6 +190,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_DEBUG =
 {
   {'D', 'E', 'B', 'U', 'G'},
   0,
+  0x0000, /* minimum */
+  0x0001, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
@@ -197,6 +203,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_PROTOCOL =
 {
   {'P', 'R', 'O', 'T', 'O', 'C', 'O', 'L'},
   0,
+  0x0000, /* minimum */
+  0x0001, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
@@ -208,6 +216,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT =
 {
   {'B', 'K', 'L', 'I', 'G', 'H', 'T'},
   0,
+  0x0000, /* minimum */
+  0x0001, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
@@ -219,6 +229,8 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_CONTRAST =
 {
   {'C', 'O', 'N', 'T', 'R', 'A', 'S', 'T'},
   0,
+  0x0000, /* minimum */
+  0x003F, /* maximum */
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
@@ -239,6 +251,7 @@ THMIMenu MODCON_HMI_MENU_IDLE =
     (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00
   },
+  4, /* total item count */
   0
 };
 
@@ -255,12 +268,13 @@ THMIMenu MODCON_HMI_MENU_SETTING =
     (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00  
   },
+  5, /* total item count */
   0
 };
 
-void IdlePanelInputHandler(THMIKey key);
+BOOL IdlePanelInputHandler(THMIKey key);
 
-const THMIPanel MODCON_HMI_IDLE_PANEL = 
+THMIPanel MODCON_HMI_IDLE_PANEL = 
 {
   0,
   {
@@ -268,21 +282,24 @@ const THMIPanel MODCON_HMI_IDLE_PANEL =
   },
   &IdlePanelInputHandler,
   (THMIPanelUpdater)0x00,
-  &MODCON_HMI_MENU_IDLE
+  &MODCON_HMI_MENU_IDLE,
+  (THMIDialog*)0x00
 };
 
-void IdlePanelInputHandler(THMIKey key)
+BOOL IdlePanelInputHandler(THMIKey key)
 {
   if (key == HMI_KEY_SET)
   {
     HMI_ShowPanel(1);
+    return bTRUE;
   }
+  return bFALSE;
 }
 
-void SettingPanelInputHandler(THMIKey key);
+BOOL SettingPanelInputHandler(THMIKey key);
 void SettingPanelUpdater(void);
 
-const THMIPanel MODCON_HMI_SETTING_PANEL = 
+THMIPanel MODCON_HMI_SETTING_PANEL = 
 {
   1,
   {
@@ -290,10 +307,11 @@ const THMIPanel MODCON_HMI_SETTING_PANEL =
   },
   &SettingPanelInputHandler,
   &SettingPanelUpdater,
-  &MODCON_HMI_MENU_SETTING
+  &MODCON_HMI_MENU_SETTING,
+  (THMIDialog*)0x00
 };
 
-void SettingPanelInputHandler(THMIKey key)
+BOOL SettingPanelInputHandler(THMIKey key)
 {
   UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
   UINT8 selectedMenuItemIndex = HMI_GetSelectedMenuItemIndex();
@@ -301,77 +319,17 @@ void SettingPanelInputHandler(THMIKey key)
   switch(key)
   {
     case HMI_KEY_SET:
-      HMI_ClosePanel();      
-      break;
-    case HMI_KEY_UP:
-      if (MODCON_HMI_SETTING_PANEL.menuPtr)
-      {
-        if (selectedMenuItemIndex != focusedMenuItemIndex)
-        {          
-          if (focusedMenuItemIndex > 0)
-          {
-            if (--focusedMenuItemIndex < MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex)
-            {
-              MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex--;  
-            }
-          }
-          HMI_SetFocusedMenuItemIndex(focusedMenuItemIndex);
-        }
-        else
-        {
-          /* update value */
-          if (!MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->useMutatedValue)
-          {
-            MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->mutatedValue = MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->value;  
-            MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->useMutatedValue = bTRUE;
-          }
-          MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->mutatedValue++; 
-          /* TODO: toggle useMutatedValue once panel has been closed */         
-        }
+    case HMI_KEY_DATA:
+      if (HMI_GetSelectedMenuItemIndex() == 0xFF)
+      {        
+        HMI_ShowPanel(2);
       }
+      return bTRUE;      
       break;
-    case HMI_KEY_DOWN:
-      if (MODCON_HMI_SETTING_PANEL.menuPtr)
-      {
-        if (selectedMenuItemIndex != focusedMenuItemIndex)
-        {          
-          if (focusedMenuItemIndex < 4) /* from 0 to 4 total 5 items*/
-          {
-            if (++focusedMenuItemIndex >= MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex + 4)
-            {
-              MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex++;  
-            }
-          }
-          HMI_SetFocusedMenuItemIndex(focusedMenuItemIndex);
-        }
-        else
-        {
-          /* update value */
-          if (!MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->useMutatedValue)
-          {
-            MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->mutatedValue = MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->value;  
-            MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->useMutatedValue = bTRUE;
-          }
-          MODCON_HMI_SETTING_PANEL.menuPtr->itemPtr[selectedMenuItemIndex]->mutatedValue--;          
-          /* TODO: toggle useMutatedValue once panel has been closed */         
-        }
-      }
-      break;
-    case HMI_KEY_SELECT:
-      if (MODCON_HMI_SETTING_PANEL.menuPtr)
-      {
-        if (selectedMenuItemIndex == focusedMenuItemIndex)
-        {
-          HMI_ClearSelectedMenuItemIndex();
-        }
-        else
-        {
-          HMI_SetSelectedMenuItemIndex(focusedMenuItemIndex);
-        }
-      }        
     default:
       break;
   }
+  return bFALSE;
 }
 
 void SettingPanelUpdater(void)
@@ -380,6 +338,58 @@ void SettingPanelUpdater(void)
   {
     MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex = 0;
   }
+}
+
+THMIDialog MODCON_HMI_CONFIRM_DIALOG = 
+{
+  {
+    {
+      'P', 'L', 'E', 'A', 'S', 'E', ' ', 'P', 'R', 'E', 'S', 'S', ' ', 'S', 'E', 'T'
+    },
+    {
+      'T', 'O', ' ', 'C', 'O', 'N', 'F', 'I', 'R', 'M', '/', 'S', 'A', 'V', 'E', ' '
+    },
+    {
+      'O', 'R', ' ', 'D', 'A', 'T', 'A', ' ', 'T', 'O', ' ', ' ', ' ', ' ', ' ', ' '
+    },
+    {
+      'C', 'A', 'N', 'C', 'E', 'L', '/', 'D', 'I', 'S', 'C', 'A', 'R', 'D', '.', ' '
+    }
+  }
+};
+
+BOOL ConfirmPanelInputHandler(THMIKey key);
+void ApplyModConSettings(void);
+
+THMIPanel MODCON_HMI_CONFIRM_PANEL = 
+{
+  2,
+  {
+    'C', 'O', 'N', 'F', 'I', 'R', 'M'
+  },
+  &ConfirmPanelInputHandler, /* TODO: rename it to ConfigPanelInputProcessRoutine */
+  (THMIPanelUpdater)0x00,
+  (THMIMenu*)0x00,
+  &MODCON_HMI_CONFIRM_DIALOG
+};
+
+BOOL ConfirmPanelInputHandler(THMIKey key)
+{
+  switch(key)
+  {
+    case HMI_KEY_SET:
+      ApplyModConSettings(); /* TODO: rename it to something better */
+      HMI_ShowPanel(0);
+      return bTRUE;
+      break;
+    case HMI_KEY_DATA:
+      HMI_ShowPanel(0);
+      return bTRUE;
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
 }
 
 const THMISetup MODCON_HMI_SETUP =

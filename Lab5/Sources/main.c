@@ -691,7 +691,8 @@ BOOL Initialize(void) /* TODO: check following statements */
   Analog_Setup(CONFIG_BUSCLK);
   
   HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
-  HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);  
+  HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);
+  HMI_AppendPanel(&MODCON_HMI_CONFIRM_PANEL);  
   
   Timer_PeriodicTimerEnable(bTRUE);
   
@@ -1045,30 +1046,59 @@ void main(void)
 /* TODO: organize following menu item updater */
 void UpdateMenuItemVersion(void)
 {
-  MODCON_HMI_MENU_ITEM_VERSION.value = MODCON_VERSION_MAJOR;
+  MODCON_HMI_MENU_ITEM_VERSION.value.v.Major = MODCON_VERSION_MAJOR;
+  MODCON_HMI_MENU_ITEM_VERSION.value.v.Minor = MODCON_VERSION_MINOR;
 }
 
 void UpdateMenuItemNumber(void)
 {
-  MODCON_HMI_MENU_ITEM_NUMBER.value = ModConNumber;
+  MODCON_HMI_MENU_ITEM_NUMBER.value.l = ModConNumber;
 }
 
 void UpdateMenuItemDebug(void)
 {
-  MODCON_HMI_MENU_ITEM_DEBUG.value = ModConDebug; 
+  MODCON_HMI_MENU_ITEM_DEBUG.value.b.Boolean = (UINT8)ModConDebug; 
 }
 
 void UpdateMenuItemProtocol(void)
 {
-  MODCON_HMI_MENU_ITEM_PROTOCOL.value = ModConProtocolMode;
+  MODCON_HMI_MENU_ITEM_PROTOCOL.value.b.Boolean =(UINT8)ModConProtocolMode;
 }
 
 void UpdateMenuItemBacklight(void)
 {
-  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value = 0;
+  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value.b.Boolean = (UINT8)bFALSE;
 }
 
 void UpdateMenuItemContrast(void)
 {
-  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value = 0;
+  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value.b.Boolean = (UINT8)bFALSE;
+}
+
+void ApplyModConSettings(void)
+{
+    if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)MODCON_HMI_MENU_ITEM_PROTOCOL.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    /* send back current protocol mode to confirm */
+    UNUSED(HandleModConProtocolModeGet());  
+    
+    if (!EEPROM_Write16(&ModConNumber, (UINT16)MODCON_HMI_MENU_ITEM_NUMBER.mutatedValue.l))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+
+    if (!EEPROM_Write16(&ModConDebug, (UINT16)MODCON_HMI_MENU_ITEM_DEBUG.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    
+    /* TODO: add LCD backlight and contrast */
 }
