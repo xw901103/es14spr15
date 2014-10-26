@@ -588,14 +588,6 @@ BOOL Initialize(void) /* TODO: check following statements */
 #endif
     return bFALSE;
   }
-
-  if (!HMI_Setup(&MODCON_HMI_SETUP))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_HMI_SETUP);
-#endif
-    return bFALSE;
-  }  
   
   if (!CRG_SetupCOP(CONFIG_COP_RATE))
   {
@@ -682,6 +674,28 @@ BOOL Initialize(void) /* TODO: check following statements */
     }
   }
   
+  if (ModConHMIBacklight == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConHMIBacklight, DEFAULT_MODCON_HMI_BACKLIGHT))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;
+    }
+  }
+
+  if (ModConHMIContrast == 0xFFFF)
+  {
+    if (!EEPROM_Write16(&ModConHMIContrast, DEFAULT_MODCON_HMI_CONTRAST))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+      return bFALSE;
+    }
+  }
+  
   Clock_Setup(CONFIG_RTI_PRESCALERATE, CONFIG_RTI_MODULUSCOUNT);
     
   Timer_Setup();
@@ -689,6 +703,16 @@ BOOL Initialize(void) /* TODO: check following statements */
   Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
 
   Analog_Setup(CONFIG_BUSCLK);
+
+  MODCON_HMI_SETUP.backlight = ModConHMIBacklight;
+  MODCON_HMI_SETUP.contrast = ModConHMIContrast;
+  if (!HMI_Setup(&MODCON_HMI_SETUP))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_HMI_SETUP);
+#endif
+    return bFALSE;
+  }  
   
   HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
   HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);
@@ -1067,12 +1091,12 @@ void UpdateMenuItemProtocol(void)
 
 void UpdateMenuItemBacklight(void)
 {
-  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value.b.Boolean = (UINT8)bFALSE;
+  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value.b.Boolean = (UINT8)ModConHMIBacklight;
 }
 
 void UpdateMenuItemContrast(void)
 {
-  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value.b.Boolean = (UINT8)bFALSE;
+  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value.l = ModConHMIContrast;
 }
 
 void ApplyModConSettings(void)
@@ -1101,4 +1125,20 @@ void ApplyModConSettings(void)
     }
     
     /* TODO: add LCD backlight and contrast */
+    if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+
+    if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)MODCON_HMI_MENU_ITEM_LCD_CONTRAST.mutatedValue.l))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    
+    HMI_SetBacklight(ModConHMIBacklight);
+    HMI_SetContrast((UINT8)ModConHMIContrast);
 }

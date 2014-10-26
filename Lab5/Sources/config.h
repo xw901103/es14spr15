@@ -156,6 +156,18 @@
 #endif
 /* RESERVED END */
 
+#ifndef CONFIG_EEPROM_ADDRESS_HMI_BACKLIGHT
+#define CONFIG_EEPROM_ADDRESS_HMI_BACKLIGHT 0x0700 /* 16-bits HMI backlight EEPROM address */
+#else
+#warning "HMI backlight EEPROM address override detected!"
+#endif
+
+#ifndef CONFIG_EEPROM_ADDRESS_HMI_CONTRAST
+#define CONFIG_EEPROM_ADDRESS_HMI_CONTRAST 0x0702 /* 16-bits HMI contrast EEPROM address */
+#else
+#warning "HMI contrast EEPROM address override detected!"
+#endif
+
 #ifndef CONFIG_EEPROM_ADDRESS_BEGIN
 #define CONFIG_EEPROM_ADDRESS_BEGIN 0x0400 /* Begin boundary of EEPROM */
 #else

@@ -55,6 +55,12 @@ typedef void(*THMIMenuItemUpdater)(void);
 typedef void(*THMIPanelUpdater)(void);
 typedef void(*THMIMenuItemValueMutator)(void);
 
+typedef struct 
+{
+  UINT8 title[16];
+  UINT8 text[4][14];
+} THMIPopup;
+
 typedef struct
 {
   UINT8 text[HMI_DIALOG_MAXIMUM_HEIGHT][HMI_DIALOG_MAXIMUM_WIDTH];
@@ -138,7 +144,10 @@ typedef struct
   THMIRenderMode renderMode;
   THMIFrame frameTemplate;
   UINT8 idlePanelId;
-  UINT16 maxIdleTimeCount;  
+  UINT16 maxIdleTimeCount;
+  
+  BOOL backlight;
+  UINT16 contrast;  
 } THMISetup;
 
 /**
@@ -179,6 +188,10 @@ typedef struct
   BOOL isFocusedOnMenuItem;
   UINT8 focusedMenuItemIndex;
   
+  THMIPopup* popupPtr;
+  UINT16 maxPopupTimeCount;
+  UINT16 popupTimeCount;
+  
 } THMIContext;
 
 /**
@@ -216,6 +229,9 @@ void HMI_ShowPanel(const UINT8 panelId);
 
 void HMI_ClosePanel(void);
 
+void HMI_ShowPopup(THMIPopup*);
+void HMI_ClosePopup(void);
+
 void HMI_ResetIdleCount(void);
 
 UINT8 HMI_GetSelectedMenuItemIndex(void);
@@ -225,5 +241,8 @@ void HMI_ClearSelectedMenuItemIndex(void);
 UINT8 HMI_GetFocusedMenuItemIndex(void);
 void HMI_SetFocusedMenuItemIndex(UINT8 index);
 void HMI_ClearFocusedMenuItemIndex(void);
+
+void HMI_SetBacklight(BOOL backlight);
+void HMI_SetContrast(UINT8 contrast);
 
 #endif

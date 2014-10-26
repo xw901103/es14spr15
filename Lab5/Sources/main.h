@@ -153,6 +153,18 @@ const UINT8 MODCON_MODE_SET = 2;
 #define DEFAULT_MODCON_DEBUG 0
 #define ModConDebug EEPROM_WORD(CONFIG_EEPROM_ADDRESS_MODCON_DEBUG)
 
+/**
+ * ModCon HMI backlight
+ */
+#define DEFAULT_MODCON_HMI_BACKLIGHT 0
+#define ModConHMIBacklight EEPROM_WORD(CONFIG_EEPROM_ADDRESS_HMI_BACKLIGHT)
+
+/**
+ * ModCon HMI contrast
+ */
+#define DEFAULT_MODCON_HMI_CONTRAST 15
+#define ModConHMIContrast EEPROM_WORD(CONFIG_EEPROM_ADDRESS_HMI_CONTRAST)
+
 void UpdateMenuItemVersion(void);
 void UpdateMenuItemNumber(void);
 void UpdateMenuItemDebug(void);
@@ -392,7 +404,7 @@ BOOL ConfirmPanelInputHandler(THMIKey key)
   return bFALSE;
 }
 
-const THMISetup MODCON_HMI_SETUP =
+THMISetup MODCON_HMI_SETUP =
 {
   HMI_RENDER_MODE_CONTINUITY,
   {
@@ -410,7 +422,9 @@ const THMISetup MODCON_HMI_SETUP =
     8
   },
   0,
-  100
+  100,
+  0,
+  15
 };
 
 /**
