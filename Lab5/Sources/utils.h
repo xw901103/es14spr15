@@ -30,4 +30,13 @@ INT16 FindMedianOfThreeNumbers(const INT16 a, const INT16 b, const INT16 c);
 
 void SwapBytes(UINT8 * const lhs, UINT8 * const rhs);
 
+/**
+ * \fn void CopyBytes(UINT8* destination, UINT8* source, UINT16 count)
+ * \brief
+ * \param
+ * \param
+ * \param
+ */
+void CopyBytes(UINT8* const destination, const UINT8* const source, const UINT16 total);
+
 #endif

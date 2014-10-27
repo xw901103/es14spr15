@@ -325,6 +325,10 @@ BOOL HMI_Setup(const THMISetup * const aHMISetup)
       HMIContext.maxPopupTimeCount = 10;
       HMIContext.popupTimeCount = 0;
       
+      HMIContext.oldHours = 0;
+      HMIContext.oldMinutes = 0;
+      HMIContext.oldSeconds = 0;      
+
       HMIContext.hours = 0;
       HMIContext.minutes = 0;
       HMIContext.seconds = 0;      
@@ -432,31 +436,62 @@ THMIKey HMI_GetKeyEvent(void)
   return HMI_KEY_NULL;
 }
 
-/* return true if display frame successfully */
-BOOL HMI_RenderFrame(void)
+void HMIRenderPopup(THMIFrame * const frameBufferPtr)
 {
-  static UINT8 animationCount = 0;
-  static UINT8 timerTick = ' ';
-  //static UINT8 beginningMenuItemIndex = 0;
-   
-  THMIFrame * frameBufferPtr = 0;
-  const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
-  THMIMenuItemValue menuItemValue;
-  UINT8 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
+  UINT16 i = 0, j = 0;
   
-  frameBufferPtr = HMIContext.renderFrameBufferPtr;
-  ++animationCount;
-    
-  for (j = 0; j < HMIContext.frameTemplate.height; ++j)
-  {
-    for (i = 0; i < HMIContext.frameTemplate.width; ++i)
+  if (frameBufferPtr)
+  {    
+    if (HMIContext.popupPtr)
     {
-      frameBufferPtr->data[j][i] = HMIContext.frameTemplate.data[j][i];
+      for (i = 0; i < 4; ++i)
+      {
+        for (j = 0; j < 14; ++j)
+        {
+          frameBufferPtr->data[2+i][1+j] = HMIContext.popupPtr->text[i][j];
+        }
+      }
     }
+  } 
+  else 
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
   }
-  frameBufferPtr->width = HMIContext.frameTemplate.width;
-  frameBufferPtr->height = HMIContext.frameTemplate.height;
+}
+
+void HMIRenderTimer(THMIFrame * const frameBufferPtr)
+{
+  UINT16 i = 0, j = 0;
   
+  if (frameBufferPtr)
+  {
+    frameBufferPtr->data[0][15] = HMIContext.seconds % 10 + '0';
+    frameBufferPtr->data[0][14] = HMIContext.seconds / 10 + '0';
+    
+    frameBufferPtr->data[0][12] = HMIContext.minutes % 10 + '0';
+    frameBufferPtr->data[0][11] = HMIContext.minutes / 10 + '0';    
+
+    frameBufferPtr->data[0][9] = HMIContext.hours % 10 + '0';
+    frameBufferPtr->data[0][8] = HMIContext.hours / 10 + '0';
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const panelPtr)
+{
+  static UINT8 animationCount = 0; /* TODO: move them into HMIContext */
+  UINT16 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
+  THMIMenuItemValue menuItemValue;
+
+  ++animationCount; /* TODO: move it to HMIContext */
+
   if (panelPtr)
   {    
     for (i = 0; i < HMI_PANEL_TITLE_SIZE; ++i)
@@ -569,17 +604,37 @@ BOOL HMI_RenderFrame(void)
         }
       }
     }
-  }
-  
-  frameBufferPtr->data[0][15] = HMIContext.seconds % 10 + '0';
-  frameBufferPtr->data[0][14] = HMIContext.seconds / 10 + '0';
-    
-  frameBufferPtr->data[0][12] = HMIContext.minutes % 10 + '0';
-  frameBufferPtr->data[0][11] = HMIContext.minutes / 10 + '0';    
+  }    
+}
 
-  frameBufferPtr->data[0][9] = HMIContext.hours % 10 + '0';
-  frameBufferPtr->data[0][8] = HMIContext.hours / 10 + '0';    
-      
+/* return true if display frame successfully */
+BOOL HMI_RenderFrame(void)
+{
+  //static UINT8 animationCount = 0;
+  static UINT8 timerTick = ' ';
+  //static UINT8 beginningMenuItemIndex = 0;
+   
+  THMIFrame * const frameBufferPtr = HMIContext.renderFrameBufferPtr;
+  const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
+  //THMIMenuItemValue menuItemValue;
+  UINT8 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
+  
+  //++animationCount;
+    
+  for (j = 0; j < HMIContext.frameTemplate.height; ++j)
+  {
+    for (i = 0; i < HMIContext.frameTemplate.width; ++i)
+    {
+      frameBufferPtr->data[j][i] = HMIContext.frameTemplate.data[j][i];
+    }
+  }
+  frameBufferPtr->width = HMIContext.frameTemplate.width;
+  frameBufferPtr->height = HMIContext.frameTemplate.height;
+  
+  HMIRenderPanel(frameBufferPtr, panelPtr);  
+  HMIRenderTimer(frameBufferPtr);
+
+  /* time notation */
   if (frameBufferPtr->data[0][15] != HMIContext.screenFrameBufferPtr->data[0][15])
   {
     if (timerTick == ':')
@@ -595,17 +650,8 @@ BOOL HMI_RenderFrame(void)
   frameBufferPtr->data[0][13] = timerTick;    
   frameBufferPtr->data[0][10] = timerTick;
   
-  if (HMIContext.popupPtr)
-  {
-    for (i = 0; i < 4; ++i)
-    {
-      for (j = 0; j < 14; ++j)
-      {
-        frameBufferPtr->data[2+i][1+j] = HMIContext.popupPtr->text[i][j];
-      }
-    }
-  }
-  
+  HMIRenderPopup(frameBufferPtr);
+    
   if (LCD_OutFrame(frameBufferPtr->data))
   {
     HMIContext.renderFrameBufferPtr = HMIContext.screenFrameBufferPtr;    
@@ -694,6 +740,10 @@ void HMI_Poll(void)
 
 void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
 {
+  HMIContext.oldHours = HMIContext.hours;
+  HMIContext.oldMinutes = HMIContext.minutes;
+  HMIContext.oldSeconds = HMIContext.seconds;
+  
   HMIContext.hours = hours;
   HMIContext.minutes = minutes;
   HMIContext.seconds = seconds;

@@ -60,3 +60,22 @@ void SwapBytes(UINT8 * const lhs, UINT8 * const rhs)
 #endif
   }
 }
+
+void CopyBytes(UINT8* const destination, const UINT8* const source, const UINT16 total)
+{
+  UINT16 index = 0;
+
+  if (destination && source)
+  {
+    for (index = 0; index < total; ++index)
+    {
+      *(destination + index) = *(source + index);
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}

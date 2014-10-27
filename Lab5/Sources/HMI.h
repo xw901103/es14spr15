@@ -50,9 +50,9 @@ typedef struct
   UINT16 height;
 } THMIFrame;
 
-typedef BOOL(*THMIInputHandler)(THMIKey);
-typedef void(*THMIMenuItemUpdater)(void);
-typedef void(*THMIPanelUpdater)(void);
+typedef BOOL(*THMIInputProcessRoutine)(THMIKey);
+typedef void(*THMIMenuItemUpdateRoutine)(void);
+typedef void(*THMIPanelUpdateRoutine)(void);
 typedef void(*THMIMenuItemValueMutator)(void);
 
 typedef struct 
@@ -92,6 +92,7 @@ typedef union
     UINT8 Minor;
   } v;
 } THMIMenuItemValue;
+
 /**
  * \brief HMI menu item
  */
@@ -104,7 +105,7 @@ typedef struct
   THMIMenuItemValue mutatedValue;
   BOOL useMutatedValue; /* TODO: add mutable boolean indicator */  
   THMIMenuItemValueType valueType;
-  THMIMenuItemUpdater updater;
+  THMIMenuItemUpdateRoutine updater;
   THMIMenuItemValueMutator mutator;
 } THMIMenuItem;
 
@@ -130,8 +131,8 @@ typedef struct
   /* TODO: add panel type */
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
-  THMIInputHandler inputHandler;
-  THMIPanelUpdater updater;
+  THMIInputProcessRoutine inputHandler;
+  THMIPanelUpdateRoutine updater;
   THMIMenu* menuPtr;
   THMIDialog* dialogPtr;
 } THMIPanel;
@@ -175,6 +176,10 @@ typedef struct
   
   UINT8 beginningMenuItemId;
    
+  UINT16 oldSeconds;
+  UINT16 oldMinutes;
+  UINT16 oldHours;
+
   UINT16 seconds;
   UINT16 minutes;
   UINT16 hours;

@@ -284,7 +284,7 @@ THMIMenu MODCON_HMI_MENU_SETTING =
   0
 };
 
-BOOL IdlePanelInputHandler(THMIKey key);
+BOOL IdlePanelInputProcessRoutine(THMIKey key);
 
 THMIPanel MODCON_HMI_IDLE_PANEL = 
 {
@@ -292,13 +292,13 @@ THMIPanel MODCON_HMI_IDLE_PANEL =
   {
     ' ',' ',' ',' ',' ',' ',' '
   },
-  &IdlePanelInputHandler,
-  (THMIPanelUpdater)0x00,
+  &IdlePanelInputProcessRoutine,
+  (THMIPanelUpdateRoutine)0x00,
   &MODCON_HMI_MENU_IDLE,
   (THMIDialog*)0x00
 };
 
-BOOL IdlePanelInputHandler(THMIKey key)
+BOOL IdlePanelInputProcessRoutine(THMIKey key)
 {
   if (key == HMI_KEY_SET)
   {
@@ -308,8 +308,8 @@ BOOL IdlePanelInputHandler(THMIKey key)
   return bFALSE;
 }
 
-BOOL SettingPanelInputHandler(THMIKey key);
-void SettingPanelUpdater(void);
+BOOL SettingPanelInputProcessRoutine(THMIKey key);
+void SettingPanelUpdateRoutine(void);
 
 THMIPanel MODCON_HMI_SETTING_PANEL = 
 {
@@ -317,13 +317,13 @@ THMIPanel MODCON_HMI_SETTING_PANEL =
   {
     'S','E','T','T','I','N','G'
   },
-  &SettingPanelInputHandler,
-  &SettingPanelUpdater,
+  &SettingPanelInputProcessRoutine,
+  &SettingPanelUpdateRoutine,
   &MODCON_HMI_MENU_SETTING,
   (THMIDialog*)0x00
 };
 
-BOOL SettingPanelInputHandler(THMIKey key)
+BOOL SettingPanelInputProcessRoutine(THMIKey key)
 {
   UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
   UINT8 selectedMenuItemIndex = HMI_GetSelectedMenuItemIndex();
@@ -344,7 +344,7 @@ BOOL SettingPanelInputHandler(THMIKey key)
   return bFALSE;
 }
 
-void SettingPanelUpdater(void)
+void SettingPanelUpdateRoutine(void)
 {
   if (MODCON_HMI_SETTING_PANEL.menuPtr)
   {
@@ -370,7 +370,7 @@ THMIDialog MODCON_HMI_CONFIRM_DIALOG =
   }
 };
 
-BOOL ConfirmPanelInputHandler(THMIKey key);
+BOOL ConfirmPanelInputProcessRoutine(THMIKey key);
 void ApplyModConSettings(void);
 
 THMIPanel MODCON_HMI_CONFIRM_PANEL = 
@@ -379,13 +379,13 @@ THMIPanel MODCON_HMI_CONFIRM_PANEL =
   {
     'C', 'O', 'N', 'F', 'I', 'R', 'M'
   },
-  &ConfirmPanelInputHandler, /* TODO: rename it to ConfigPanelInputProcessRoutine */
-  (THMIPanelUpdater)0x00,
+  &ConfirmPanelInputProcessRoutine, /* TODO: rename it to ConfigPanelInputProcessRoutine */
+  (THMIPanelUpdateRoutine)0x00,
   (THMIMenu*)0x00,
   &MODCON_HMI_CONFIRM_DIALOG
 };
 
-BOOL ConfirmPanelInputHandler(THMIKey key)
+BOOL ConfirmPanelInputProcessRoutine(THMIKey key)
 {
   switch(key)
   {
@@ -509,44 +509,5 @@ void Routine(void);
  * \brief The main entry of the program will initialize runtime parameters and keep looping routine.
  */
 void main(void);
-
-/*
-const char blankFrame[8][16] = 
-{
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-};
-
-const char testFrame[8][16] = 
-{
-  {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'},
-  {'1', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'2', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'3', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'4', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'5', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'6', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-  {'7', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}
-};
-
-char systemFrame[8][16] = 
-{
-//  {' ', 'U', 'P', 'T', 'I', 'M', 'E', ' ', '0', '0', ':', '0', '0', ':', '0', '0'},
-  {'P', 'A', 'N', 'E', 'L', 'T', 'S', ' ', '0', '0', ':', '0', '0', ':', '0', '0'},
-  {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
-  {' ', ' ', 'N', 'U', 'M', 'B', 'E', 'R', ':', '0', '0', '0', '0', '0', ' ', ' '},
-  {' ', 'V', 'E', 'R', 'S', 'I', 'O', 'N', ':', '0', '.', '0', ' ', ' ', ' ', ' '},
-  {'P', 'R', 'O', 'T', 'O', 'C', 'O', 'L', ':', 'U', 'N', 'K', 'N', 'O', 'W', ' '},
-  {' ', ' ', ' ', 'D', 'E', 'B', 'U', 'G', ':', 'U', 'N', 'K', 'N', 'O', 'W', ' '},
-  {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
-  {'S', 'E', 'T', ' ', 'D', 'A', 'T', 'A', ' ', '<', ' ', '>', ' ', 'S', 'E', 'L'}
-};
- */
 
 #endif
