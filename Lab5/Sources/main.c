@@ -717,6 +717,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
   HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);
   HMI_AppendPanel(&MODCON_HMI_ANALOG_PANEL);
+  HMI_AppendPanel(&MODCON_HMI_SWITCH_PANEL);
   HMI_AppendPanel(&MODCON_HMI_CONFIRM_PANEL);  
   
   Timer_PeriodicTimerEnable(bTRUE);
@@ -916,6 +917,152 @@ void UpdateMenuItemAnalogOutputCh4Value(void)
 }
 /* analog channels update routines */
 
+/* switch update routines */
+void UpdateMenuItemAnalogInputCh1Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh2Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh3Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh4Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh5Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh6Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh7Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogInputCh8Switch(void)
+{
+  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogOutputCh1Switch(void)
+{
+  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogOutputCh2Switch(void)
+{
+  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogOutputCh3Switch(void)
+{
+  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+
+void UpdateMenuItemAnalogOutputCh4Switch(void)
+{
+  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4)
+  {    
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.value.b.Boolean = bTRUE;
+  }
+  else
+  {
+    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.value.b.Boolean = bFALSE;
+  }
+}
+/* switch update routines */
+
 void ApplyModConSettings(void)
 {
     if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)MODCON_HMI_MENU_ITEM_PROTOCOL.mutatedValue.b.Boolean))
@@ -958,4 +1105,93 @@ void ApplyModConSettings(void)
     
     HMI_SetBacklight(ModConHMIBacklight);
     HMI_SetContrast((UINT8)ModConHMIContrast);
+}
+
+void ApplyModConSwitchs(void)
+{
+  UINT16 analogInputChannelSwitch = 0, analogOutputChannelSwitch = 0;
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4;
+  }
+  
+  if (!EEPROM_Write16(&ModConAnalogInputChannelSwitch, analogInputChannelSwitch))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+  
+  if (!EEPROM_Write16(&ModConAnalogOutputChannelSwitch, analogOutputChannelSwitch))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+}
+
+void EraseModConSettings(void)
+{
+    if (!EEPROM_Erase())
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_ERASE);
+#endif
+    }
 }

@@ -54,8 +54,8 @@ typedef struct
 
 typedef BOOL(*THMIInputProcessRoutine)(THMIKey);
 typedef void(*THMIMenuItemUpdateRoutine)(void);
+typedef void(*THMIMenuItemActionRoutine)(void);
 typedef void(*THMIPanelUpdateRoutine)(void);
-typedef void(*THMIMenuItemValueMutator)(void);
 
 typedef struct 
 {
@@ -68,8 +68,16 @@ typedef struct
   UINT8 text[HMI_DIALOG_MAXIMUM_HEIGHT][HMI_DIALOG_MAXIMUM_WIDTH];
 } THMIDialog;
 
+typedef enum
+{
+  HMI_MENU_ITEM_TYPE_STATIC,
+  HMI_MENU_ITEM_TYPE_ENTRY, /* can be selected and value can be mutated */
+  HMI_MENU_ITEM_TYPE_ACTION /* can be selected and its action routine will be executed */
+} THMIMenuItemType;
+
 typedef enum 
 {
+  HMI_MENU_ITEM_VALUE_TYPE_NONE,
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
   HMI_MENU_ITEM_VALUE_TYPE_FLOAT, /* +- XX.XX */
   HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
@@ -113,6 +121,7 @@ typedef union
 typedef struct 
 {
   UINT8 title[16];
+  THMIMenuItemType type;
   THMIMenuItemValue value; /* TODO: use type THMIMenuItemValue */
   THMIMenuItemValue minimumValue;
   THMIMenuItemValue maximumValue;
@@ -121,7 +130,7 @@ typedef struct
   THMIMenuItemValueType valueType;
   THMIMenuItemValueNotation valueNotation;
   THMIMenuItemUpdateRoutine updateRoutine;
-  THMIMenuItemValueMutator mutator;
+  THMIMenuItemActionRoutine actionRoutine;
 } THMIMenuItem;
 
 typedef enum
