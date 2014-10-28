@@ -10,6 +10,7 @@
 #include <mc9s12a512.h>
 
 TAnalogInput Analog_Input[NB_INPUT_CHANNELS] = { 0 };
+TAnalogOutput Analog_Output[NB_OUTPUT_CHANNELS] = { 0 };
 
 #define ADC_OFFSET 0x0800
 

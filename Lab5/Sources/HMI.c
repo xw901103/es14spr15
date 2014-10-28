@@ -122,7 +122,7 @@ BOOL HMIPopupProcessRoutine(void)
   return bFALSE;
 }
 
-void HMIPanelInputHandler(THMIPanel* const panelPtr, THMIKey key)
+void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
 {
   UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
   UINT8 selectedMenuItemIndex = HMI_GetSelectedMenuItemIndex();
@@ -489,11 +489,12 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
   static UINT8 animationCount = 0; /* TODO: move them into HMIContext */
   UINT16 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
   THMIMenuItemValue menuItemValue;
+  THMIMenuItemValueNotation menuItemValueNotation = HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT;
 
   ++animationCount; /* TODO: move it to HMIContext */
 
-  if (panelPtr)
-  {    
+  if (frameBufferPtr && panelPtr)
+  {  
     for (i = 0; i < HMI_PANEL_TITLE_SIZE; ++i)
     {
       frameBufferPtr->data[0][i] = panelPtr->title[i];
@@ -548,39 +549,90 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
           {
             menuItemValue = panelPtr->menuPtr->itemPtr[menuItemIndex]->value;
           }
+          menuItemValueNotation = panelPtr->menuPtr->itemPtr[menuItemIndex]->valueNotation;
           switch(panelPtr->menuPtr->itemPtr[menuItemIndex]->valueType)
           {
-            case HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER:
-              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.l % 10) + '0';
-              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue.l % 100) / 10 + '0';
-              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = (menuItemValue.l % 1000) / 100 + '0';
-              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue.l % 10000) /1000 + '0';
-              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = (menuItemValue.l % 100000) /10000 + '0';          
-              break;
             case HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN:
-              if (menuItemValue.b.Boolean)
+              switch (menuItemValueNotation)
               {
-                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'T';                          
-                frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'R';
-                frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'U';
-                frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'E';
-              }
-              else
-              {
-                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'F';                          
-                frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'A';
-                frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'L';
-                frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'S';
-                frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'E';
+                case HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF:
+                  if (menuItemValue.b.Boolean)
+                  {
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'O';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'N';
+                  }
+                  else
+                  {
+                    frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'O';
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'F';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'F';
+                  }                
+                  break;
+                case HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC:
+                  if (menuItemValue.b.Boolean)
+                  {
+                    frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'S';                          
+                    frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'Y';
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'N';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'C';
+                  }
+                  else
+                  {
+                    frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'A';                          
+                    frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'S';
+                    frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'Y';
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'N';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'C';
+                  }                
+                  break;
+                default:
+                  if (menuItemValue.b.Boolean)
+                  {
+                    frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'T';                          
+                    frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'R';
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'U';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'E';
+                  }
+                  else
+                  {
+                    frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'F';                          
+                    frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = 'A';
+                    frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = 'L';
+                    frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = 'S';
+                    frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = 'E';
+                  }                
+                  break;
               }
               break;
             case HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER:
               frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'V';
               frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = menuItemValue.v.Major + '0';
               frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = '.';
-              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = menuItemValue.v.Minor + '0';                                                    
+              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = menuItemValue.v.Minor / 10 + '0';
+              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.v.Minor % 10) + '0';                                                    
               break;
+            case HMI_MENU_ITEM_VALUE_TYPE_FLOAT:
+              if (menuItemValue.f.Float < 0)
+              {
+                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = '-';
+                menuItemValue.f.Float = -menuItemValue.f.Float;
+              }
+              else
+              {
+                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = '+';
+              }
+              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 10) + '0';
+              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 100) / 10 + '0';
+              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = '.';
+              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 1000) / 100 + '0';
+              break;
+            case HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER:              
             default:
+              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.l % 10) + '0';
+              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue.l % 100) / 10 + '0';
+              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = (menuItemValue.l % 1000) / 100 + '0';
+              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue.l % 10000) /1000 + '0';
+              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = (menuItemValue.l % 100000) /10000 + '0';            
               break;
           }
           
@@ -604,7 +656,13 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
         }
       }
     }
-  }    
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
 }
 
 /* return true if display frame successfully */
@@ -665,6 +723,7 @@ void HMI_Poll(void)
 {
   //static THMIMenu* cachedMenuPtr = (THMIMenu*)0x00;
   THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
+  THMIMenuItem* menuItemPtr = (THMIMenuItem*)0x0000;
   THMIKey key = HMI_GetKeyEvent();
   UINT8 i = 0;
   
@@ -698,16 +757,17 @@ void HMI_Poll(void)
             HMIContext.focusedMenuItemId = panelPtr->menuPtr->startingMenuItemIndex;
           }
         }
-        for (i = 0; i < 8; ++i)
+        for (i = 0; i < 4; ++i)
         {
-          if (panelPtr->menuPtr->itemPtr[i])
+          menuItemPtr = panelPtr->menuPtr->itemPtr[i + panelPtr->menuPtr->startingMenuItemIndex];
+          if (menuItemPtr)
           {
-            if (panelPtr->menuPtr->itemPtr[i]->updater)
+            if (menuItemPtr->updateRoutine)
             {
-              if (!panelPtr->menuPtr->itemPtr[i]->useMutatedValue)
+              if (!menuItemPtr->useMutatedValue)
               {                
-                panelPtr->menuPtr->itemPtr[i]->updater();
-                panelPtr->menuPtr->itemPtr[i]->mutatedValue = panelPtr->menuPtr->itemPtr[i]->value;
+                menuItemPtr->updateRoutine();
+                menuItemPtr->mutatedValue = menuItemPtr->value;
               }
             }
           }
@@ -720,16 +780,16 @@ void HMI_Poll(void)
       if (key != HMI_KEY_NULL)
       {      
         HMI_ResetIdleCount();
-        if (panelPtr->inputHandler)
+        if (panelPtr->inputProcessRoutine)
         {
-          if (!panelPtr->inputHandler(key))
+          if (!panelPtr->inputProcessRoutine(key))
           {
-            HMIPanelInputHandler(panelPtr, key);
+            HMIPanelInputProcessRoutine(panelPtr, key);
           }
         }
         else
         {
-          HMIPanelInputHandler(panelPtr, key);
+          HMIPanelInputProcessRoutine(panelPtr, key);
         }
       }
     }

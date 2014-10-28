@@ -18,6 +18,8 @@
 #define HMI_DIALOG_MAXIMUM_HEIGHT 4
 #define HMI_DIALOG_MAXIMUM_WIDTH 16
 
+#define HMI_MENU_ITEM_SIZE 16
+
 /**
  * \brief HMI buttons
  */
@@ -69,9 +71,17 @@ typedef struct
 typedef enum 
 {
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT, /* +- XX.XX */
   HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN
 } THMIMenuItemValueType;
+
+typedef enum
+{
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT = 0,
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF,
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC
+} THMIMenuItemValueNotation;
 
 typedef union
 {
@@ -91,6 +101,10 @@ typedef union
     UINT8 Major;
     UINT8 Minor;
   } v;
+  struct
+  {
+    INT16 Float;
+  } f;
 } THMIMenuItemValue;
 
 /**
@@ -105,7 +119,8 @@ typedef struct
   THMIMenuItemValue mutatedValue;
   BOOL useMutatedValue; /* TODO: add mutable boolean indicator */  
   THMIMenuItemValueType valueType;
-  THMIMenuItemUpdateRoutine updater;
+  THMIMenuItemValueNotation valueNotation;
+  THMIMenuItemUpdateRoutine updateRoutine;
   THMIMenuItemValueMutator mutator;
 } THMIMenuItem;
 
@@ -118,7 +133,7 @@ typedef enum
 typedef struct
 {
   THMIMenuType type;
-  THMIMenuItem* itemPtr[8];
+  THMIMenuItem* itemPtr[HMI_MENU_ITEM_SIZE];
   UINT8 itemCount;
   UINT8 startingMenuItemIndex;
 } THMIMenu;
@@ -131,7 +146,7 @@ typedef struct
   /* TODO: add panel type */
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
-  THMIInputProcessRoutine inputHandler;
+  THMIInputProcessRoutine inputProcessRoutine;
   THMIPanelUpdateRoutine updater;
   THMIMenu* menuPtr;
   THMIDialog* dialogPtr;

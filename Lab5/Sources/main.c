@@ -716,6 +716,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   
   HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
   HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);
+  HMI_AppendPanel(&MODCON_HMI_ANALOG_PANEL);
   HMI_AppendPanel(&MODCON_HMI_CONFIRM_PANEL);  
   
   Timer_PeriodicTimerEnable(bTRUE);
@@ -726,214 +727,6 @@ BOOL Initialize(void) /* TODO: check following statements */
   
   return bTRUE;
 }
-
-/*
-UINT8 menuId = 0, idleCount = 0;
-UINT16 debounceCount = 0;
-
-void UpdateFrame() 
-{  
-  if (systemFrame[0][13] == ':')
-  {
-    systemFrame[0][10] = ' ';
-    systemFrame[0][13] = ' ';
-  }
-  else
-  {
-    systemFrame[0][10] = ':';
-    systemFrame[0][13] = ':';
-  }
-  systemFrame[0][8] = ((Clock_Minutes / 60) % 100 / 10 + '0');  
-  systemFrame[0][9] = ((Clock_Minutes / 60) % 10 + '0');  
-  systemFrame[0][11] = ((Clock_Minutes % 60) / 10 + '0');
-  systemFrame[0][12] = (Clock_Minutes % 10 + '0');
-  systemFrame[0][14] = (Clock_Seconds / 10 + '0');
-  systemFrame[0][15] = (Clock_Seconds % 10 + '0');
-
-  if (menuId == 0)
-  {
-    systemFrame[2][0] = ' ';
-    systemFrame[2][1] = ' ';
-    systemFrame[2][2] = 'N';
-    systemFrame[2][3] = 'U';
-    systemFrame[2][4] = 'M';
-    systemFrame[2][5] = 'B';
-    systemFrame[2][6] = 'E';
-    systemFrame[2][7] = 'R';
-    systemFrame[2][8] = ':';
-
-    systemFrame[2][9] = ModConNumber / 10000 + '0';
-    systemFrame[2][10] = (ModConNumber % 10000) / 1000 + '0';
-    systemFrame[2][11] = (ModConNumber % 1000) / 100 + '0';
-    systemFrame[2][12] = (ModConNumber % 100) / 10 + '0';
-    systemFrame[2][13] = (ModConNumber % 10) + '0';
-    systemFrame[2][14] = ' ';
-    systemFrame[2][15] = ' ';
-
-    systemFrame[3][0] = ' ';
-    systemFrame[3][1] = 'V';
-    systemFrame[3][2] = 'E';
-    systemFrame[3][3] = 'R';
-    systemFrame[3][4] = 'S';
-    systemFrame[3][5] = 'I';
-    systemFrame[3][6] = 'O';
-    systemFrame[3][7] = 'N';
-    systemFrame[3][8] = ':';
-
-    systemFrame[3][9] = MODCON_VERSION_MAJOR + '0';
-    systemFrame[3][10] = '.';
-    systemFrame[3][11] = MODCON_VERSION_MINOR + '0';
-  
-    systemFrame[4][0] = 'P';
-    systemFrame[4][1] = 'R';
-    systemFrame[4][2] = 'O';
-    systemFrame[4][3] = 'T';
-    systemFrame[4][4] = 'O';
-    systemFrame[4][5] = 'C';
-    systemFrame[4][6] = 'O';
-    systemFrame[4][7] = 'L';
-    systemFrame[4][8] = ':';
-    
-    if (ModConProtocolMode == MODCON_PROTOCOL_MODE_ASYNCHRONOUS)
-    {
-
-      systemFrame[4][9] = 'A';
-      systemFrame[4][10] = 'S';
-      systemFrame[4][11] = 'Y';
-      systemFrame[4][12] = 'N';
-      systemFrame[4][13] = 'C';
-      systemFrame[4][14] = ' ';
-      systemFrame[4][15] = ' ';
-    }
-    else
-    {
-      systemFrame[4][9] = 'S';
-      systemFrame[4][10] = 'Y';
-      systemFrame[4][11] = 'N';
-      systemFrame[4][12] = 'C';
-      systemFrame[4][13] = ' ';
-      systemFrame[4][14] = ' ';
-      systemFrame[4][15] = ' ';
-    }
-
-    systemFrame[5][0] = ' ';
-    systemFrame[5][1] = ' ';
-    systemFrame[5][2] = ' ';
-    systemFrame[5][3] = 'D';
-    systemFrame[5][4] = 'E';
-    systemFrame[5][5] = 'B';
-    systemFrame[5][6] = 'U';
-    systemFrame[5][7] = 'G';
-    systemFrame[5][8] = ':';
-
-    if (ModConDebug)
-    {
-      systemFrame[5][9] = 'T';
-      systemFrame[5][10] = 'R';
-      systemFrame[5][11] = 'U';
-      systemFrame[5][12] = 'E';
-      systemFrame[5][13] = ' ';
-      systemFrame[5][14] = ' ';
-      systemFrame[5][15] = ' ';
-    }
-    else
-    {
-      systemFrame[5][9] = 'F';
-      systemFrame[5][10] = 'A';
-      systemFrame[5][11] = 'L';
-      systemFrame[5][12] = 'S';
-      systemFrame[5][13] = 'E';
-      systemFrame[5][14] = ' ';
-      systemFrame[5][15] = ' ';
-    }
-  }
-  if (menuId == 1) 
-  {
-    systemFrame[2][0] = 'W';
-    systemFrame[2][1] = 'O';
-    systemFrame[2][2] = 'R';
-    systemFrame[2][3] = 'K';
-    systemFrame[2][4] = ' ';
-    systemFrame[2][5] = 'I';
-    systemFrame[2][6] = 'N';
-    systemFrame[2][7] = ' ';
-    systemFrame[2][8] = 'P';
-    systemFrame[2][9] = 'R';
-    systemFrame[2][10] = 'O';
-    systemFrame[2][11] = 'G';
-    systemFrame[2][12] = 'R';
-    systemFrame[2][13] = 'E';
-    systemFrame[2][14] = 'S';
-    systemFrame[2][15] = 'S';
-
-    systemFrame[3][0] = ' ';
-    systemFrame[3][1] = ' ';
-    systemFrame[3][2] = ' ';
-    systemFrame[3][3] = ' ';
-    systemFrame[3][4] = ' ';
-    systemFrame[3][5] = ' ';
-    systemFrame[3][6] = ' ';
-    systemFrame[3][7] = ' ';
-    systemFrame[3][8] = ' ';
-    systemFrame[3][9] = ' ';
-    systemFrame[3][10] = ' ';
-    systemFrame[3][11] = ' ';
-    systemFrame[3][12] = ' ';
-    systemFrame[3][13] = ' ';
-    systemFrame[3][14] = ' ';
-    systemFrame[3][15] = ' ';
-
-    systemFrame[4][0] = ' ';
-    systemFrame[4][1] = ' ';
-    systemFrame[4][2] = ' ';
-    systemFrame[4][3] = ' ';
-    systemFrame[4][4] = ' ';
-    systemFrame[4][5] = ' ';
-    systemFrame[4][6] = ' ';
-    systemFrame[4][7] = ' ';
-    systemFrame[4][8] = ' ';
-    systemFrame[4][9] = ' ';
-    systemFrame[4][10] = ' ';
-    systemFrame[4][11] = ' ';
-    systemFrame[4][12] = ' ';
-    systemFrame[4][13] = ' ';
-    systemFrame[4][14] = ' ';
-    systemFrame[4][15] = ' ';
-
-    systemFrame[5][0] = ' ';
-    systemFrame[5][1] = ' ';
-    systemFrame[5][2] = ' ';
-    systemFrame[5][3] = ' ';
-    systemFrame[5][4] = ' ';
-    systemFrame[5][5] = ' ';
-    systemFrame[5][6] = ' ';
-    systemFrame[5][7] = ' ';
-    systemFrame[5][8] = ' ';
-    systemFrame[5][9] = ' ';
-    systemFrame[5][10] = ' ';
-    systemFrame[5][11] = ' ';
-    systemFrame[5][12] = ' ';
-    systemFrame[5][13] = ' ';
-    systemFrame[5][14] = ' ';
-    systemFrame[5][15] = ' ';
-  }
-  if (PORTK_BIT2)
-    systemFrame[0][0] = '2';  
-  else if (PORTK_BIT3)
-    systemFrame[0][0] = '3';
-  else if (PORTK_BIT4)
-    systemFrame[0][0] = '4';
-  else if (PORTK_BIT5)
-    systemFrame[0][0] = '5';  
-  else if (PORTK_BIT7)
-    systemFrame[0][0] = '7';
-  else
-    systemFrame[0][0] = ' ';  
-
-  //UNUSED(LCD_OutFrame(systemFrame));       
-}
-*/
-
 
 /**
  * \fn void Routine(void)
@@ -946,43 +739,11 @@ void Routine(void)
     
   if (Clock_Update())
   {
-    //if (++idleCount >= 10) 
-    //{
-    //  menuId = 0;
-    //}
-    //UpdateFrame();
-    //HMI_RenderFrame();
     /* hours from 0 to 23; minutes from 0 to 59; seconds from 0 to 59 */
     HMI_SetTime((Clock_Minutes / 60) % 24, Clock_Minutes % 60, Clock_Seconds);    
     bad = !HandleModConUptime();
   }
-  
-  //DDRK = DDRK & (DDRK_BIT0_MASK | DDRK_BIT1_MASK);
-  
-  //if (debounceCount > 0)
-  //  --debounceCount;
-  
-  /*
-  if (PORTK_BIT2 && debounceCount == 0)
-  { 
-    idleCount = 0;
-    debounceCount = 0xFFFF;
-    if (menuId == 1)
-    {
-      menuId = 0;      
-    }
-    else 
-    {
-      menuId = 1;
-    }
-    UpdateFrame();
-  }
-  else if (PORTK_BIT3)
-  {
-    idleCount = 0;
-  }
-   */
-    
+      
   if (Packet_Get())
   { 
     ack = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
@@ -1052,9 +813,6 @@ void main(void)
   }
 
   TurnOnStartupIndicator(); 
-
-  //UpdateFrame();
-  //HMI_RenderFrame();
   
   /* queue startup packets for transmission */
   UNUSED(HandleModConStartup());
@@ -1098,6 +856,65 @@ void UpdateMenuItemContrast(void)
 {
   MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value.l = ModConHMIContrast;
 }
+
+/* analog channels update routines */
+void UpdateMenuItemAnalogInputCh1Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_VALUE.value.f.Float = ((Analog_Input[0].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh2Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_VALUE.value.l = (((INT16)Analog_Input[1].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh3Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_VALUE.value.l = (((INT16)Analog_Input[2].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh4Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh5Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh6Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh7Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogInputCh8Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
+}
+
+void UpdateMenuItemAnalogOutputCh1Value(void)
+{
+  MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_VALUE.value.l = Analog_Output[0].Value.l;
+}
+
+void UpdateMenuItemAnalogOutputCh2Value(void)
+{
+}
+
+void UpdateMenuItemAnalogOutputCh3Value(void)
+{
+}
+
+void UpdateMenuItemAnalogOutputCh4Value(void)
+{
+}
+/* analog channels update routines */
 
 void ApplyModConSettings(void)
 {

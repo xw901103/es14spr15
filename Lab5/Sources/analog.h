@@ -44,7 +44,13 @@ typedef struct
   INT16 Value1, Value2, Value3; /* variables for median filtering */
 } TAnalogInput;
 
+typedef struct
+{
+  TINT16 Value, OldValue;  
+} TAnalogOutput;
+
 extern TAnalogInput Analog_Input[NB_INPUT_CHANNELS];
+extern TAnalogOutput Analog_Output[NB_OUTPUT_CHANNELS];
 
 /**
  * \fn void Analog_Setup(const UINT32 busClk)

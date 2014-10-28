@@ -172,6 +172,20 @@ void UpdateMenuItemProtocol(void);
 void UpdateMenuItemBacklight(void);
 void UpdateMenuItemContrast(void);
 
+void UpdateMenuItemAnalogInputCh1Value(void);
+void UpdateMenuItemAnalogInputCh2Value(void);
+void UpdateMenuItemAnalogInputCh3Value(void);
+void UpdateMenuItemAnalogInputCh4Value(void);
+void UpdateMenuItemAnalogInputCh5Value(void);
+void UpdateMenuItemAnalogInputCh6Value(void);
+void UpdateMenuItemAnalogInputCh7Value(void);
+void UpdateMenuItemAnalogInputCh8Value(void);
+
+void UpdateMenuItemAnalogOutputCh1Value(void);
+void UpdateMenuItemAnalogOutputCh2Value(void);
+void UpdateMenuItemAnalogOutputCh3Value(void);
+void UpdateMenuItemAnalogOutputCh4Value(void);
+
 THMIMenuItem MODCON_HMI_MENU_ITEM_VERSION =
 {
   {'V', 'E', 'R', 'S', 'I', 'O', 'N'},
@@ -181,6 +195,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_VERSION =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
   &UpdateMenuItemVersion,
   (THMIMenuItemValueMutator)0x00
 };
@@ -194,6 +209,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_NUMBER =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
   &UpdateMenuItemNumber,
   (THMIMenuItemValueMutator)0x00
 };
@@ -207,6 +223,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_DEBUG =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
   &UpdateMenuItemDebug,
   (THMIMenuItemValueMutator)0x00
 };
@@ -220,6 +237,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_PROTOCOL =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC,
   &UpdateMenuItemProtocol,
   (THMIMenuItemValueMutator)0x00
 };
@@ -233,6 +251,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN,
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF,
   &UpdateMenuItemBacklight,
   (THMIMenuItemValueMutator)0x00
 };
@@ -246,9 +265,180 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_LCD_CONTRAST =
   0,
   bFALSE,
   HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
   &UpdateMenuItemContrast,
   (THMIMenuItemValueMutator)0x00
 };
+
+/* menu items for analog channels */
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh1Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh2Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh3Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh4Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '5'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh5Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '6'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh6Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '7'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh7Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_VALUE =
+{
+  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '8'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogInputCh8Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_VALUE =
+{
+  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogOutputCh1Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_VALUE =
+{
+  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogOutputCh2Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_VALUE =
+{
+  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogOutputCh3Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+
+THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_VALUE =
+{
+  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
+  0,
+  0x0000,
+  0xFFFF,
+  0,
+  bFALSE,
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
+  &UpdateMenuItemAnalogOutputCh4Value,
+  (THMIMenuItemValueMutator)0x00    
+};
+/* menu items for analog channels */
 
 THMIMenu MODCON_HMI_MENU_IDLE =
 {
@@ -261,7 +451,15 @@ THMIMenu MODCON_HMI_MENU_IDLE =
     (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00    
   },
   4, /* total item count */
   0
@@ -278,9 +476,42 @@ THMIMenu MODCON_HMI_MENU_SETTING =
     &MODCON_HMI_MENU_ITEM_DEBUG,
     (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
     (THMIMenuItem*) 0x00  
   },
   5, /* total item count */
+  0
+};
+
+THMIMenu MODCON_HMI_MENU_ANALOG =
+{
+  HMI_MENU_TYPE_STATIC,
+  {
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_VALUE,
+    &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_VALUE,    
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00,
+    (THMIMenuItem*) 0x00
+  },
+  12, /* total item count */
   0
 };
 
@@ -300,11 +531,19 @@ THMIPanel MODCON_HMI_IDLE_PANEL =
 
 BOOL IdlePanelInputProcessRoutine(THMIKey key)
 {
-  if (key == HMI_KEY_SET)
+  switch(key)
   {
-    HMI_ShowPanel(1);
-    return bTRUE;
-  }
+    case HMI_KEY_SET:
+      HMI_ShowPanel(1);
+      return bTRUE;
+      break;
+    case HMI_KEY_DATA:
+      HMI_ShowPanel(2);
+      return bTRUE;
+      break;
+    default:
+      break;
+  };
   return bFALSE;
 }
 
@@ -334,7 +573,7 @@ BOOL SettingPanelInputProcessRoutine(THMIKey key)
     case HMI_KEY_DATA:
       if (HMI_GetSelectedMenuItemIndex() == 0xFF)
       {        
-        HMI_ShowPanel(2);
+        HMI_ShowPanel(3);
       }
       return bTRUE;      
       break;
@@ -349,6 +588,43 @@ void SettingPanelUpdateRoutine(void)
   if (MODCON_HMI_SETTING_PANEL.menuPtr)
   {
     MODCON_HMI_SETTING_PANEL.menuPtr->startingMenuItemIndex = 0;
+  }
+}
+
+BOOL AnalogPanelInputProcessRoutine(THMIKey key);
+void AnalogPanelUpdateRoutine(void);
+
+THMIPanel MODCON_HMI_ANALOG_PANEL = 
+{
+  2,
+  {
+    'A', 'N', 'A', 'L', 'O', 'G', ' '
+  },
+  &AnalogPanelInputProcessRoutine,
+  &AnalogPanelUpdateRoutine,
+  &MODCON_HMI_MENU_ANALOG,
+  (THMIDialog*)0x00
+};
+
+BOOL AnalogPanelInputProcessRoutine(THMIKey key)
+{  
+  switch(key)
+  {
+    case HMI_KEY_DATA:
+      HMI_ClosePanel();
+      return bTRUE;      
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
+void AnalogPanelUpdateRoutine(void)
+{
+  if (MODCON_HMI_ANALOG_PANEL.menuPtr)
+  {
+    MODCON_HMI_ANALOG_PANEL.menuPtr->startingMenuItemIndex = 0;
   }
 }
 
@@ -375,7 +651,7 @@ void ApplyModConSettings(void);
 
 THMIPanel MODCON_HMI_CONFIRM_PANEL = 
 {
-  2,
+  3,
   {
     'C', 'O', 'N', 'F', 'I', 'R', 'M'
   },
