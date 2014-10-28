@@ -838,9 +838,9 @@ void HMI_ShowPanel(const UINT8 panelId)
     {
       HMIClearMenuItemMutatedValues(HMIPanelLookupTable[HMIContext.currentPanelId]->menuPtr);
     }
-    if (HMIPanelLookupTable[HMIContext.currentPanelId]->updater)
+    if (HMIPanelLookupTable[HMIContext.currentPanelId]->updateRoutine)
     {      
-      HMIPanelLookupTable[HMIContext.currentPanelId]->updater(HMIPanelLookupTable[HMIContext.currentPanelId]);
+      HMIPanelLookupTable[HMIContext.currentPanelId]->updateRoutine(HMIPanelLookupTable[HMIContext.currentPanelId]);
     }
   }
 }
@@ -894,23 +894,42 @@ void HMI_ClearFocusedMenuItemIndex(void)
   HMIContext.focusedMenuItemId = 0xFF;
 }
 
+/**
+ * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
+ * \brief Exposes a popup on screen
+ * \param popupPtr A pointer of THMIPopup
+ */
 void HMI_ShowPopup(THMIPopup* popupPtr)
 {
   HMIContext.popupPtr = popupPtr;
   HMIContext.popupTimeCount = 0;
 }
 
+/**
+ * \fn void HMI_ClosePopup(void)
+ * \brief Hides shown popup
+ */
 void HMI_ClosePopup(void)
 {
   HMIContext.popupPtr = (THMIPopup*)0x0000;
   HMIContext.popupTimeCount = 0;
 }
 
+/**
+ * \fn void HMI_SetBacklight(BOOL backlight)
+ * \brief Sets the display backlight on or off
+ * \param backlight whether the backlight is on or off 
+ */
 void HMI_SetBacklight(BOOL backlight) 
 {
   UNUSED(LCD_Backlight(backlight));
 }
 
+/**
+ * \fn void HMI_SetContrast(UINT8 contrast)
+ * \brief Sets the contrast of the display
+ * \param contrast contrast a value between 0 and 63
+ */
 void HMI_SetContrast(UINT8 contrast)
 {
   UNUSED(LCD_SetContrast(contrast));

@@ -72,25 +72,9 @@ const UINT16 STATUS_COUNT_MAX = 50;
  */
 const UINT16 LCD_TURN_ON_DELAY = 1200;
 /**
- * maximum contrast setting
- */
-const UINT8 MAX_CONTRAST = 64;
-/**
- * default LCD contrast
- */
-const UINT8 LCD_DEFAULT_CONTRAST = 15;
-/**
  * blank line
  */
 const char LCD_BLANKLINE_STR[] = "                ";
-/**
- * number of lines on LCD
- */
-const UINT8 MAX_LCD_LINES = 8;
-/**
- * LCD text size in characters
- */
-const UINT8 LCD_TEXT_SIZE_X = 16;
 
 /**
  * LCD text and graphics addresses
@@ -257,6 +241,40 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
 }
 
 /**
+ * \fn BOOL SetTextHomeAddress(UINT8 lsb, UINT8 msb)
+ * \brief Sets the starting address in the external display RAM for text display. The text home address indicates the leftmost and uppermost position.
+ * \param lsb less significant byte of the address
+ * \param msb most significant byte of the address
+ * \return bTRUE if the text home address was successfully set up, else bFALSE
+ */
+BOOL SetTextHomeAddress(UINT8 lsb, UINT8 msb)
+{
+  return SendCommand(LCD_CMD_SET_TEXT_HOME_ADDRESS, 2, lsb, msb);
+}
+
+/**
+ * \fn BOOL SetGraphicHomeAddress(UINT8 lsb, UINT8 msb)
+ * \brief Sets the starting address in the external display RAM for graphic display. The text home address indicates the leftmost and uppermost position.
+ * \param lsb less significant byte of the address
+ * \param msb most significant byte of the address
+ * \return bTRUE if the graphic home address was successfully set up, else bFALSE
+ */
+BOOL SetGraphicHomeAddress(UINT8 lsb, UINT8 msb)
+{
+  return SendCommand(LCD_CMD_SET_GRAPHIC_HOME_ADDRESS, 2, lsb, msb);
+}
+
+/**
+ * \fn BOOL SetTextMode(TLCDTextMode mode)
+ * \brief Sets the mode of text.  
+ * \param mode predefined acceptable text mode.
+ */
+BOOL SetTextMode(TLCDTextMode mode)
+{
+  return SendCommand(LCD_CMD_TEXT_MODE + (UINT8)mode, 0, 0, 0);
+}
+
+/**
  * \fn BOOL LCD_Setup(void)
  * \brief Sets up the graphical LCD
  * \return bTRUE if the LCD was successfully set up, else bFALSE
@@ -292,7 +310,7 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   }
   
   /* set text home address */
-  success = SendCommand(LCD_CMD_SET_TEXT_HOME_ADDRESS, 2, (UINT8)LCD_TEXT_HOME_ADDRESS, (UINT8)(LCD_TEXT_HOME_ADDRESS >> 8));
+  success = SetTextHomeAddress((UINT8)(LCD_TEXT_HOME_ADDRESS & 0x00FF), (UINT8)(LCD_TEXT_HOME_ADDRESS >> 8));
   if (!success)
   {    
     return success;
@@ -306,7 +324,7 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   }
   
   /* set graphic home address */
-  success = SendCommand(LCD_CMD_SET_GRAPHIC_HOME_ADDRESS, 2, (UINT8)(LCD_GRAPHIC_HOME_ADDRESS & 0x00ff), (UINT8)(LCD_GRAPHIC_HOME_ADDRESS >> 8));
+  success = SetGraphicHomeAddress((UINT8)(LCD_GRAPHIC_HOME_ADDRESS & 0x00FF), (UINT8)(LCD_GRAPHIC_HOME_ADDRESS >> 8));
   if (!success)
   {    
     return success;
@@ -320,7 +338,7 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   }
   
   /* set Mode to OR so that text overwrites graphics */
-  success = SendCommand(LCD_CMD_TEXT_MODE + (UINT8)ORMode, 0, 0, 0);
+  success = SetTextMode(ORMode);
   if (!success)
   {    
     return success;
@@ -453,9 +471,9 @@ BOOL LCD_OutString(const char *str)
  * \return bTRUE if the command was successful, otherwise FALSE
  * \warning Assumes LCD has been set up
  */
-BOOL LCD_OutFrame(const UINT8 frame[8][16]) 
+BOOL LCD_OutFrame(const UINT8 frame[LCD_TEXT_SIZE_Y][LCD_TEXT_SIZE_X]) 
 {
-  return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(128, (const char*)frame, bTRUE);
+  return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(LCD_TEXT_SIZE, (const char*)frame, bTRUE);
 }
 
 /**
@@ -474,7 +492,7 @@ BOOL LCD_Clear(void)
     return bFALSE;
   }
   
-  for (lineNb = 0; lineNb < MAX_LCD_LINES; lineNb++)
+  for (lineNb = 0; lineNb < LCD_TEXT_SIZE_Y; lineNb++)
   {
     success = LCD_OutString(LCD_BLANKLINE_STR);
     if (!success)
@@ -511,10 +529,10 @@ BOOL LCD_SetContrast(const UINT8 contrast)
   LCD_ADJ = 0;
 
   /* increment to the desired contrast */
-  nbSteps = contrast + MAX_CONTRAST / 2;
-  if (nbSteps >= MAX_CONTRAST)
+  nbSteps = contrast + LCD_MAX_CONTRAST / 2;
+  if (nbSteps >= LCD_MAX_CONTRAST)
   {
-    nbSteps -= MAX_CONTRAST;
+    nbSteps -= LCD_MAX_CONTRAST;
   }
   for (stepNb = 0; stepNb < nbSteps; stepNb++)
   {

@@ -7,6 +7,23 @@
 #include "global.h"
 
 /**
+ * maximum contrast setting
+ */
+#define LCD_MAX_CONTRAST 64
+
+/**
+ * default LCD contrast
+ */
+#define LCD_DEFAULT_CONTRAST 15
+
+/**
+ * LCD text size in characters
+ */
+#define LCD_TEXT_SIZE   128
+#define LCD_TEXT_SIZE_X 16
+#define LCD_TEXT_SIZE_Y 8
+
+/**
  * \fn BOOL LCD_Setup(void)
  * \brief Sets up the graphical LCD
  * \return bTRUE if the LCD was successfully set up, else bFALSE
@@ -39,7 +56,7 @@ BOOL LCD_OutString(const char *str);
  * \return bTRUE if the command was successful, otherwise FALSE
  * \warning Assumes LCD has been set up
  */
-BOOL LCD_OutFrame(const UINT8 frame[8][16]); /* TODO: use dfines instead of this fixed value */
+BOOL LCD_OutFrame(const UINT8 frame[LCD_TEXT_SIZE_Y][LCD_TEXT_SIZE_X]); /* TODO: use dfines instead of this fixed value */
 
 /**
  * \fn BOOL LCD_Clear(void)

@@ -8,17 +8,23 @@
 #define HMI_H
 
 #include "global.h"
+#include "LCD.h"
 
-#define HMI_PANEL_TITLE_SIZE 7
-#define HMI_MENU_ITEM_TITLE_SIZE 16
-#define HMI_PANEL_SIZE 256
-#define HMI_FRAME_MAXIMUM_HEIGHT 8
-#define HMI_FRAME_MAXIMUM_WIDTH  16
+#define HMI_PANEL_TITLE_SIZE      7
+#define HMI_MENU_ITEM_TITLE_SIZE  16
+#define HMI_PANEL_SIZE            256
+
+#define HMI_FRAME_MAXIMUM_HEIGHT  LCD_TEXT_SIZE_Y
+#define HMI_FRAME_MAXIMUM_WIDTH   LCD_TEXT_SIZE_X
 
 #define HMI_DIALOG_MAXIMUM_HEIGHT 4
-#define HMI_DIALOG_MAXIMUM_WIDTH 16
+#define HMI_DIALOG_MAXIMUM_WIDTH  HMI_FRAME_MAXIMUM_WIDTH
 
-#define HMI_MENU_ITEM_SIZE 16
+#define HMI_POPUP_TITLE_SIZE      16
+#define HMI_POPUP_MAXIMUM_HEIGHT  4
+#define HMI_POPUP_MAXIMUM_WIDTH   14
+
+#define HMI_MENU_ITEM_SIZE        16
 
 /**
  * \brief HMI buttons
@@ -39,7 +45,7 @@ typedef enum
 typedef enum
 {
   HMI_RENDER_MODE_DIRTY,     /* redraw when screen is dirty */
-  HMI_RENDER_MODE_CONTINUITY /* redraw continuity */
+  HMI_RENDER_MODE_CONTINUITY /* redraw continuity           */
 } THMIRenderMode;
 
 /**
@@ -48,6 +54,8 @@ typedef enum
 typedef struct 
 {
   UINT8 data[HMI_FRAME_MAXIMUM_HEIGHT][HMI_FRAME_MAXIMUM_WIDTH];
+
+  /* NOTE: usable area size might be different to frame buffer size */
   UINT16 width;
   UINT16 height;
 } THMIFrame;
@@ -62,8 +70,8 @@ typedef void(*THMIPanelUpdateRoutine)(THMIPanel*);
 
 typedef struct 
 {
-  UINT8 title[16];
-  UINT8 text[4][14];
+  UINT8 title[HMI_POPUP_TITLE_SIZE];
+  UINT8 text[HMI_POPUP_MAXIMUM_HEIGHT][HMI_POPUP_MAXIMUM_WIDTH];
 } THMIPopup;
 
 typedef struct
@@ -80,18 +88,18 @@ typedef enum
 
 typedef enum 
 {
-  HMI_MENU_ITEM_VALUE_TYPE_NONE,
-  HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER,
-  HMI_MENU_ITEM_VALUE_TYPE_FLOAT, /* +- XX.XX */
-  HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,
-  HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN
+  HMI_MENU_ITEM_VALUE_TYPE_NONE,             /* determines the value is no purpose  */
+  HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER, /* in notation of  XXXXX               */
+  HMI_MENU_ITEM_VALUE_TYPE_FLOAT,            /* in notation of  -X.XX               */
+  HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER,   /* in notation of  VX.XX               */
+  HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN           /* boolean type has multiple notations */
 } THMIMenuItemValueType;
 
 typedef enum
 {
-  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT = 0,
-  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF,
-  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC
+  HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT = 0,       /* TRUE when true, FALSE when false */
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF,    /* ON when true, OFF when false     */
+  HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC /* SYNC when true, ASYNC when false */
 } THMIMenuItemValueNotation;
 
 typedef union
@@ -104,16 +112,18 @@ typedef union
   } s;
   struct
   {
-    UINT8;
+    UINT8;         /* this byte has no use for boolean */
     UINT8 Boolean;    
   } b;
   struct
   {
+    /* it will be represent in VMajor.Minor(VX.XX) */
     UINT8 Major;
     UINT8 Minor;
   } v;
   struct
   {
+    /* e.g. -114 will be represent as -1.14 */
     INT16 Float;
   } f;
 } THMIMenuItemValue;
@@ -123,32 +133,32 @@ typedef union
  */
 struct HMIMenuItemSTR 
 {
-  UINT8 title[16];
-  THMIMenuItemType type;
-  UINT16 attribute; /* user defined attribute */
-  THMIMenuItemValue value; /* TODO: use type THMIMenuItemValue */
-  THMIMenuItemValue minimumValue;
-  THMIMenuItemValue maximumValue;
-  THMIMenuItemValue mutatedValue;
-  BOOL useMutatedValue; /* TODO: add mutable boolean indicator */  
-  THMIMenuItemValueType valueType;
-  THMIMenuItemValueNotation valueNotation;
-  THMIMenuItemUpdateRoutine updateRoutine;
-  THMIMenuItemActionRoutine actionRoutine;
+  UINT8 title[16];                         /* menu item title */
+  THMIMenuItemType type;                   /* menu item type. this could be static, entry or action */
+  UINT16 attribute;                        /* user defined attribute */
+  THMIMenuItemValue value;                 /* item value when the type is entry */
+  THMIMenuItemValue minimumValue;          /* minimum value */
+  THMIMenuItemValue maximumValue;          /* maximum value */
+  THMIMenuItemValue mutatedValue;          /* mutated value of the menu item */
+  BOOL useMutatedValue;                    /* use muated value instead of original */  
+  THMIMenuItemValueType valueType;         /* menu item value type */
+  THMIMenuItemValueNotation valueNotation; /* this determines how the HMI display the value */
+  THMIMenuItemUpdateRoutine updateRoutine; /* routine to poll new value */
+  THMIMenuItemActionRoutine actionRoutine; /* routine for action type menu item */
 };
 
 typedef enum
 {
-  HMI_MENU_TYPE_STATIC,
-  HMI_MENU_TYPE_SETTING
+  HMI_MENU_TYPE_STATIC, /* static menu will be read only */
+  HMI_MENU_TYPE_SETTING /* values of menu item of setting type menu can be mutated */
 } THMIMenuType;
 
 typedef struct
 {
-  THMIMenuType type;
-  THMIMenuItem* itemPtr[HMI_MENU_ITEM_SIZE];
-  UINT8 itemCount;
-  UINT8 startingMenuItemIndex;
+  THMIMenuType type;                         /* menu type. this could be static or setting */
+  THMIMenuItem* itemPtr[HMI_MENU_ITEM_SIZE]; /* menu item array */
+  UINT8 itemCount;                           /* count of menu items in the array */
+  UINT8 startingMenuItemIndex;               /* TODO: move this to THMIContext */
 } THMIMenu;
 
 /**
@@ -157,10 +167,10 @@ typedef struct
 struct HMIPanelSTR
 {
   /* TODO: add panel type */
-  UINT8 id;
-  UINT8 title[HMI_PANEL_TITLE_SIZE];
-  THMIPanelInputProcessRoutine inputProcessRoutine;
-  THMIPanelUpdateRoutine updater;
+  UINT8 id; /* TODO: remove this unused attribute */
+  UINT8 title[HMI_PANEL_TITLE_SIZE];                /* title of panel */
+  THMIPanelInputProcessRoutine inputProcessRoutine; /* routine for button input processing */
+  THMIPanelUpdateRoutine updateRoutine;             /* routine to update panel */
   THMIMenu* menuPtr;
   THMIDialog* dialogPtr;
 } THMIPanel;
@@ -189,10 +199,7 @@ typedef struct
   
   THMIFrame* renderFrameBufferPtr;
   THMIFrame* screenFrameBufferPtr;
-  
-  //THMIMenuItem* focusedMenuItemPtr;
-  //THMIMenuItem* selectedMenuItemPtr;
-   
+     
   UINT8 parentPanelId;
   UINT8 previousPanelId;
   UINT8 currentPanelId;
@@ -201,6 +208,9 @@ typedef struct
   /* TODO: think a better way to resolve menu scrolling */
   UINT8 selectedMenuItemId;
   UINT8 focusedMenuItemId;
+
+  //THMIMenuItem* focusedMenuItemPtr;
+  //THMIMenuItem* selectedMenuItemPtr;
   
   UINT8 beginningMenuItemId;
    
@@ -235,6 +245,10 @@ typedef struct
  */
 BOOL HMI_Setup(const THMISetup* const aHMISetup);
 
+/**
+ * \fn void HMI_Poll(void)
+ * \brief Polls update of shown HMI components.
+ */
 void HMI_Poll(void);
 
 /**
@@ -245,26 +259,70 @@ void HMI_Poll(void);
  */
 const THMIContext * const HMI_GetContext(void);
 
+/**
+ * \fn THMIKey HMI_GetKeyEvent(void)
+ * \brief Gets current pressed key
+ * \return the key which has been pressed by user
+ */
 THMIKey HMI_GetKeyEvent(void);
 
 /**
  * \fn BOOL HMI_RenderFrame(void)
+ * \brief Renders a frame based on current shown panel, menu and/or dialog.
+ * \return TRUE if the frame has been sent to display or FALSE it failed.
  */
 BOOL HMI_RenderFrame(void);
 
+/**
+ * \fn void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
+ * \brief Sets timer time
+ */
 void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
 
+/**
+ * \fn void HMI_AppendPanel(THMIPanel* const aHMIPanel)
+ * \brief add a panel to HMI panel list
+ * \param aHMIPanel A pointer of THMIPanel
+ */
 void HMI_AppendPanel(THMIPanel* const aHMIPanel);
 
+/**
+ * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
+ * \brief Exposes a popup on screen
+ * \param popupPtr A pointer of THMIPopup
+ */
 void HMI_RemovePanel(const UINT8 panelId);
 
+/**
+ * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
+ * \brief Exposes a popup on screen
+ * \param popupPtr A pointer of THMIPopup
+ */
 void HMI_ShowPanel(const UINT8 panelId);
 
+/**
+ * \fn void HMI_ClosePopup(void)
+ * \brief Hides shown popup
+ */
 void HMI_ClosePanel(void);
 
+/**
+ * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
+ * \brief Exposes a popup on screen
+ * \param popupPtr A pointer of THMIPopup
+ */
 void HMI_ShowPopup(THMIPopup*);
+
+/**
+ * \fn void HMI_ClosePopup(void)
+ * \brief Hides shown popup
+ */
 void HMI_ClosePopup(void);
 
+/**
+ * \fn void HMI_ResetIdleCount(void)
+ * \brief Resets idle timeout counter to zero.
+ */
 void HMI_ResetIdleCount(void);
 
 UINT8 HMI_GetSelectedMenuItemIndex(void);
@@ -275,7 +333,18 @@ UINT8 HMI_GetFocusedMenuItemIndex(void);
 void HMI_SetFocusedMenuItemIndex(UINT8 index);
 void HMI_ClearFocusedMenuItemIndex(void);
 
+/**
+ * \fn void HMI_SetBacklight(BOOL backlight)
+ * \brief Sets the display backlight on or off
+ * \param backlight whether the backlight is on or off 
+ */
 void HMI_SetBacklight(BOOL backlight);
+
+/**
+ * \fn void HMI_SetContrast(UINT8 contrast)
+ * \brief Sets the contrast of the display
+ * \param contrast contrast a value between 0 and 63
+ */
 void HMI_SetContrast(UINT8 contrast);
 
 #endif
