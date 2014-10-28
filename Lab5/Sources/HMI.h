@@ -52,10 +52,13 @@ typedef struct
   UINT16 height;
 } THMIFrame;
 
-typedef BOOL(*THMIInputProcessRoutine)(THMIKey);
-typedef void(*THMIMenuItemUpdateRoutine)(void);
-typedef void(*THMIMenuItemActionRoutine)(void);
-typedef void(*THMIPanelUpdateRoutine)(void);
+typedef struct HMIMenuItemSTR THMIMenuItem;
+typedef struct HMIPanelSTR THMIPanel;
+
+typedef void(*THMIMenuItemUpdateRoutine)(THMIMenuItem*);
+typedef void(*THMIMenuItemActionRoutine)(THMIMenuItem*);
+typedef BOOL(*THMIPanelInputProcessRoutine)(THMIPanel*, THMIKey);
+typedef void(*THMIPanelUpdateRoutine)(THMIPanel*);
 
 typedef struct 
 {
@@ -118,10 +121,11 @@ typedef union
 /**
  * \brief HMI menu item
  */
-typedef struct 
+struct HMIMenuItemSTR 
 {
   UINT8 title[16];
   THMIMenuItemType type;
+  UINT16 attribute; /* user defined attribute */
   THMIMenuItemValue value; /* TODO: use type THMIMenuItemValue */
   THMIMenuItemValue minimumValue;
   THMIMenuItemValue maximumValue;
@@ -131,7 +135,7 @@ typedef struct
   THMIMenuItemValueNotation valueNotation;
   THMIMenuItemUpdateRoutine updateRoutine;
   THMIMenuItemActionRoutine actionRoutine;
-} THMIMenuItem;
+};
 
 typedef enum
 {
@@ -150,12 +154,12 @@ typedef struct
 /**
  * \brief HMI panel
  */
-typedef struct 
+struct HMIPanelSTR
 {
   /* TODO: add panel type */
   UINT8 id;
   UINT8 title[HMI_PANEL_TITLE_SIZE];
-  THMIInputProcessRoutine inputProcessRoutine;
+  THMIPanelInputProcessRoutine inputProcessRoutine;
   THMIPanelUpdateRoutine updater;
   THMIMenu* menuPtr;
   THMIDialog* dialogPtr;

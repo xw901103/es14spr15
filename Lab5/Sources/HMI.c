@@ -245,7 +245,7 @@ void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
           {
             if (panelPtr->menuPtr->itemPtr[focusedMenuItemIndex]->actionRoutine)
             {
-              panelPtr->menuPtr->itemPtr[focusedMenuItemIndex]->actionRoutine();
+              panelPtr->menuPtr->itemPtr[focusedMenuItemIndex]->actionRoutine(panelPtr->menuPtr->itemPtr[focusedMenuItemIndex]);
             }
           }
         }
@@ -759,7 +759,7 @@ void HMI_Poll(void)
             {
               if (!menuItemPtr->useMutatedValue)
               {                
-                menuItemPtr->updateRoutine();
+                menuItemPtr->updateRoutine(menuItemPtr);
                 menuItemPtr->mutatedValue = menuItemPtr->value;
               }
             }
@@ -775,7 +775,7 @@ void HMI_Poll(void)
         HMI_ResetIdleCount();
         if (panelPtr->inputProcessRoutine)
         {
-          if (!panelPtr->inputProcessRoutine(key))
+          if (!panelPtr->inputProcessRoutine(panelPtr, key))
           {
             HMIPanelInputProcessRoutine(panelPtr, key);
           }
@@ -840,7 +840,7 @@ void HMI_ShowPanel(const UINT8 panelId)
     }
     if (HMIPanelLookupTable[HMIContext.currentPanelId]->updater)
     {      
-      HMIPanelLookupTable[HMIContext.currentPanelId]->updater();
+      HMIPanelLookupTable[HMIContext.currentPanelId]->updater(HMIPanelLookupTable[HMIContext.currentPanelId]);
     }
   }
 }

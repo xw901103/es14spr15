@@ -11,10 +11,13 @@
 #include "timer.h"
 #include "EEPROM.h"
 #include "packet.h"
-//#include "LCD.h"
-//#include "HMI.h"
 #include "utils.h"
 #include <mc9s12a512.h>
+
+/**
+ * HMI confirm dialog callback
+ */
+void (*ConfirmDialogCallback)(void); /* TODO: rename it */
 
 /**
  * \fn BOOL HandleModConSpecialDebug(void)
@@ -557,6 +560,568 @@ void SampleAnalogInputChannels(void)
 }
 
 /**
+ * \fn BOOL IdlePanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+ * \brief Handles idle panel inputs.
+ * \param panelPtr A pointer of THMIPanel
+ * \param key Key that has been pressed
+ * \return TRUE if input has been processed or FALSE if it is not acceptable.
+ */
+BOOL IdlePanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+{
+  UNUSED(panelPtr);
+  switch(key)
+  {
+    case HMI_KEY_SET:
+      HMI_ShowPanel(1);
+      return bTRUE;
+      break;
+    case HMI_KEY_DATA:
+      HMI_ShowPanel(2);
+      return bTRUE;
+      break;
+    default:
+      break;
+  };
+  return bFALSE;
+}
+
+/**
+ * \fn void UpdateMenuItemVersion(THMIMenuItem* itemPtr)
+ * \brief Updates version menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemVersion(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {    
+    itemPtr->value.v.Major = MODCON_VERSION_MAJOR;
+    itemPtr->value.v.Minor = MODCON_VERSION_MINOR;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemNumber(THMIMenuItem* itemPtr)
+ * \brief Updates number menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemNumber(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {    
+    itemPtr->value.l = ModConNumber;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemDebug(THMIMenuItem* itemPtr)
+ * \brief Updates debug menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemDebug(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {      
+    itemPtr->value.b.Boolean = (UINT8)ModConDebug; 
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemProtocol(THMIMenuItem* itemPtr)
+ * \brief Updates protocol menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemProtocol(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {      
+    itemPtr->value.b.Boolean =(UINT8)ModConProtocolMode;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemBacklight(THMIMenuItem* itemPtr)
+ * \brief Updates backlight menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemBacklight(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {      
+    itemPtr->value.b.Boolean = (UINT8)ModConHMIBacklight;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemContrast(THMIMenuItem* itemPtr)
+ * \brief Updates contrast menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemContrast(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {      
+    itemPtr->value.l = ModConHMIContrast;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemAnalogInputChannelValue(THMIMenuItem* itemPtr)
+ * \brief Updates given input channel menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemAnalogInputChannelValue(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {
+    itemPtr->value.f.Float = (Analog_Input[itemPtr->attribute].Value.l * 49 + 7) / 100;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemAnalogOutputChannelValue(THMIMenuItem* itemPtr)
+ * \brief Updates given output channel menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemAnalogOutputChannelValue(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {
+    /* TODO: replace this placeholder with real implementation */
+    itemPtr->value.f.Float = Analog_Output[itemPtr->attribute].Value.l;
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemAnalogInputChannelSwitch(THMIMenuItem* itemPtr)
+ * \brief Updates given input channel switch menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemAnalogInputChannelSwitch(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {
+    if (ModConAnalogInputChannelSwitch & itemPtr->attribute)
+    {    
+      itemPtr->value.b.Boolean = bTRUE;
+    }
+    else
+    {
+      itemPtr->value.b.Boolean = bFALSE;
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}
+
+/**
+ * \fn void UpdateMenuItemAnalogOutputChannelSwitch(THMIMenuItem* itemPtr)
+ * \brief Updates given output channel switch menu item value.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void UpdateMenuItemAnalogOutputChannelSwitch(THMIMenuItem* itemPtr)
+{
+  if (itemPtr)
+  {
+    if (ModConAnalogOutputChannelSwitch & itemPtr->attribute)
+    {    
+      itemPtr->value.b.Boolean = bTRUE;
+    }
+    else
+    {
+      itemPtr->value.b.Boolean = bFALSE;
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}
+
+/**
+ * \fn void ApplyModConSettings(void)
+ * \brief Writes all related ModCon setting menu values to EEPROM.
+ */
+void ApplyModConSettings(void)
+{
+    if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)MODCON_HMI_MENU_ITEM_PROTOCOL.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    
+    /* send back current protocol mode to confirm */
+    UNUSED(HandleModConProtocolModeGet());  
+    
+    if (!EEPROM_Write16(&ModConNumber, (UINT16)MODCON_HMI_MENU_ITEM_NUMBER.mutatedValue.l))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+
+    if (!EEPROM_Write16(&ModConDebug, (UINT16)MODCON_HMI_MENU_ITEM_DEBUG.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    
+    if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.mutatedValue.b.Boolean))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+
+    if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)MODCON_HMI_MENU_ITEM_LCD_CONTRAST.mutatedValue.l))
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+    }
+    
+    HMI_SetBacklight(ModConHMIBacklight);
+    HMI_SetContrast((UINT8)ModConHMIContrast);
+}
+
+/**
+ * \fn void ApplyModConSwitchs(void)
+ * \brief Writes all related ModCon IO switch menu values to EEPROM.
+ */
+void ApplyModConSwitchs(void)
+{
+  UINT16 analogInputChannelSwitch = 0, analogOutputChannelSwitch = 0;
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1;
+  }
+
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3;
+  }
+  
+  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.mutatedValue.b.Boolean)
+  {
+    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4;
+  }
+  
+  if (!EEPROM_Write16(&ModConAnalogInputChannelSwitch, analogInputChannelSwitch))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+  
+  if (!EEPROM_Write16(&ModConAnalogOutputChannelSwitch, analogOutputChannelSwitch))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+}
+
+/**
+ * \fn void EraseModConSettings(THMIMenuItem* itemPtr)
+ * \brief Erases EEPROM and force MCU reset.
+ * \param itemPtr A pointer of THMIMenuItem
+ */
+void EraseModConSettings(THMIMenuItem* itemPtr)
+{
+    UNUSED(itemPtr);
+    
+    if (!EEPROM_Erase())
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_EEPROM_ERASE);
+#endif
+    }
+    /* let the watchdog reset the MCU */
+    for(;;);
+}
+
+/**
+ * \fn BOOL SettingPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+ * \brief Handles setting panel inputs.
+ * \param panelPtr A pointer of THMIPanel
+ * \param key Key that has been pressed
+ * \return TRUE if input has been processed or FALSE if it is not acceptable.
+ */
+BOOL SettingPanelInputProcessRoutine(THMIPanel* panelPtr,THMIKey key)
+{
+  UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
+  UINT8 selectedMenuItemIndex = HMI_GetSelectedMenuItemIndex();
+
+  UNUSED(panelPtr);
+    
+  switch(key)
+  {
+    case HMI_KEY_SET:
+    case HMI_KEY_DATA:
+      if (selectedMenuItemIndex == 0xFF) /* no item selected */
+      {
+        ConfirmDialogCallback = &ApplyModConSettings;        
+        HMI_ShowPanel(15);
+      }
+      return bTRUE;      
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
+/**
+ * \fn void SettingPanelUpdateRoutine(THMIPanel* panelPtr)
+ * \brief Updates related setting panel parameters once it has been exposed.
+ * \param panelPtr A pointer of THMIPanel
+ */
+void SettingPanelUpdateRoutine(THMIPanel* panelPtr)
+{
+  if (panelPtr)
+  {    
+    if (panelPtr->menuPtr)
+    {
+      panelPtr->menuPtr->startingMenuItemIndex = 0;
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn BOOL AnalogPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+ * \brief Handles analog panel inputs.
+ * \param panelPtr A pointer of THMIPanel
+ * \param key Key that has been pressed
+ * \return TRUE if input has been processed or FALSE if it is not acceptable.
+ */
+BOOL AnalogPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+{
+  UNUSED(panelPtr);
+    
+  switch(key)
+  {
+    case HMI_KEY_SET:
+      HMI_ShowPanel(3);
+      return bTRUE;
+      break;
+    case HMI_KEY_DATA:
+      HMI_ClosePanel();
+      return bTRUE;      
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
+/**
+ * \fn void AnalogPanelUpdateRoutine(THMIPanel* panelPtr)
+ * \brief Updates related analog panel parameters once it has been exposed.
+ * \param panelPtr A pointer of THMIPanel
+ */
+void AnalogPanelUpdateRoutine(THMIPanel* panelPtr)
+{
+  if (panelPtr)
+  {    
+    if (panelPtr->menuPtr)
+    {
+      panelPtr->menuPtr->startingMenuItemIndex = 0;
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif  
+  }
+}
+
+/**
+ * \fn BOOL SwitchPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+ * \brief Handles switch panel inputs.
+ * \param panelPtr A pointer of THMIPanel
+ * \param key Key that has been pressed
+ * \return TRUE if input has been processed or FALSE if it is not acceptable.
+ */
+BOOL SwitchPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+{
+  UNUSED(panelPtr); 
+   
+  switch(key)
+  {
+    case HMI_KEY_SET:
+    case HMI_KEY_DATA:
+      ConfirmDialogCallback = &ApplyModConSwitchs;
+      HMI_ShowPanel(15);
+      return bTRUE;
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
+/**
+ * \fn void SwitchPanelUpdateRoutine(THMIPanel* panelPtr)
+ * \brief Updates related switch panel parameters once it has been exposed.
+ * \param panelPtr A pointer of THMIPanel
+ */
+void SwitchPanelUpdateRoutine(THMIPanel* panelPtr)
+{
+  if (panelPtr)
+  {    
+    if (panelPtr->menuPtr)
+    {
+      panelPtr->menuPtr->startingMenuItemIndex = 0;
+    }
+  }
+  else
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif
+  }
+}
+
+/**
+ * \fn BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+ * \brief Handles confirm panel inputs.
+ * \param panelPtr A pointer of THMIPanel
+ * \param key Key that has been pressed
+ * \return TRUE if input has been processed or FALSE if it is not acceptable.
+ */
+BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
+{
+  UNUSED(panelPtr);
+  
+  switch(key)
+  {
+    case HMI_KEY_SET:
+      if (ConfirmDialogCallback)
+      {
+        ConfirmDialogCallback();
+      }
+      HMI_ClosePanel();
+      return bTRUE;
+      break;
+    case HMI_KEY_DATA:
+      HMI_ClosePanel();
+      return bTRUE;
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
+/**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
  * \return TRUE if initialization routines executed successfully.
@@ -824,374 +1389,4 @@ void main(void)
     Routine();
     CRG_DisarmCOP();
   }
-}
-
-/* TODO: organize following menu item updater */
-void UpdateMenuItemVersion(void)
-{
-  MODCON_HMI_MENU_ITEM_VERSION.value.v.Major = MODCON_VERSION_MAJOR;
-  MODCON_HMI_MENU_ITEM_VERSION.value.v.Minor = MODCON_VERSION_MINOR;
-}
-
-void UpdateMenuItemNumber(void)
-{
-  MODCON_HMI_MENU_ITEM_NUMBER.value.l = ModConNumber;
-}
-
-void UpdateMenuItemDebug(void)
-{
-  MODCON_HMI_MENU_ITEM_DEBUG.value.b.Boolean = (UINT8)ModConDebug; 
-}
-
-void UpdateMenuItemProtocol(void)
-{
-  MODCON_HMI_MENU_ITEM_PROTOCOL.value.b.Boolean =(UINT8)ModConProtocolMode;
-}
-
-void UpdateMenuItemBacklight(void)
-{
-  MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.value.b.Boolean = (UINT8)ModConHMIBacklight;
-}
-
-void UpdateMenuItemContrast(void)
-{
-  MODCON_HMI_MENU_ITEM_LCD_CONTRAST.value.l = ModConHMIContrast;
-}
-
-/* analog channels update routines */
-void UpdateMenuItemAnalogInputCh1Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_VALUE.value.f.Float = ((Analog_Input[0].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh2Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_VALUE.value.l = (((INT16)Analog_Input[1].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh3Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_VALUE.value.l = (((INT16)Analog_Input[2].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh4Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh5Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh6Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh7Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogInputCh8Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_VALUE.value.l = (((INT16)Analog_Input[3].Value.l * 49 + 7) / 100);
-}
-
-void UpdateMenuItemAnalogOutputCh1Value(void)
-{
-  MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_VALUE.value.l = Analog_Output[0].Value.l;
-}
-
-void UpdateMenuItemAnalogOutputCh2Value(void)
-{
-}
-
-void UpdateMenuItemAnalogOutputCh3Value(void)
-{
-}
-
-void UpdateMenuItemAnalogOutputCh4Value(void)
-{
-}
-/* analog channels update routines */
-
-/* switch update routines */
-void UpdateMenuItemAnalogInputCh1Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh2Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh3Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh4Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh5Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh6Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh7Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogInputCh8Switch(void)
-{
-  if (ModConAnalogInputChannelSwitch & MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogOutputCh1Switch(void)
-{
-  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogOutputCh2Switch(void)
-{
-  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogOutputCh3Switch(void)
-{
-  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-
-void UpdateMenuItemAnalogOutputCh4Switch(void)
-{
-  if (ModConAnalogOutputChannelSwitch & MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4)
-  {    
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.value.b.Boolean = bTRUE;
-  }
-  else
-  {
-    MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.value.b.Boolean = bFALSE;
-  }
-}
-/* switch update routines */
-
-void ApplyModConSettings(void)
-{
-    if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)MODCON_HMI_MENU_ITEM_PROTOCOL.mutatedValue.b.Boolean))
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-    }
-    /* send back current protocol mode to confirm */
-    UNUSED(HandleModConProtocolModeGet());  
-    
-    if (!EEPROM_Write16(&ModConNumber, (UINT16)MODCON_HMI_MENU_ITEM_NUMBER.mutatedValue.l))
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-    }
-
-    if (!EEPROM_Write16(&ModConDebug, (UINT16)MODCON_HMI_MENU_ITEM_DEBUG.mutatedValue.b.Boolean))
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-    }
-    
-    /* TODO: add LCD backlight and contrast */
-    if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.mutatedValue.b.Boolean))
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-    }
-
-    if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)MODCON_HMI_MENU_ITEM_LCD_CONTRAST.mutatedValue.l))
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-    }
-    
-    HMI_SetBacklight(ModConHMIBacklight);
-    HMI_SetContrast((UINT8)ModConHMIContrast);
-}
-
-void ApplyModConSwitchs(void)
-{
-  UINT16 analogInputChannelSwitch = 0, analogOutputChannelSwitch = 0;
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4;
-  }
-  
-  if (!EEPROM_Write16(&ModConAnalogInputChannelSwitch, analogInputChannelSwitch))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-  
-  if (!EEPROM_Write16(&ModConAnalogOutputChannelSwitch, analogOutputChannelSwitch))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-}
-
-void EraseModConSettings(void)
-{
-    if (!EEPROM_Erase())
-    {
-#ifndef NO_DEBUG
-      DEBUG(__LINE__, ERR_EEPROM_ERASE);
-#endif
-    }
 }
