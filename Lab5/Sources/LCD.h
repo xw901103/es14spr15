@@ -32,43 +32,35 @@ BOOL LCD_OutChar(const UINT8 data);
  */
 BOOL LCD_OutString(const char *str);
 
-BOOL LCD_OutFrame(const UINT8 frame[8][16]);
+/**
+ * \fn BOOL LCD_OutFrame(const UINT8 frame[8][16])
+ * \brief Writes whole text frame to the LCD
+ * \param frame Text frame to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
+BOOL LCD_OutFrame(const UINT8 frame[8][16]); /* TODO: use dfines instead of this fixed value */
 
-// ----------------------------------------
-// LCD_Clear
-// 
-// Clears the LCD
-// Input:
-//   none
-// Output:
-//   returns bTRUE if the clear was successful, otherwise FALSE
-// Conditions:
-//   Assumes LCD has been set up
-
+/**
+ * \fn BOOL LCD_Clear(void)
+ * \brief Clears the LCD
+ * \return returns bTRUE if the clear was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
 BOOL LCD_Clear(void);
 
-// ----------------------------------------
-// LCD_SetContrast
-// 
-// Sets the contrast of the LCD
-// Input:
-//   contrast is a value between 0 and 63 (according to the MAX749 datasheet)
-// Output:
-//   returns bTRUE if the contrast was in range, otherwise FALSE
-// Conditions:
-//   Assumes LCD contrast has started in shutdown mode
-
+/**
+ * \fn BOOL LCD_SetContrast(const UINT8 contrast)
+ * \brief Sets the contrast of the LCD
+ * \param contrast a value between 0 and 63 (according to the MAX749 datasheet)
+ * \return bTRUE if the contrast was in range, otherwise FALSE
+ * \warning Assumes LCD contrast has started in shutdown mode
+ */
 BOOL LCD_SetContrast(const UINT8 contrast);
 
-// ----------------------------------------
-// LCD_Backlight
-// 
-// Sets the LED backlight of the LCD on or off
-// Input:
-//   LEDBacklightOn determines whether the LED backlight is on or off
-// Output:
-//   none
-// Conditions:
-//   none
-
+/**
+ * \fn void LCD_Backlight(const BOOL LEDBacklightOn)
+ * \brief Sets the LED backlight of the LCD on or off
+ * \param LEDBacklightOn  whether the LED backlight is on or off
+ */
 void LCD_Backlight(const BOOL LEDBacklightOn);

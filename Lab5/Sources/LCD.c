@@ -15,21 +15,22 @@
 #define LCD_CTRL                        PORTB_BIT5
 #define LCD_LED                         PORTB_BIT6
 
-//----------------------------------------------------------------------------------------
-// Define Status byte
+/**
+ * define Status byte
+ */
 typedef union
 {
   UINT8 Byte;
   struct
   {
-    UINT8 STA0       :1;                // Command execution capability
-    UINT8 STA1       :1;                // Data read/write capability
-    UINT8 STA2       :1;                // Auto mode data read capability
-    UINT8 STA3       :1;                // Auto mode data write capability
+    UINT8 STA0       :1; /* Command execution capability                    */
+    UINT8 STA1       :1; /* Data read/write capability                      */
+    UINT8 STA2       :1; /* Auto mode data read capability                  */
+    UINT8 STA3       :1; /* Auto mode data write capability                 */
     UINT8            :1; 
-    UINT8 STA5       :1;                // Controller operation capability
-    UINT8 STA6       :1;                // Error flag
-    UINT8 STA7       :1;                // Blink condition 0=Display off, 1=Normal display
+    UINT8 STA5       :1; /* Controller operation capability                 */
+    UINT8 STA6       :1; /* Error flag                                      */
+    UINT8 STA7       :1; /* Blink condition 0=Display off, 1=Normal display */
   } Bits;
 } LCD_STATUSSTR;
 
@@ -39,17 +40,18 @@ volatile LCD_STATUSSTR _LCD_STATUS;
 #define LCD_STA0                        _LCD_STATUS.Bits.STA0
 #define LCD_STA1                        _LCD_STATUS.Bits.STA1
 
-//----------------------------------------------------------------------------------------
-// Define Display Mode byte
+/**
+ * define Display Mode byte
+ */
 typedef union
 {
   UINT8 Byte;
   struct
   {
-    UINT8 cursorBlink      :1;                // Cursor blink
-    UINT8 cursorDisplay    :1;                // Cursor display
-    UINT8 textDisplay      :1;                // Text display
-    UINT8 graphicDisplay   :1;                // Graphic display
+    UINT8 cursorBlink      :1; /* Cursor blink    */
+    UINT8 cursorDisplay    :1; /* Cursor display  */
+    UINT8 textDisplay      :1; /* Text display    */
+    UINT8 graphicDisplay   :1; /* Graphic display */
   } Bits;
 } LCD_DISPLAYMODESTR;
 
@@ -61,31 +63,45 @@ volatile LCD_DISPLAYMODESTR _LCD_DISPLAYMODE;
 #define DisplayMode_TextDisplay         _LCD_DISPLAYMODE.Bits.textDisplay
 #define DisplayMode_GraphicDisplay      _LCD_DISPLAYMODE.Bits.graphicDisplay
 
-
-//----------------------------------------------------------------------------------------
-// Constants
-
-// Safety count maximum value - used for LCD status checks
+/**
+ * safety count maximum value - used for LCD status checks
+ */
 const UINT16 STATUS_COUNT_MAX = 50;
-// LCD turn on delay
+/**
+ * LCD turn on delay
+ */
 const UINT16 LCD_TURN_ON_DELAY = 1200;
-// Maximum contrast setting
+/**
+ * maximum contrast setting
+ */
 const UINT8 MAX_CONTRAST = 64;
-// Default LCD contrast
+/**
+ * default LCD contrast
+ */
 const UINT8 LCD_DEFAULT_CONTRAST = 15;
-// Blank line
+/**
+ * blank line
+ */
 const char LCD_BLANKLINE_STR[] = "                ";
-// Number of lines on LCD
+/**
+ * number of lines on LCD
+ */
 const UINT8 MAX_LCD_LINES = 8;
-// LCD text size in characters
+/**
+ * LCD text size in characters
+ */
 const UINT8 LCD_TEXT_SIZE_X = 16;
 
-// LCD text and graphics addresses
+/**
+ * LCD text and graphics addresses
+ */
 const UINT16 LCD_TEXT_HOME_ADDRESS    = 0x0000;
 const UINT16 LCD_GRAPHIC_HOME_ADDRESS	= 0x8000;
 const UINT16 LCD_USER_CG_RAM_START_ADDRESS = 0x0C00;
 
-// Enumerated types for LCD commands
+/**
+ * enumerated types for LCD commands
+ */
 typedef enum
 {
   LCD_DATA_ZERO,
@@ -108,7 +124,9 @@ typedef enum
   StatusAutoWrite = 0x08
 } TLCDStatus;
 
-// LCD commands
+/**
+ * LCD commands
+ */
 const UINT8 LCD_CMD_SET_CURSOR_POINTER       = 0x21;
 const UINT8 LCD_CMD_SET_OFFSET_REGISTER      = 0x22;
 const UINT8 LCD_CMD_SET_ADDRESS_POINTER      = 0x24;
@@ -133,32 +151,29 @@ const UINT8 LCD_CMD_SCREEN_COPY              = 0xE8;
 const UINT8 LCD_CMD_BIT_RESET                = 0xF0;
 const UINT8 LCD_CMD_BIT_SET                  = 0xF8;
 
-// Masks for display command and text mode
+/**
+ * masks for display command and text mode
+ */
 const UINT8 LCD_CMD_EXTERNAL_CG_RAM_MODE     = 0x08;
 
-
-// ----------------------------------------
-// StatusCheck
-// 
-// Checks the status of the LCD
-// Input:
-//   statusMask is the bit mask used to check particular status bits
-// Output:
-//   returns bTRUE if the LCD is ready, otherwise FALSE
-// Conditions:
-//   LCD has been set up
-
+/**
+ * \fn BOOL StatusCheck(const TLCDStatus statusMask)
+ * \brief Checks the status of the LCD
+ * \param statusMask the bit mask used to check particular status bits
+ * \return bTRUE if the LCD is ready, otherwise FALSE
+ * \warning LCD has been set up
+ */
 BOOL StatusCheck(const TLCDStatus statusMask)
 {
   UINT16 safetyCount = 0;
 
-  // Turn Port A into an input port
+  /* turn Port A into an input port */
   DDRA = 0x00;
 
-  // Ask for status
+  /* ask for status */
   LCD_CD = 1;
  
-  // Check response
+  /* check response */
   do
   {
     LCD_RD = 0;
@@ -168,29 +183,25 @@ BOOL StatusCheck(const TLCDStatus statusMask)
         
   } while (((LCD_STATUS & statusMask) != statusMask) && (safetyCount < STATUS_COUNT_MAX));
 
-  // Turn Port A into an output port
+  /* turn Port A into an output port */
   DDRA = 0xFF;
 
   __RESET_WATCHDOG();
 
   if (safetyCount < STATUS_COUNT_MAX)
+  {    
     return bTRUE;
-  
+  }
   return bFALSE;
 }
 
-// ----------------------------------------
-// WriteByte
-// 
-// Writes a byte to the LCD
-// Input:
-//   data is a byte to be written to the LCD
-//   cmd determines whether the byte is a command or data
-// Output:
-//   none
-// Conditions:
-//   LCD has been set up, 24 MHz bus clock is used (41.7 ns cycle time)
-
+/**
+ * \fn void WriteByte(const UINT8 data, const BOOL cmd)
+ * \brief Writes a byte to the LCD
+ * \param data a byte to be written to the LCD
+ * \param cmd whether the byte is a command or data
+ * \warning LCD has been set up, 24 MHz bus clock is used (41.7 ns cycle time)
+ */
 void WriteByte(const UINT8 data, const BOOL cmd)
 {
   LCD_CD = (UINT8)cmd;
@@ -199,46 +210,47 @@ void WriteByte(const UINT8 data, const BOOL cmd)
   LCD_WR = 1;
 }
 
-// ----------------------------------------
-// SendCommand
-// 
-// Sends a command to the LCD
-// Input:
-//   command is the LCD command
-//   nbDataBytes is the number of data bytes that the command uses
-//   data1 is the first data byte
-//   data2 is the second data byte
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const UINT8 data1, const UINT8 data2)
+ * \brief Sends a command to the LCD
+ * \param the LCD command
+ * \param the number of data bytes that the command uses
+ * \param the first data byte
+ * \param the second data byte
+ * \return bTRUE if the command was successful, otherwise FALSE
+ */
 BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const UINT8 data1, const UINT8 data2)
 {
   BOOL success;
 
-  // Send first data byte if it exists
+  /* send first data byte if it exists */
   if (nbDataBytes >= LCD_DATA_ONE)
   {
     success = StatusCheck(StatusManual);
     if (!success)
+    {      
       return success;
+    }
     WriteByte(data1, bFALSE);
   
-    // Send second data byte if it exists
+    /* send second data byte if it exists */
     if (nbDataBytes == LCD_DATA_TWO)
     {
       success = StatusCheck(StatusManual);
       if (!success)
+      {        
         return success;
+      }
       WriteByte(data2, bFALSE);
     }
   }
   
-  // Send command
+  /* send command */
   success = StatusCheck(StatusManual);
   if (!success)
+  {    
     return success;
+  }
   WriteByte(command, bTRUE);
   
   return success;
@@ -256,58 +268,72 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   UINT16 delay;
   BOOL success;
 
-  // Ensure WR/RD lines are not asserted
+  /* ensure WR/RD lines are not asserted */
   LCD_WR = 1;
   LCD_RD = 1;
 
-  // Reset LCD
+  /* reset LCD */
   LCD_RST = 0;
 
-  // Turn Port B into an output port, except for bit 7 (audio volume control)
+  /* turn Port B into an output port, except for bit 7 (audio volume control) */
   DDRB = 0x7F;
 
-  // Wait for 5 clock cycles of the LCD oscillator (2.5 us for a 2 MHz clock)
+  /* wait for 5 clock cycles of the LCD oscillator (2.5 us for a 2 MHz clock) */
   for (delay = 0; delay < LCD_TURN_ON_DELAY; delay++);
 
-  // Bring LCD out of reset
+  /* bring LCD out of reset */
   LCD_RST = 1;
 
-  // Set LCD contrast
+  /* set LCD contrast */
   success = LCD_SetContrast(LCD_DEFAULT_CONTRAST);
   if (!success)
+  {    
     return success;
+  }
   
-  // Set text home address
+  /* set text home address */
   success = SendCommand(LCD_CMD_SET_TEXT_HOME_ADDRESS, 2, (UINT8)LCD_TEXT_HOME_ADDRESS, (UINT8)(LCD_TEXT_HOME_ADDRESS >> 8));
   if (!success)
+  {    
     return success;
+  }
   
-  // Set text area line length in multiples of 8 pixels
+  /* set text area line length in multiples of 8 pixels */
   success = SendCommand(LCD_CMD_SET_TEXT_AREA, 2, LCD_TEXT_SIZE_X, 0);
   if (!success)
+  {    
     return success;
+  }
   
-  // Set graphic home address
+  /* set graphic home address */
   success = SendCommand(LCD_CMD_SET_GRAPHIC_HOME_ADDRESS, 2, (UINT8)(LCD_GRAPHIC_HOME_ADDRESS & 0x00ff), (UINT8)(LCD_GRAPHIC_HOME_ADDRESS >> 8));
   if (!success)
+  {    
     return success;
+  }
   
-  // Set graphic area line length in multiples of 8 pixels
+  /* set graphic area line length in multiples of 8 pixels */
   success = SendCommand(LCD_CMD_SET_GRAPHIC_AREA, 2, LCD_TEXT_SIZE_X, 0);
-  if (!success)
+  if (!success) 
+  {    
     return success;
+  }
   
-  // Set Mode to OR so that text overwrites graphics
+  /* set Mode to OR so that text overwrites graphics */
   success = SendCommand(LCD_CMD_TEXT_MODE + (UINT8)ORMode, 0, 0, 0);
   if (!success)
+  {    
     return success;
+  }
   
-  // Clear LCD
+  /* clear LCD */
   success = LCD_Clear();
   if (!success)
+  {    
     return success;
+  }
   
-  // Set display mode
+  /* set display mode */
   DisplayMode = LCD_CMD_DISPLAY_OFF;
   DisplayMode_CursorBlink = 0;
   DisplayMode_CursorDisplay = 0;
@@ -315,7 +341,9 @@ BOOL SendCommand(const UINT8 command, const TLCDNbDataBytes nbDataBytes, const U
   DisplayMode_GraphicDisplay = 0;
   success = SendCommand(DisplayMode, 0, 0, 0);
   if (!success)
+  {    
     return success;
+  }
   
   success = SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0);
   return success;
@@ -337,48 +365,53 @@ BOOL LCD_OutChar(const UINT8 data)
     return bFALSE;
 }
 
-// ----------------------------------------
-// WriteAuto
-// 
-// Writes data to the LCD in auto mode
-// Input:
-//   nbBytes is the number of bytes to write
-//   data is a pointer to the bytes to write
-//   convert determines whether the byte is converted from ASCII to ROM0101
-// Output:
-//   returns bTRUE if the command was successful, otherwise FALSE
-// Conditions:
-//   none
-
+/**
+ * \fn BOOL WriteAuto(const UINT16 nbBytes, const char *data, const BOOL convert)
+ * \brief Writes data to the LCD in auto mode
+ * \param nbBytes the number of bytes to write
+ * \param data a pointer to the bytes to write
+ * \param convert whether the byte is converted from ASCII to ROM0101
+ * \return returns bTRUE if the command was successful, otherwise FALSE
+ */
 BOOL WriteAuto(const UINT16 nbBytes, const char *data, const BOOL convert)
 {
   UINT16 byteNb;
-  BOOL success;
   
-  // Check for NULL pointer
+  /* check for NULL pointer */
   if (!data || (nbBytes == 0))
-    return bTRUE;
-  
-  // Set auto write mode
-  success = SendCommand(LCD_CMD_SET_DATA_AUTO_WRITE, 0, 0, 0);  
-  if (!success)
-    return success;
-      
-  // Write data bytes
-  for (byteNb = 0; byteNb < nbBytes; byteNb++)
   {
-    success = StatusCheck(StatusAutoWrite);
-    if (!success)
-      return success;
-    if (convert)
-      WriteByte((*data++) - 32, bFALSE);
-    else
-      WriteByte(*data++, bFALSE);
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_ARGUMENT);
+#endif    
+    return bFALSE;
   }
   
-  // Reset auto write mode
-  success = SendCommand(LCD_CMD_SET_DATA_AUTO_RESET, 0, 0, 0);  
-  return success;
+  /* set auto write mode */
+  if (!SendCommand(LCD_CMD_SET_DATA_AUTO_WRITE, 0, 0, 0))
+  {
+    return bFALSE;
+  }
+      
+  /* write data bytes */
+  for (byteNb = 0; byteNb < nbBytes; byteNb++)
+  {
+    if (!StatusCheck(StatusAutoWrite))
+    {
+      return bFALSE;
+    }
+    
+    if (convert)
+    {      
+      WriteByte((*data++) - 32, bFALSE);
+    }
+    else
+    {      
+      WriteByte(*data++, bFALSE);
+    }
+  }
+  
+  /* reset auto write mode */
+  return SendCommand(LCD_CMD_SET_DATA_AUTO_RESET, 0, 0, 0);  
 }
 
 /**
@@ -394,18 +427,32 @@ BOOL LCD_OutString(const char *str)
   const char *strPtr = str;
   UINT16 nbBytes = 0;
   
-  // Check for NULL pointer
+  /* Check for NULL pointer */
   if (!str)
-    return bTRUE;
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_INVALID_POINTER);
+#endif    
+    return bFALSE;
+  }
   
-  // Count number of bytes in string
+  /* count number of bytes in string */
   while (*strPtr++)
+  {    
     nbBytes++;
+  }
 
-  // Write string using auto mode
+  /* Write string using auto mode */
   return WriteAuto(nbBytes, str, bTRUE);
 }
 
+/**
+ * \fn BOOL LCD_OutFrame(const UINT8 frame[8][16])
+ * \brief Writes whole text frame to the LCD
+ * \param frame Text frame to be written to the LCD
+ * \return bTRUE if the command was successful, otherwise FALSE
+ * \warning Assumes LCD has been set up
+ */
 BOOL LCD_OutFrame(const UINT8 frame[8][16]) 
 {
   return SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0) && WriteAuto(128, (const char*)frame, bTRUE);
@@ -422,10 +469,11 @@ BOOL LCD_Clear(void)
   UINT8 lineNb;
   BOOL success;
   
-  success = SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0);
-  if (!success)
-    return success;
-
+  if (!SendCommand(LCD_CMD_SET_ADDRESS_POINTER, 2, 0, 0))
+  {    
+    return bFALSE;
+  }
+  
   for (lineNb = 0; lineNb < MAX_LCD_LINES; lineNb++)
   {
     success = LCD_OutString(LCD_BLANKLINE_STR);
@@ -435,17 +483,13 @@ BOOL LCD_Clear(void)
   return success;
 }
 
-// ----------------------------------------
-// LCD_SetContrast
-// 
-// Sets the contrast of the LCD
-// Input:
-//   contrast is a value between 0 and 63 (according to the MAX749 datasheet)
-// Output:
-//   returns bTRUE if the contrast was in range, otherwise FALSE
-// Conditions:
-//   Assumes LCD contrast has started in shutdown mode
-
+/**
+ * \fn BOOL LCD_SetContrast(const UINT8 contrast)
+ * \brief Sets the contrast of the LCD
+ * \param contrast a value between 0 and 63 (according to the MAX749 datasheet)
+ * \return bTRUE if the contrast was in range, otherwise FALSE
+ * \warning Assumes LCD contrast has started in shutdown mode
+ */
 BOOL LCD_SetContrast(const UINT8 contrast)
 {
   UINT8 nbSteps, stepNb;
@@ -453,32 +497,34 @@ BOOL LCD_SetContrast(const UINT8 contrast)
   if (contrast > 63)
     return bFALSE;
   
-  // Start at mid-range
+  /* start at mid-range */
   LCD_ADJ = 1;
   LCD_CTRL = 0;
 
-  // Minimum delay is 100 ns
+  /* minimum delay is 100 ns */
   asm nop;
   asm nop;
   asm nop;
 
-  // Set default signals for contrast adjustment
+  /* set default signals for contrast adjustment */
   LCD_CTRL = 1;
   LCD_ADJ = 0;
 
-  // Increment to the desired contrast
+  /* increment to the desired contrast */
   nbSteps = contrast + MAX_CONTRAST / 2;
   if (nbSteps >= MAX_CONTRAST)
+  {
     nbSteps -= MAX_CONTRAST;
+  }
   for (stepNb = 0; stepNb < nbSteps; stepNb++)
   {
     LCD_ADJ = 1;
-    // Minimum high is 100 ns
+    /* minimum high is 100 ns */
     asm nop;
     asm nop;
     asm nop;
     LCD_ADJ = 0;
-    // Minimum low is 200 ns
+    /* minimum low is 200 ns */
     asm nop;
     asm nop;
     asm nop;
@@ -488,17 +534,11 @@ BOOL LCD_SetContrast(const UINT8 contrast)
   return bTRUE;
 }
 
-// ----------------------------------------
-// LCD_Backlight
-// 
-// Sets the LED backlight of the LCD on or off
-// Input:
-//   LEDBacklightOn determines whether the LED backlight is on or off
-// Output:
-//   none
-// Conditions:
-//   none
-
+/**
+ * \fn void LCD_Backlight(const BOOL LEDBacklightOn)
+ * \brief Sets the LED backlight of the LCD on or off
+ * \param LEDBacklightOn  whether the LED backlight is on or off
+ */
 void LCD_Backlight(const BOOL LEDBacklightOn)
 {
   LCD_LED = (UINT8)LEDBacklightOn;
