@@ -56,6 +56,7 @@
 #define EnableSPI0CS() { DDRH = DDRH | (DDRH_DDRH4_MASK | DDRH_DDRH5_MASK | DDRH_DDRH6_MASK); }
 #define SPI0CS      PTH
 #define SPI0CS_ADC  0x30
+#define SPI0CS_DAC  0x40
 #define SPI0CS_NULL 0x70 /* no chip connected */
 
 /**

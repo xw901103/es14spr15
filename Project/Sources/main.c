@@ -14,6 +14,8 @@
 // Date: 12-May-09
 
 #include "main.h"
+#include "CRG.h"
+#include "analog.h"
 #include "OS.h"
 #include <mc9s12a512.h>     /* derivative information */
 
@@ -21,8 +23,8 @@
 
 #define THREAD_STACK_SIZE 100
 
-static const UINT16 LED_TIME_ON  = 10;
-static const UINT16 LED_TIME_OFF = 10;
+static const UINT16 LED_TIME_ON  = 5;
+static const UINT16 LED_TIME_OFF = 5;
 
 static UINT8 LEDOnStack[THREAD_STACK_SIZE];
 static UINT8 LEDOffStack[THREAD_STACK_SIZE];
@@ -52,9 +54,11 @@ void LogDebug(const UINT16 lineNumber, const UINT16 err)
 // ----------------------------------------
 // LEDOn
 // ----------------------------------------
+static Vout = 4095;
 
 static void LEDOn(void *pData)
 {
+  
   for (;;)                       
   {
     // Call one of the RTOS's services:
@@ -64,6 +68,10 @@ static void LEDOn(void *pData)
     
     // Turn LED on
     PORTE_BIT7 = 0;
+
+    Analog_Set(ANALOG_OUTPUT_Ch1, Vout);
+    
+    Vout -= 1000;
 
     // Call more RTOS services:
     OS_TimeDelay(LED_TIME_ON);
@@ -88,11 +96,33 @@ static void LEDOff(void *pData)
     // Turn LED off
     PORTE_BIT7 = 1;
 
+    Analog_Set(ANALOG_OUTPUT_Ch1, Vout);
+
+    Vout -= 1000;
+    
     // Call more RTOS services:
     OS_TimeDelay(LED_TIME_OFF);
     (void)OS_SemaphoreSignal(TurnLEDOn);
   }
 } 
+
+BOOL Initialize(void)
+{
+  if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_CRGPLL_SETUP);
+#endif
+    return bFALSE;
+  }
+
+  Analog_Setup(CONFIG_BUSCLK);
+
+  // Initialize the RTOS
+  OS_Init();         
+
+  return bTRUE;
+}
 
 // ----------------------------------------
 // main
@@ -105,10 +135,9 @@ void main(void)
   // Initialise hardware  
   PORTE_BIT7 = 1; // Turn LED off
   DDRE_BIT7  = 1; // Set /XCLKS as output 
-
-  // Initialize the RTOS
-  OS_Init();         
   
+  UNUSED(Initialize());
+    
   // Create semaphores for signalling between threads
   TurnLEDOn = OS_SemaphoreCreate(1);
   TurnLEDOff = OS_SemaphoreCreate(0);
