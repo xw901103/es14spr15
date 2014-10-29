@@ -13,13 +13,11 @@
 // Author: PMcL
 // Date: 12-May-09
 
-#include <hidef.h>          /* common defines and macros */
-#include <mc9s12a512.h>     /* derivative information */
-		 
-#pragma LINK_INFO DERIVATIVE "mc9s12a512"
-
-// OS
+#include "main.h"
 #include "OS.h"
+#include <mc9s12a512.h>     /* derivative information */
+
+#pragma LINK_INFO DERIVATIVE "mc9s12a512"
 
 #define THREAD_STACK_SIZE 100
 
@@ -35,6 +33,21 @@ static UINT8 LEDOffStack[THREAD_STACK_SIZE];
 
 static OS_ECB *TurnLEDOn;
 static OS_ECB *TurnLEDOff;
+
+#ifndef NO_DEBUG
+/**
+ * \fn void LogDebug(const UINT16 lineNumber, const UINT16 err)
+ * \brief Logs debug information including line number and error number.
+ * \param lineNumber line number of source file
+ * \param err error number refers to predefined errors
+ */
+void LogDebug(const UINT16 lineNumber, const UINT16 err)
+{
+    /* break point here */
+    UNUSED(lineNumber);
+    UNUSED(err);
+}
+#endif
 
 // ----------------------------------------
 // LEDOn
