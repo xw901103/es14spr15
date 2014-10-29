@@ -1,3 +1,9 @@
+/**
+ * \file HMI.c
+ * \brief Routines to implement human-machine interface
+ * \author Xu Waycell
+ * \date 19-9-2014
+ */
 #include "HMI.h"
 #include "LCD.h"
 #ifndef NO_INTERRUPT
@@ -11,6 +17,26 @@
 #define HMI_KEY3 PORTK_BIT4
 #define HMI_KEY4 PORTK_BIT5
 #define HMI_KEY5 PORTK_BIT7
+
+#define HMI_POPUP_INITIAL_X 1
+#define HMI_POPUP_INITIAL_Y 2
+
+#define HMI_TIMER_INITIAL_X 8
+#define HMI_TIMER_INITIAL_Y 0
+
+#define HMI_PANEL_TITLE_INITIAL_X 0
+#define HMI_PANEL_TITLE_INITIAL_Y 0
+
+#define HMI_PANEL_INITIAL_X 0
+#define HMI_PANEL_INITIAL_Y 2
+
+#define HMI_PANEL_END_X 15
+#define HMI_PANEL_END_Y 5
+
+#define HMI_DIALOG_INITIAL_X 0
+#define HMI_DIALOG_INITIAL_Y 2
+
+#define HMI_MAXIMUM_ON_SCREEN_MENU_ITEM 4
 
 static THMIFrame HMIFrameBuffer[2] = {0};
 static THMIContext HMIContext = {0};
@@ -60,69 +86,120 @@ THMIPopup HMI_CONTRAST_POPUP =
 
 static UINT16 HMIRoutinePeriod = 0;
 
+/**
+ * \fn void HMIRoutine(const TTimerChannel channelNb)
+ * \brief Default HMI time driven interupt process routine
+ * \param channelNb Indicate the parent timer channel
+ */
 void HMIRoutine(const TTimerChannel channelNb)
 {
   static UINT16 count = 0; // 2ms every cycle
   //HMI_Poll();
-  if (++count == 50) // 10 fps
+    
+  ++count;
+  
+  if (count == 49) // 10 fps or 100ms
   {
-    HMI_Poll();
     count = 0;
+
+    HMI_Poll();
+    
+    if (HMIContext.renderMode == HMI_RENDER_MODE_CONTINUITY || HMIContext.isDirty)
+    {
+      // TODO: replace unused with a debug macro
+      UNUSED(HMI_RenderFrame()); 
+    }
   }
+
   Timer_ScheduleRoutine(channelNb, HMIRoutinePeriod);
 }
 #endif
 
+/**
+ * \fn BOOL HMIPopupProcessRoutine(void)
+ * \brief Default HMI popup process routine
+ * \return TRUE if popup related process has been done or FALSE when bypassed
+ */
 BOOL HMIPopupProcessRoutine(void)
 {
+  static BOOL pressedKey2 = bFALSE;
+
   /* TODO: connect variables to ModConHMIBacklight and ModConHMIContrast */
-  static BOOL backlight = bFALSE;
-  static UINT8 contrast = 15;
   
-  if (HMI_KEY5 && HMI_KEY2)
+  BOOL showBacklight = bFALSE, showContrast = bFALSE;
+  
+  if (HMI_KEY5)
   {
-    backlight = !backlight;
-    if (backlight)
+    if (HMI_KEY2 && !pressedKey2)
     {      
-      HMI_BACKLIGHT_POPUP.text[2][6] = ' ';
-      HMI_BACKLIGHT_POPUP.text[2][7] = 'O';
-      HMI_BACKLIGHT_POPUP.text[2][8] = 'N';      
+      HMIContext.backlight = !HMIContext.backlight;
+      
+      showBacklight = bTRUE;
+    }
+    else if (HMI_KEY3)
+    {
+      if (HMIContext.contrast > 0)
+      {        
+        --HMIContext.contrast;
+      }
+      showContrast = bTRUE;
+    }
+    else if (HMI_KEY4)
+    {
+      if (HMIContext.contrast < 63)
+      {
+        ++HMIContext.contrast;
+      }
+      showContrast = bTRUE;
+    }
+  }
+
+  pressedKey2 = HMI_KEY2;
+      
+  if (showBacklight)
+  {
+    if (HMIContext.backlight)
+    {      
+      CopyBytes(&HMI_BACKLIGHT_POPUP.text[2][6], (UINT8*)" ON", 3);      
     }
     else
     {
-      HMI_BACKLIGHT_POPUP.text[2][6] = 'O';
-      HMI_BACKLIGHT_POPUP.text[2][7] = 'F';
-      HMI_BACKLIGHT_POPUP.text[2][8] = 'F';      
+      CopyBytes(&HMI_BACKLIGHT_POPUP.text[2][6], (UINT8*)"OFF", 3);      
     }
-    LCD_Backlight(backlight);
+    LCD_Backlight(HMIContext.backlight);
     HMI_ShowPopup(&HMI_BACKLIGHT_POPUP);
+    
+    if (HMIContext.backlightChangedCallback)
+    {
+      HMIContext.backlightChangedCallback(HMIContext.backlight);
+    }
+    
     return bTRUE;
   }
-  else if (HMI_KEY5 && (HMI_KEY3 || HMI_KEY4))
+  else if (showContrast)
   {
-    if (HMI_KEY3)
-    {
-      if (contrast > 0)
-      {        
-        --contrast;
-      }
-    }
-    if (HMI_KEY4)
-    {
-      if (contrast < 63)
-      {
-        ++contrast;
-      }
-    }
-    HMI_CONTRAST_POPUP.text[2][6] = contrast/10 + '0';
-    HMI_CONTRAST_POPUP.text[2][7] = contrast%10 + '0';    
-    UNUSED(LCD_SetContrast(contrast));
+    HMI_CONTRAST_POPUP.text[2][6] = HMIContext.contrast / 10 + '0';
+    HMI_CONTRAST_POPUP.text[2][7] = HMIContext.contrast % 10 + '0';    
+    UNUSED(LCD_SetContrast(HMIContext.contrast));
     HMI_ShowPopup(&HMI_CONTRAST_POPUP);
+    
+    if (HMIContext.contrastChangedCallback)
+    {
+      HMIContext.contrastChangedCallback(HMIContext.contrast);
+    }
+    
     return bTRUE;
   }
+    
   return bFALSE;
 }
 
+/**
+ * \fn void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
+ * \brief Default HMI input process routine
+ * \param panelPtr current focused panel
+ * \param key current pressed key
+ */
 void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
 {
   UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
@@ -185,7 +262,7 @@ void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
           if (panelPtr->menuPtr->type == HMI_MENU_TYPE_STATIC)
           {
             /* TODO: use startingMenuItemIndex inside the HMIContext instead of HMIMenu.startingMenuItemIndex */          
-            if ((panelPtr->menuPtr->itemCount - panelPtr->menuPtr->startingMenuItemIndex) > 4)
+            if ((panelPtr->menuPtr->itemCount - panelPtr->menuPtr->startingMenuItemIndex) > HMI_MAXIMUM_ON_SCREEN_MENU_ITEM)
             {              
               panelPtr->menuPtr->startingMenuItemIndex++;
             }
@@ -194,7 +271,7 @@ void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
           {          
             if (focusedMenuItemIndex < (panelPtr->menuPtr->itemCount - 1)) /* from 0 to n-1 total n items*/
             {
-              if (++focusedMenuItemIndex >= panelPtr->menuPtr->startingMenuItemIndex + 4)
+              if (++focusedMenuItemIndex >= (panelPtr->menuPtr->startingMenuItemIndex + HMI_MAXIMUM_ON_SCREEN_MENU_ITEM))
               {
                 panelPtr->menuPtr->startingMenuItemIndex++;  
               }
@@ -264,7 +341,11 @@ void HMIPanelInputProcessRoutine(THMIPanel* const panelPtr, THMIKey key)
   }
 }
 
-/* TODO: assign menu item value to mutatedValue once the panel is shown */
+/**
+ * \fn void HMIClearMenuItemMutatedValues(THMIMenu* const menuPtr)
+ * \brief Clears useMutatedValue of all menu items of given menu.
+ * \param menuPtr A pointer of THMIMenu containing menu items
+ */
 void HMIClearMenuItemMutatedValues(THMIMenu* const menuPtr)
 {
   UINT8 i = 0;
@@ -282,10 +363,10 @@ void HMIClearMenuItemMutatedValues(THMIMenu* const menuPtr)
 }
 
 /**
- * \fn HMI_Setup(const THMIContext * const aHMIContext)
- * \brief
- * \param
- * \return
+ * \fn HMI_Setup(const THMISetup * const aHMISetup)
+ * \brief Setup HMI system.
+ * \param aHMIContext A pointer of HMI configuration structure
+ * \return TRUE if HMI is set properly or FALSE when failed
  */
 BOOL HMI_Setup(const THMISetup * const aHMISetup) 
 {
@@ -339,7 +420,12 @@ BOOL HMI_Setup(const THMISetup * const aHMISetup)
 
       HMIContext.hours = 0;
       HMIContext.minutes = 0;
-      HMIContext.seconds = 0;      
+      HMIContext.seconds = 0;
+      
+      HMIContext.backlight = aHMISetup->backlight;
+      HMIContext.backlightChangedCallback = aHMISetup->backlightChangedCallback;
+      HMIContext.contrast = aHMISetup->contrast;
+      HMIContext.contrastChangedCallback = aHMISetup->contrastChangedCallback;      
 #ifndef NO_INTERRUPT
       HMIRoutinePeriod = (UINT16)(48000); // 2ms
       
@@ -367,96 +453,112 @@ BOOL HMI_Setup(const THMISetup * const aHMISetup)
   return bFALSE;
 }
 
+/**
+ * \fn const THMIContext * const HMI_GetContext(void)
+ * \brief Gets the current using HMI context
+ * \return A pointer of current using HMI context
+ * \warning Assumes HMI setup properly 
+ */
 const THMIContext * const HMI_GetContext(void)
 {
   return &HMIContext;
 }
 
+/**
+ * \fn THMIKey HMI_GetKeyEvent(void)
+ * \brief Gets current pressed key
+ * \return the key which has been pressed by user
+ */
 THMIKey HMI_GetKeyEvent(void)
 {
-  static BOOL key1 = bFALSE, key2 = bFALSE, key3 = bFALSE, key4 = bFALSE, key5 = bFALSE;
+  static BOOL pressedKey1 = bFALSE, pressedKey2 = bFALSE, pressedKey3 = bFALSE, pressedKey4 = bFALSE, pressedKey5 = bFALSE;
 
   if (HMI_KEY1)
   {
-    if (!key1)
+    if (!pressedKey1)
     {      
-      key1 = bTRUE;
+      pressedKey1 = bTRUE;
       return HMI_KEY_SET;
     }
   }
   else
   {    
-    key1 = bFALSE;
+    pressedKey1 = bFALSE;
   }
   
   if (HMI_KEY2)
   {
-    if (!key2)
+    if (!pressedKey2)
     {      
-      key2 = bTRUE;
+      pressedKey2 = bTRUE;
       return HMI_KEY_DATA;
     }
   }
   else
   {    
-    key2 = bFALSE;
+    pressedKey2 = bFALSE;
   }
   
   if (HMI_KEY3)
   {
-    if (!key3)
+    if (!pressedKey3)
     {      
-      key3 = bTRUE;
+      pressedKey3 = bTRUE;
       return HMI_KEY_UP;
     }
   }
   else
   {    
-    key3 = bFALSE;
+    pressedKey3 = bFALSE;
   }
   
   if (HMI_KEY4)
   {
-    if (!key4)
+    if (!pressedKey4)
     {      
-      key4 = bTRUE;
+      pressedKey4 = bTRUE;
       return HMI_KEY_DOWN; 
     }
   }
   else
   {    
-    key4 = bFALSE;
+    pressedKey4 = bFALSE;
   }
   
   if (HMI_KEY5)
   {
-    if (!key5)
+    if (!pressedKey5)
     {      
-      key5 = bTRUE;
+      pressedKey5 = bTRUE;
       return HMI_KEY_SELECT;
     }
   }
   else
   {    
-    key5 = bFALSE;
+    pressedKey5 = bFALSE;
   }
   
   return HMI_KEY_NULL;
 }
 
+/**
+ * \fn void HMIRenderPopup(THMIFrame * const frameBufferPtr)
+ * \brief Renders a popup on given framebuffer
+ * \param frameBufferPtr Targeted rendering framebuffer
+ */
 void HMIRenderPopup(THMIFrame * const frameBufferPtr)
 {
-  UINT16 i = 0, j = 0;
+  UINT16 y = 0, x = 0;
   
   if (frameBufferPtr)
   {    
     if (HMIContext.popupPtr)
     {
-      for (i = 0; i < 4; ++i)
+      for (y = 0; y < HMI_POPUP_MAXIMUM_HEIGHT; ++y)
       {
-        for (j = 0; j < 14; ++j)
+        for (x = 0; x < HMI_POPUP_MAXIMUM_WIDTH; ++x)
         {
-          frameBufferPtr->data[2+i][1+j] = HMIContext.popupPtr->text[i][j];
+          frameBufferPtr->data[HMI_POPUP_INITIAL_Y + y][HMI_POPUP_INITIAL_X + x] = HMIContext.popupPtr->text[y][x];
         }
       }
     }
@@ -469,20 +571,27 @@ void HMIRenderPopup(THMIFrame * const frameBufferPtr)
   }
 }
 
+/**
+ * \fn void HMIRenderTimer(THMIFrame * const frameBufferPtr)
+ * \brief Renders timer to targeted framebuffer
+ * \param frameBufferPtr framebuffer to use
+ */
 void HMIRenderTimer(THMIFrame * const frameBufferPtr)
 {
   UINT16 i = 0, j = 0;
   
   if (frameBufferPtr)
   {
-    frameBufferPtr->data[0][15] = HMIContext.seconds % 10 + '0';
-    frameBufferPtr->data[0][14] = HMIContext.seconds / 10 + '0';
+    /*        89ABCDEF */
+    /* format HH:MM:SS */
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 7] = HMIContext.seconds % 10 + '0';
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 6] = HMIContext.seconds / 10 + '0';
     
-    frameBufferPtr->data[0][12] = HMIContext.minutes % 10 + '0';
-    frameBufferPtr->data[0][11] = HMIContext.minutes / 10 + '0';    
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 4] = HMIContext.minutes % 10 + '0';
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 3] = HMIContext.minutes / 10 + '0';    
 
-    frameBufferPtr->data[0][9] = HMIContext.hours % 10 + '0';
-    frameBufferPtr->data[0][8] = HMIContext.hours / 10 + '0';
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 1] = HMIContext.hours % 10 + '0';
+    frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X] = HMIContext.hours / 10 + '0';
   }
   else
   {
@@ -492,6 +601,12 @@ void HMIRenderTimer(THMIFrame * const frameBufferPtr)
   }
 }
 
+/**
+ * \fn void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const panelPtr)
+ * \brief Renders given panel to targeted framebuffer
+ * \param frameBufferPtr framebuffer to use
+ * \param panelPtr panel to render
+ */
 void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const panelPtr)
 {
   static UINT8 animationCount = 0; /* TODO: move them into HMIContext */
@@ -505,16 +620,18 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
   {  
     for (i = 0; i < HMI_PANEL_TITLE_SIZE; ++i)
     {
-      frameBufferPtr->data[0][i] = panelPtr->title[i];
+      frameBufferPtr->data[HMI_PANEL_TITLE_INITIAL_Y][HMI_PANEL_TITLE_INITIAL_X + i] = panelPtr->title[i];
     }
     
     if (panelPtr->dialogPtr)
     {
+      /* y coordinate */
       for (i = 0; i < HMI_DIALOG_MAXIMUM_HEIGHT; ++i)
       {
+        /* x coordinate */
         for (j = 0; j < HMI_DIALOG_MAXIMUM_WIDTH; ++j)
         {
-          frameBufferPtr->data[2+i][0+j] = panelPtr->dialogPtr->text[i][j];
+          frameBufferPtr->data[HMI_DIALOG_INITIAL_Y + i][HMI_DIALOG_INITIAL_X + j] = panelPtr->dialogPtr->text[i][j];
         }
       }
     }
@@ -522,6 +639,7 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
     {
       switch(panelPtr->menuPtr->type)
       {
+        /* TODO: move them to configurable defines */
         case HMI_MENU_TYPE_STATIC:
           menuItemTitleInitialPosition = 0;
           menuItemValueInitialPosition = 0;
@@ -536,19 +654,25 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
           break;
       };
       
-      for(i = 0; i < 4; ++i)
+      /* rendering menu items */
+      for(i = 0; i < HMI_MAXIMUM_ON_SCREEN_MENU_ITEM; ++i)
       {
         menuItemIndex = panelPtr->menuPtr->startingMenuItemIndex + i;
+        
         if (panelPtr->menuPtr->itemPtr[menuItemIndex])
         {
+          /* render menu item title */
+          /* NOTE: text left align */
           for (j = 0; j < HMI_MENU_ITEM_TITLE_SIZE; ++j)
           {
             /* TODO: use configurable setting for panel area starting row */
-            if (panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j] > 0)
+            if (panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j] != '\0')
             {              
-              frameBufferPtr->data[2+i][menuItemTitleInitialPosition + j] = panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j];
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_INITIAL_X + menuItemTitleInitialPosition + j] = panelPtr->menuPtr->itemPtr[menuItemIndex]->title[j];
             }
           }
+          
+          /* determine rendering menu item value */
           if (panelPtr->menuPtr->itemPtr[menuItemIndex]->useMutatedValue)
           {
             menuItemValue = panelPtr->menuPtr->itemPtr[menuItemIndex]->mutatedValue;
@@ -557,7 +681,11 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
           {
             menuItemValue = panelPtr->menuPtr->itemPtr[menuItemIndex]->value;
           }
+          
           menuItemValueNotation = panelPtr->menuPtr->itemPtr[menuItemIndex]->valueNotation;
+          
+          /* rendering menu item value */
+          /* NOTE: text right align */
           switch(panelPtr->menuPtr->itemPtr[menuItemIndex]->valueType)
           {
             case HMI_MENU_ITEM_VALUE_TYPE_BOOLEAN:
@@ -566,66 +694,66 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
                 case HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_ON_OFF:
                   if (menuItemValue.b.Boolean)
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition], (const UINT8*)"ON", 2);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 1 - menuItemValueInitialPosition], (const UINT8*)"ON", 2);
                   }
                   else
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition], (const UINT8*)"OFF", 3);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 2 - menuItemValueInitialPosition], (const UINT8*)"OFF", 3);
                   }                
                   break;
                 case HMI_MENU_ITEM_VALUE_NOTATION_BOOLEAN_SYNC_ASYNC:
                   if (menuItemValue.b.Boolean)
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition], (const UINT8*)"SYNC", 4);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 3 - menuItemValueInitialPosition], (const UINT8*)"SYNC", 4);
                   }
                   else
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition], (const UINT8*)"ASYNC", 5);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 4 - menuItemValueInitialPosition], (const UINT8*)"ASYNC", 5);
                   }                
                   break;
                 default:
                   if (menuItemValue.b.Boolean)
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition], (const UINT8*)"TRUE", 4);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 3 - menuItemValueInitialPosition], (const UINT8*)"TRUE", 4);
                   }
                   else
                   {
-                    CopyBytes(&frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition], (const UINT8*)"FALSE", 5);
+                    CopyBytes(&frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 4 - menuItemValueInitialPosition], (const UINT8*)"FALSE", 5);
                   }                
                   break;
               }
               break;
             case HMI_MENU_ITEM_VALUE_TYPE_VERSION_NUMBER:
-              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = 'V';
-              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = menuItemValue.v.Major + '0';
-              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = '.';
-              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = menuItemValue.v.Minor / 10 + '0';
-              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.v.Minor % 10) + '0';                                                    
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 4 - menuItemValueInitialPosition] = 'V';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 3 - menuItemValueInitialPosition] = menuItemValue.v.Major + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 2 - menuItemValueInitialPosition] = '.';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 1 - menuItemValueInitialPosition] = menuItemValue.v.Minor / 10 + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - menuItemValueInitialPosition] = (menuItemValue.v.Minor % 10) + '0';                                                    
               break;
             case HMI_MENU_ITEM_VALUE_TYPE_FLOAT:
               if (menuItemValue.f.Float < 0)
               {
-                frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = '-';
+                frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 4 - menuItemValueInitialPosition] = '-';
                 menuItemValue.f.Float = -menuItemValue.f.Float;
               }
               else
               {
-                //frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = '+';
+                //frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 4 - menuItemValueInitialPosition] = '+';
               }
-              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 10) + '0';
-              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 100) / 10 + '0';
-              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = '.';
-              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 1000) / 100 + '0';
-              break;
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - menuItemValueInitialPosition] = (menuItemValue.f.Float % 10) + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 1 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 100) / 10 + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 2 - menuItemValueInitialPosition] = '.';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 3 - menuItemValueInitialPosition] = (menuItemValue.f.Float % 1000) / 100 + '0';
+              break;                                                           
             case HMI_MENU_ITEM_VALUE_TYPE_NONE:
               break;
             case HMI_MENU_ITEM_VALUE_TYPE_UNSIGNED_INTEGER:              
             default:
-              frameBufferPtr->data[2+i][15 - menuItemValueInitialPosition] = (menuItemValue.l % 10) + '0';
-              frameBufferPtr->data[2+i][14 - menuItemValueInitialPosition] = (menuItemValue.l % 100) / 10 + '0';
-              frameBufferPtr->data[2+i][13 - menuItemValueInitialPosition] = (menuItemValue.l % 1000) / 100 + '0';
-              frameBufferPtr->data[2+i][12 - menuItemValueInitialPosition] = (menuItemValue.l % 10000) /1000 + '0';
-              frameBufferPtr->data[2+i][11 - menuItemValueInitialPosition] = (menuItemValue.l % 100000) /10000 + '0';            
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][15 - menuItemValueInitialPosition] = (menuItemValue.l % 10) + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][14 - menuItemValueInitialPosition] = (menuItemValue.l % 100) / 10 + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][13 - menuItemValueInitialPosition] = (menuItemValue.l % 1000) / 100 + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][12 - menuItemValueInitialPosition] = (menuItemValue.l % 10000) /1000 + '0';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][11 - menuItemValueInitialPosition] = (menuItemValue.l % 100000) /10000 + '0';            
               break;
           }
           
@@ -633,23 +761,25 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
           if (HMIContext.selectedMenuItemId == menuItemIndex)
           {
             if (animationCount % 4 <= 1)
-            {              
-              frameBufferPtr->data[2+i][9] = '[';
-              frameBufferPtr->data[2+i][15] = ']';
+            {
+              /* NOTE: menu item value is right align */              
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X - 6] = '[';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X] = ']';
             }
           }
           else if (HMIContext.focusedMenuItemId == menuItemIndex)
           {
             if (animationCount % 4 <= 1)
             {              
-              frameBufferPtr->data[2+i][0] = '[';
-              frameBufferPtr->data[2+i][15] = ']'; 
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_INITIAL_X] = '[';
+              frameBufferPtr->data[HMI_PANEL_INITIAL_Y + i][HMI_PANEL_END_X] = ']'; 
             }
           }
-        }
-      }
-    }
-  }
+          
+        } /* if itemPtr valid */
+      } /* for loop iterate menu items */
+    } /* if menuPtr valid */
+  } /* if panelPtr valid */
   else
   {
 #ifndef NO_DEBUG
@@ -658,35 +788,37 @@ void HMIRenderPanel(THMIFrame * const frameBufferPtr, const THMIPanel* const pan
   }
 }
 
-/* return true if display frame successfully */
+/**
+ * \fn BOOL HMI_RenderFrame(void)
+ * \brief Renders a frame based on current shown panel, menu and/or dialog.
+ * \return TRUE if the frame has been sent to display or FALSE it failed.
+ */
 BOOL HMI_RenderFrame(void)
 {
-  //static UINT8 animationCount = 0;
   static UINT8 timerTick = ' ';
-  //static UINT8 beginningMenuItemIndex = 0;
    
   THMIFrame * const frameBufferPtr = HMIContext.renderFrameBufferPtr;
   const THMIPanel * panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
-  //THMIMenuItemValue menuItemValue;
-  UINT8 i = 0, j = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
+  UINT8 x = 0, y = 0, menuItemIndex = 0, menuItemTitleInitialPosition = 0, menuItemValueInitialPosition = 0;
   
-  //++animationCount;
-    
-  for (j = 0; j < HMIContext.frameTemplate.height; ++j)
+  /* rendering bottom layer */    
+  for (y = 0; y < HMIContext.frameTemplate.height; ++y)
   {
-    for (i = 0; i < HMIContext.frameTemplate.width; ++i)
+    for (x = 0; x < HMIContext.frameTemplate.width; ++x)
     {
-      frameBufferPtr->data[j][i] = HMIContext.frameTemplate.data[j][i];
+      frameBufferPtr->data[y][x] = HMIContext.frameTemplate.data[y][x];
     }
   }
+  
   frameBufferPtr->width = HMIContext.frameTemplate.width;
   frameBufferPtr->height = HMIContext.frameTemplate.height;
   
   HMIRenderPanel(frameBufferPtr, panelPtr);  
   HMIRenderTimer(frameBufferPtr);
 
-  /* time notation */
-  if (frameBufferPtr->data[0][15] != HMIContext.screenFrameBufferPtr->data[0][15])
+  /* TODO: move timer column update out of this function */
+  /* update time notation by compare on screen framebuffer */
+  if (frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 7] != HMIContext.screenFrameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 7])
   {
     if (timerTick == ':')
     {
@@ -698,8 +830,8 @@ BOOL HMI_RenderFrame(void)
     }
   }
 
-  frameBufferPtr->data[0][13] = timerTick;    
-  frameBufferPtr->data[0][10] = timerTick;
+  frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 5] = timerTick;    
+  frameBufferPtr->data[HMI_TIMER_INITIAL_Y][HMI_TIMER_INITIAL_X + 2] = timerTick;
   
   HMIRenderPopup(frameBufferPtr);
     
@@ -707,11 +839,18 @@ BOOL HMI_RenderFrame(void)
   {
     HMIContext.renderFrameBufferPtr = HMIContext.screenFrameBufferPtr;    
     HMIContext.screenFrameBufferPtr = frameBufferPtr;
+    
+    HMIContext.isDirty = bFALSE; /* screen is up to date */
+
     return bTRUE;
   }
   return bFALSE;
 }
 
+/**
+ * \fn void HMI_Poll(void)
+ * \brief Polls update of shown HMI components.
+ */
 void HMI_Poll(void) 
 {
   //static THMIMenu* cachedMenuPtr = (THMIMenu*)0x00;
@@ -723,6 +862,10 @@ void HMI_Poll(void)
   /* TODO: declare a function to increase idleCount */
   if (++HMIContext.idleTimeCount >= HMIContext.maxIdleTimeCount)
   {
+    //if (panelPtr && panelPtr->menuPtr)
+    //{
+    //  HMIClearMenuItemMutatedValues(panelPtr->menuPtr);
+    //}
     HMI_ResetIdleCount();
     HMI_ShowPanel(HMIContext.idlePanelId);
     panelPtr = HMIPanelLookupTable[HMIContext.currentPanelId];
@@ -740,32 +883,32 @@ void HMI_Poll(void)
   {
     if (panelPtr->menuPtr)
     {
-      //if (cachedMenuPtr != panelPtr->menuPtr)
-      //{
-      //  cachedMenuPtr = panelPtr->menuPtr; 
-        if (panelPtr->menuPtr->type == HMI_MENU_TYPE_SETTING)
+      if (panelPtr->menuPtr->type == HMI_MENU_TYPE_SETTING)
+      {
+        if (HMIContext.focusedMenuItemId == 0xFF)
         {
-          if (HMIContext.focusedMenuItemId == 0xFF)
-          {
-            HMIContext.focusedMenuItemId = panelPtr->menuPtr->startingMenuItemIndex;
-          }
+          HMIContext.focusedMenuItemId = panelPtr->menuPtr->startingMenuItemIndex;
         }
-        for (i = 0; i < 4; ++i)
+      }
+      
+      for (i = 0; i < panelPtr->menuPtr->itemCount; ++i)
+      {
+        menuItemPtr = panelPtr->menuPtr->itemPtr[i + panelPtr->menuPtr->startingMenuItemIndex];
+        
+        if (menuItemPtr && menuItemPtr->type == HMI_MENU_ITEM_TYPE_ENTRY)
         {
-          menuItemPtr = panelPtr->menuPtr->itemPtr[i + panelPtr->menuPtr->startingMenuItemIndex];
-          if (menuItemPtr && menuItemPtr->type == HMI_MENU_ITEM_TYPE_ENTRY)
+          if (menuItemPtr->updateRoutine)
           {
-            if (menuItemPtr->updateRoutine)
-            {
-              if (!menuItemPtr->useMutatedValue)
-              {                
-                menuItemPtr->updateRoutine(menuItemPtr);
-                menuItemPtr->mutatedValue = menuItemPtr->value;
-              }
+            if (!menuItemPtr->useMutatedValue)
+            {                
+              menuItemPtr->updateRoutine(menuItemPtr);
+              menuItemPtr->mutatedValue = menuItemPtr->value;
+
+              HMI_MarkDirty();
             }
           }
         }
-      //}
+      }
     }
     
     if (!HMIPopupProcessRoutine())
@@ -792,10 +935,15 @@ void HMI_Poll(void)
     /* key processed for popup */
     HMI_ResetIdleCount();
   }
-  // TODO: replace unused with a debug macro
-  UNUSED(HMI_RenderFrame()); // rendering continuity  
 }
 
+/**
+ * \fn void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
+ * \brief Sets HMI timer time
+ * \param hours
+ * \param minutes
+ * \param seconds
+ */
 void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
 {
   HMIContext.oldHours = HMIContext.hours;
@@ -805,8 +953,15 @@ void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
   HMIContext.hours = hours;
   HMIContext.minutes = minutes;
   HMIContext.seconds = seconds;
+
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn void HMI_AppendPanel(THMIPanel* const aHMIPanel)
+ * \brief add a panel to HMI panel list
+ * \param aHMIPanel A pointer of THMIPanel
+ */
 void HMI_AppendPanel(THMIPanel * const aHMIPanel) 
 {
   if (aHMIPanel)
@@ -819,11 +974,21 @@ void HMI_AppendPanel(THMIPanel * const aHMIPanel)
   }
 }
 
+/**
+ * \fn void HMI_RemovePanel(const UINT8 panelId)
+ * \brief remove a panel from HMI panel list
+ * \param panelId array index of THMIPanel in panel list
+ */
 void HMI_RemovePanel(const UINT8 panelId)
 {
   HMIPanelLookupTable[panelId] = (const THMIPanel *)0x0000;
 }
 
+/**
+ * \fn void HMI_ShowPanel(const UINT8 panelId)
+ * \brief Exposes a panel on screen
+ * \param popupPtr array index of THMIPanel in panel list
+ */
 void HMI_ShowPanel(const UINT8 panelId) 
 {
   HMIContext.previousPanelId = HMIContext.currentPanelId;
@@ -843,8 +1008,14 @@ void HMI_ShowPanel(const UINT8 panelId)
       HMIPanelLookupTable[HMIContext.currentPanelId]->updateRoutine(HMIPanelLookupTable[HMIContext.currentPanelId]);
     }
   }
+
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn void HMI_ClosePanel(void)
+ * \brief Hides shown panel
+ */
 void HMI_ClosePanel(void) 
 {
   if (HMIPanelLookupTable[HMIContext.currentPanelId]->menuPtr)
@@ -857,41 +1028,88 @@ void HMI_ClosePanel(void)
 
   HMIContext.focusedMenuItemId = 0xFF;
   HMIContext.selectedMenuItemId = 0xFF;
+
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn void HMI_ResetIdleCount(void)
+ * \brief Resets idle timeout counter to zero.
+ */
 void HMI_ResetIdleCount(void)
 {
   HMIContext.idleTimeCount = 0;
 }
 
+/**
+ * \fn void HMI_MarkDirty(void)
+ * \brief Marks screen that needs to update.
+ */
+void HMI_MarkDirty(void)
+{
+  HMIContext.isDirty = bTRUE;
+}
+
+/**
+ * \fn UINT8 HMI_GetSelectedMenuItemIndex(void)
+ * \brief Gets current selected menu item index
+ * \return the selected menu item index in menu item list of focused menu
+ */
 UINT8 HMI_GetSelectedMenuItemIndex(void)
 {
   return HMIContext.selectedMenuItemId;
 }
 
+/**
+ * \fn void HMI_SetSelectedMenuItemIndex(UINT8 index)
+ * \brief Sets current selected menu item index
+ * \param index the menu item index in menu item list of focused menu
+ */
 void HMI_SetSelectedMenuItemIndex(UINT8 index)
 {
   HMIContext.selectedMenuItemId = index;
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn void HMI_ClearSelectedMenuItemIndex(void)
+ * \brief Resets current selected menu item index to zero
+ */
 void HMI_ClearSelectedMenuItemIndex(void)
 {
   HMIContext.selectedMenuItemId = 0xFF;
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn UINT8 HMI_GetFocusedMenuItemIndex(void)
+ * \brief Gets current focused menu item index
+ * \return the focused menu item index in menu item list of focused menu
+ */
 UINT8 HMI_GetFocusedMenuItemIndex(void)
 {
   return HMIContext.focusedMenuItemId;
 }
 
+/**
+ * \fn void HMI_SetFocusedMenuItemIndex(UINT8 index)
+ * \brief Sets current focused menu item index
+ * \param index the menu item index in menu item list of focused menu
+ */
 void HMI_SetFocusedMenuItemIndex(UINT8 index)
 {
   HMIContext.focusedMenuItemId = index;
+  HMI_MarkDirty();
 }
 
+/**
+ * \fn void HMI_ClearFocusedMenuItemIndex(void)
+ * \brief Resets current focused menu item index to zero
+ */
 void HMI_ClearFocusedMenuItemIndex(void)
 {
   HMIContext.focusedMenuItemId = 0xFF;
+  HMI_MarkDirty();
 }
 
 /**
@@ -903,6 +1121,7 @@ void HMI_ShowPopup(THMIPopup* popupPtr)
 {
   HMIContext.popupPtr = popupPtr;
   HMIContext.popupTimeCount = 0;
+  HMI_MarkDirty();
 }
 
 /**
@@ -913,6 +1132,7 @@ void HMI_ClosePopup(void)
 {
   HMIContext.popupPtr = (THMIPopup*)0x0000;
   HMIContext.popupTimeCount = 0;
+  HMI_MarkDirty();
 }
 
 /**

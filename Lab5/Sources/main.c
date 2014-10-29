@@ -923,6 +923,37 @@ void ApplyModConSwitchs(void)
 }
 
 /**
+ * \fn void StoreHMIBacklightSetting(BOOL backlight)
+ * \brief Stores given HMI display backlight setting to EEPROM
+ * \param backlight Boolean state of HMI display backlight on or off
+ */
+void StoreHMIBacklightSetting(BOOL backlight)
+{
+  if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)backlight))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+
+}
+
+/**
+ * \fn void StoreHMIContrastSetting(UINT8 contrast)
+ * \brief Stores given HMI display contrast setting to EEPROM
+ * \param contrast a value from 0 to 63 of HMI display contrast level
+ */
+void StoreHMIContrastSetting(UINT8 contrast)
+{
+  if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)contrast))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
+#endif
+  }
+}
+
+/**
  * \fn void EraseModConSettings(THMIMenuItem* itemPtr)
  * \brief Erases EEPROM and force MCU reset.
  * \param itemPtr A pointer of THMIMenuItem
@@ -931,6 +962,7 @@ void EraseModConSettings(THMIMenuItem* itemPtr)
 {
     UNUSED(itemPtr);
     
+    /* TODO: add dialog to confirm erase */
     if (!EEPROM_Erase())
     {
 #ifndef NO_DEBUG
@@ -1269,8 +1301,8 @@ BOOL Initialize(void) /* TODO: check following statements */
 
   Analog_Setup(CONFIG_BUSCLK);
 
-  MODCON_HMI_SETUP.backlight = ModConHMIBacklight;
-  MODCON_HMI_SETUP.contrast = ModConHMIContrast;
+  MODCON_HMI_SETUP.backlight = (BOOL)ModConHMIBacklight;
+  MODCON_HMI_SETUP.contrast = (UINT8)ModConHMIContrast;
   if (!HMI_Setup(&MODCON_HMI_SETUP))
   {
 #ifndef NO_DEBUG

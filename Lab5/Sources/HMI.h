@@ -1,8 +1,8 @@
 /**
- * \fn HMI.h
+ * \file HMI.h
  * \brief Routines to implement human-machine interface
  * \author Xu Waycell
- * \date 
+ * \date 19-9-2014
  */
 #ifndef HMI_H
 #define HMI_H
@@ -67,6 +67,11 @@ typedef void(*THMIMenuItemUpdateRoutine)(THMIMenuItem*);
 typedef void(*THMIMenuItemActionRoutine)(THMIMenuItem*);
 typedef BOOL(*THMIPanelInputProcessRoutine)(THMIPanel*, THMIKey);
 typedef void(*THMIPanelUpdateRoutine)(THMIPanel*);
+
+/* this will be called once backlight has changed through HMI popup */
+typedef void(*THMIBacklightChangedCallback)(BOOL); /* TODO: rename it */
+/* this will be called once contrast has changed through HMI popup */
+typedef void(*THMIContrastChangedCallback)(UINT8);  /* TODO: rename it */
 
 typedef struct 
 {
@@ -186,7 +191,9 @@ typedef struct
   UINT16 maxIdleTimeCount;
   
   BOOL backlight;
-  UINT16 contrast;  
+  THMIBacklightChangedCallback backlightChangedCallback;
+  UINT8 contrast;  
+  THMIContrastChangedCallback contrastChangedCallback;
 } THMISetup;
 
 /**
@@ -212,7 +219,7 @@ typedef struct
   //THMIMenuItem* focusedMenuItemPtr;
   //THMIMenuItem* selectedMenuItemPtr;
   
-  UINT8 beginningMenuItemId;
+  //UINT8 beginningMenuItemId;
    
   UINT16 oldSeconds;
   UINT16 oldMinutes;
@@ -235,6 +242,11 @@ typedef struct
   UINT16 maxPopupTimeCount;
   UINT16 popupTimeCount;
   
+  BOOL backlight;
+  THMIBacklightChangedCallback backlightChangedCallback;
+  UINT8 contrast;  
+  THMIContrastChangedCallback contrastChangedCallback;
+  
 } THMIContext;
 
 /**
@@ -252,9 +264,9 @@ BOOL HMI_Setup(const THMISetup* const aHMISetup);
 void HMI_Poll(void);
 
 /**
- * \fn const THMIContext * HMI_GetContext(void)
- * \brief
- * \return Current HMI context
+ * \fn const THMIContext * const HMI_GetContext(void)
+ * \brief Gets the current using HMI context
+ * \return A pointer of current using HMI context
  * \warning Assumes HMI setup properly 
  */
 const THMIContext * const HMI_GetContext(void);
@@ -275,7 +287,10 @@ BOOL HMI_RenderFrame(void);
 
 /**
  * \fn void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds)
- * \brief Sets timer time
+ * \brief Sets HMI timer time
+ * \param hours
+ * \param minutes
+ * \param seconds
  */
 void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
 
@@ -287,22 +302,22 @@ void HMI_SetTime(UINT16 hours, UINT16 minutes, UINT16 seconds);
 void HMI_AppendPanel(THMIPanel* const aHMIPanel);
 
 /**
- * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
- * \brief Exposes a popup on screen
- * \param popupPtr A pointer of THMIPopup
+ * \fn void HMI_RemovePanel(const UINT8 panelId)
+ * \brief remove a panel from HMI panel list
+ * \param panelId array index of THMIPanel in panel list
  */
 void HMI_RemovePanel(const UINT8 panelId);
 
 /**
- * \fn void HMI_ShowPopup(THMIPopup* popupPtr)
- * \brief Exposes a popup on screen
- * \param popupPtr A pointer of THMIPopup
+ * \fn void HMI_ShowPanel(const UINT8 panelId)
+ * \brief Exposes a panel on screen
+ * \param popupPtr array index of THMIPanel in panel list
  */
 void HMI_ShowPanel(const UINT8 panelId);
 
 /**
- * \fn void HMI_ClosePopup(void)
- * \brief Hides shown popup
+ * \fn void HMI_ClosePanel(void)
+ * \brief Hides shown panel
  */
 void HMI_ClosePanel(void);
 
@@ -325,12 +340,50 @@ void HMI_ClosePopup(void);
  */
 void HMI_ResetIdleCount(void);
 
+/**
+ * \fn void HMI_MarkDirty(void)
+ * \brief Marks screen that needs to update.
+ */
+void HMI_MarkDirty(void);
+
+/**
+ * \fn UINT8 HMI_GetSelectedMenuItemIndex(void)
+ * \brief Gets current selected menu item index
+ * \return the selected menu item index in menu item list of focused menu
+ */
 UINT8 HMI_GetSelectedMenuItemIndex(void);
+
+/**
+ * \fn void HMI_SetSelectedMenuItemIndex(UINT8 index)
+ * \brief Sets current selected menu item index
+ * \param index the menu item index in menu item list of focused menu
+ */
 void HMI_SetSelectedMenuItemIndex(UINT8 index);
+
+/**
+ * \fn void HMI_ClearSelectedMenuItemIndex(void)
+ * \brief Resets current selected menu item index to zero
+ */
 void HMI_ClearSelectedMenuItemIndex(void);
 
+/**
+ * \fn UINT8 HMI_GetFocusedMenuItemIndex(void)
+ * \brief Gets current focused menu item index
+ * \return the focused menu item index in menu item list of focused menu
+ */
 UINT8 HMI_GetFocusedMenuItemIndex(void);
+
+/**
+ * \fn void HMI_SetFocusedMenuItemIndex(UINT8 index)
+ * \brief Sets current focused menu item index
+ * \param index the menu item index in menu item list of focused menu
+ */
 void HMI_SetFocusedMenuItemIndex(UINT8 index);
+
+/**
+ * \fn void HMI_ClearFocusedMenuItemIndex(void)
+ * \brief Resets current focused menu item index to zero
+ */
 void HMI_ClearFocusedMenuItemIndex(void);
 
 /**

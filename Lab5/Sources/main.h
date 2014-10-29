@@ -1,16 +1,9 @@
 /**
- * \mainpage Xu's Embedded Software Lab 4
+ * \mainpage Xu's Embedded Software Lab 5
  *
  * \section intro_sec Introduction
- * Lab 4 is based on Lab 3 to interface a ADC chip via SPI bus to enable
- * analog input sampling every 10 ms period.
- * <br>
- * - Uptime will be updated every second
- * - A 10 millisecond period periodic analog input sampling rate will be using.
- * - SPI bus will be set up on 1Mhz baudrate.
- * - A simple three records median filter will be using for signal process.
- * - Protocol mode will be using for synchronous/asynchronous mode.
- * <br>
+ * Lab 5 is based on Lab 4 to implement a human machine interface.
+ *
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
  * * 0x07 ModCon Program EEPROM byte
@@ -320,6 +313,20 @@ void UpdateMenuItemAnalogInputChannelSwitch(THMIMenuItem* itemPtr);
  */
 void UpdateMenuItemAnalogOutputChannelSwitch(THMIMenuItem* itemPtr);
 
+/**
+ * \fn void StoreHMIBacklightSetting(BOOL backlight)
+ * \brief Stores given HMI display backlight setting to EEPROM
+ * \param backlight Boolean state of HMI display backlight on or off
+ */
+void StoreHMIBacklightSetting(BOOL backlight);
+
+/**
+ * \fn void StoreHMIContrastSetting(UINT8 contrast)
+ * \brief Stores given HMI display contrast setting to EEPROM
+ * \param contrast a value from 0 to 63 of HMI display contrast level
+ */
+void StoreHMIContrastSetting(UINT8 contrast);
+
 THMIMenuItem MODCON_HMI_MENU_ITEM_VERSION =
 {
   {'V', 'E', 'R', 'S', 'I', 'O', 'N'},
@@ -438,7 +445,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   0, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -454,7 +461,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   1, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -470,7 +477,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   2, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -486,7 +493,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   3, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -502,7 +509,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '5'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   4, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -518,7 +525,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '6'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   5, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -534,7 +541,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '7'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   6, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -550,7 +557,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_VALUE =
   {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '8'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   7, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -566,7 +573,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_VALUE =
   {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   0, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -582,7 +589,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_VALUE =
   {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   1, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -598,11 +605,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_VALUE =
   {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   2, /* user defined attribute */
-  0,
-  0x0000,
-  0xFFFF,
-  0,
-  bFALSE,
+  0, /* menu item value */
+  0x0000, /* minimum value */
+  0xFFFF, /* maximum value */
+  0,      /* mutated value */
+  bFALSE, /* useMutatedValue */
   HMI_MENU_ITEM_VALUE_TYPE_FLOAT,
   HMI_MENU_ITEM_VALUE_NOTATION_DEFAULT,
   &UpdateMenuItemAnalogOutputChannelValue,
@@ -614,7 +621,7 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_VALUE =
   {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   3, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0xFFFF,
   0,
@@ -629,10 +636,10 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_VALUE =
 /* menu items for io switchs */
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
+  {'I', 'N', ' ', 'C', 'H', '1'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0x0001,
   0,
@@ -645,10 +652,10 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
+  {'I', 'N', ' ', 'C', 'H', '2'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2, /* user defined attribute */
-  0,
+  0, /* menu item value */
   0x0000,
   0x0001,
   0,
@@ -661,11 +668,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
+  {'I', 'N', ' ', 'C', 'H', '3'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -677,11 +684,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
+  {'I', 'N', ' ', 'C', 'H', '4'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -693,11 +700,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '5'},
+  {'I', 'N', ' ', 'C', 'H', '5'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -709,11 +716,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '6'},
+  {'I', 'N', ' ', 'C', 'H', '6'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -725,11 +732,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '7'},
+  {'I', 'N', ' ', 'C', 'H', '7'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -741,11 +748,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH =
 {
-  {'I', 'N', 'P', 'U', 'T', ' ', 'C', 'H', '8'},
+  {'I', 'N', ' ', 'C', 'H', '8'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -757,11 +764,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH =
 {
-  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '1'},
+  {'O', 'U', 'T', ' ', 'C', 'H', '1'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -773,11 +780,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH =
 {
-  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '2'},
+  {'O', 'U', 'T', ' ', 'C', 'H', '2'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -789,11 +796,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH =
 {
-  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '3'},
+  {'O', 'U', 'T', ' ', 'C', 'H', '3'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -805,11 +812,11 @@ THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH =
 
 THMIMenuItem MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH =
 {
-  {'O', 'U', 'T', 'P', 'U', 'T', ' ', 'C', 'H', '4'},
+  {'O', 'U', 'T', ' ', 'C', 'H', '4'},
   HMI_MENU_ITEM_TYPE_ENTRY,
   MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4, /* user defined attribute */
-  0,
-  0x0000,
+  0, /* menu item value */
+  0x0000, /* minimum value */
   0x0001,
   0,
   bFALSE,
@@ -828,21 +835,21 @@ THMIMenu MODCON_HMI_MENU_IDLE =
     &MODCON_HMI_MENU_ITEM_NUMBER,
     &MODCON_HMI_MENU_ITEM_PROTOCOL,
     &MODCON_HMI_MENU_ITEM_DEBUG,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00    
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000    
   },
   4, /* total item count */
-  0
+  0  /* starting menu item index */
 };
 
 THMIMenu MODCON_HMI_MENU_SETTING =
@@ -855,19 +862,19 @@ THMIMenu MODCON_HMI_MENU_SETTING =
     &MODCON_HMI_MENU_ITEM_PROTOCOL,
     &MODCON_HMI_MENU_ITEM_DEBUG,
     &MODCON_HMI_MENU_ITEM_RESET,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00  
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000  
   },
   6, /* total item count */
-  0
+  0  /* starting menu item index */
 };
 
 THMIMenu MODCON_HMI_MENU_ANALOG =
@@ -886,13 +893,13 @@ THMIMenu MODCON_HMI_MENU_ANALOG =
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_VALUE,
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_VALUE,
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_VALUE,    
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000
   },
   12, /* total item count */
-  0
+  0   /* starting menu item index */
 };
 
 THMIMenu MODCON_HMI_MENU_SWITCH =
@@ -911,18 +918,18 @@ THMIMenu MODCON_HMI_MENU_SWITCH =
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH,
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH,
     &MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH,    
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00,
-    (THMIMenuItem*) 0x00
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000,
+    (THMIMenuItem*) 0x0000
   },
   12,
-  0
+  0   /* starting menu item index */
 };
 
 THMIPanel MODCON_HMI_IDLE_PANEL = 
 {
-  0,
+  0, /* panel id */
   {
     ' ',' ',' ',' ',' ',' ',' '
   },
@@ -1000,9 +1007,9 @@ THMIPanel MODCON_HMI_CONFIRM_PANEL =
 
 THMISetup MODCON_HMI_SETUP =
 {
-  HMI_RENDER_MODE_CONTINUITY,
+  HMI_RENDER_MODE_CONTINUITY, /* rendering mode */
   {
-    {
+    { /* frame template contents */
       {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
       {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
       {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -1012,13 +1019,15 @@ THMISetup MODCON_HMI_SETUP =
       {'-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-'},
       {'S', 'E', 'T', ' ', 'D', 'A', 'T', 'A', ' ', '<', ' ', '>', ' ', 'S', 'E', 'L'}    
     },
-    16,
-    8
+    16, /* frame template width */
+    8   /* frame template height */
   },
-  0,
-  100,
-  0,
-  15
+  0,   /* idle panel id */
+  100, /* maximum idle timeout count 100ms percycle */
+  bFALSE, /* HMI display backlight */
+  &StoreHMIBacklightSetting,
+  15,     /* HMI display contrast */
+  &StoreHMIContrastSetting
 };
 
 /**
