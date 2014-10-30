@@ -13,14 +13,7 @@
 #include "config.h"
 
 #ifndef NO_DEBUG
-/**
- * \fn void LogDebug(const UINT16 lineNumber, const UINT16 err)
- * \brief Logs debug information including line number and error number.
- * \param lineNumber line number of source file
- * \param err error number refers to predefined errors
- */
-void LogDebug(const UINT16 lineNumber, const UINT16 err);
-#define DEBUG(LINE, ERR) LogDebug(LINE, ERR)
+#include "debug.h"
 #endif
 
 #endif

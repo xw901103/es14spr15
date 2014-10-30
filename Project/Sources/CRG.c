@@ -21,25 +21,25 @@ static TRTIRoutine rtiRoutine = (TRTIRoutine) 0x0000;
 #define RTIDebugEnable *(volatile UINT16*)CONFIG_EEPROM_ADDRESS_RTI_DEBUG
 #endif
 
-//void interrupt VectorNumber_Vrti CRGRTISR(void)
-//{
+void interrupt VectorNumber_Vrti CRGRTISR(void)
+{
   /* clear real time interrupt flag */
-//  CRGFLG_RTIF = 1;
+  CRGFLG_RTIF = 1;
 
   /* check if debug is on */
-//  if (RTIDebugEnable)
-//  {
+  if (RTIDebugEnable)
+  {
     /* set data direction register to output */
-//    DDRT_DDRT5 = 1;
+    DDRT_DDRT5 = 1;
     /* toggle pin 5 */
-//    PTT_PTT5 = !PTT_PTT5;
-//  }
+    PTT_PTT5 = !PTT_PTT5;
+  }
 
-//  if (rtiRoutine)
-//  {
-//    rtiRoutine();
-//  }
-//}
+  if (rtiRoutine)
+  {
+    rtiRoutine();
+  }
+}
 #endif
 
 /**

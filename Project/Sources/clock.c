@@ -51,11 +51,11 @@ void ClockRTISR(void)
  * \return TRUE if the clock was setup successfully.
  * \warning Given parameters must be able to trigger real-time interrupt occur every 65536 microseconds.
  */
-//void Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount)
-//{
-//  CRG_SetupRTI(prescaleRate, modulusCount);
-//  CRG_AttachRTIRoutine(&ClockRTISR);
-//}
+void Clock_Setup(const UINT8 prescaleRate, const UINT8 modulusCount)
+{
+  CRG_SetupRTI(prescaleRate, modulusCount);
+  CRG_AttachRTIRoutine(&ClockRTISR);
+}
 
 /**
  * \fn BOOL Clock_Update(void)
@@ -63,25 +63,25 @@ void ClockRTISR(void)
  * \return TRUE if clock seconds have changed
  * \warning Assumes that the clock has been set up
  */
-//BOOL Clock_Update(void)
-//{
-//  UINT8 savedCCR;
-//  BOOL updated = bFALSE;
+BOOL Clock_Update(void)
+{
+  UINT8 savedCCR;
+  BOOL updated = bFALSE;
   
   /* check if one second passed */  
-//  while (ClockMicroSeconds >= MATH_1_MEGA)
-//  {
-//    ++Clock_Seconds;    
+  while (ClockMicroSeconds >= MATH_1_MEGA)
+  {
+    ++Clock_Seconds;    
     /* check if one minute passed */
-//    if (Clock_Seconds >= 60)
-//    {
-//      ++Clock_Minutes;
-//      Clock_Seconds -= 60;
-//    }    
-//    EnterCritical();
-//    ClockMicroSeconds -= MATH_1_MEGA;    
-//    ExitCritical();    
-//    updated = bTRUE;
-//  } 
-//  return updated;  
-//}
+    if (Clock_Seconds >= 60)
+    {
+      ++Clock_Minutes;
+      Clock_Seconds -= 60;
+    }    
+    EnterCritical();
+    ClockMicroSeconds -= MATH_1_MEGA;    
+    ExitCritical();    
+    updated = bTRUE;
+  } 
+  return updated;  
+}
