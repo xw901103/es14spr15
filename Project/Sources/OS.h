@@ -11,6 +11,7 @@
 
 #define OS_LIMIT_PROCESS_SIZE 2
 #define OS_LIMIT_THREAD_SIZE 16
+#define OS_LIMIT_THREAD_STACK_SIZE 128
 
 typedef struct 
 {
@@ -29,6 +30,7 @@ typedef enum
   OSERROR_NOT_EXISTS
 } TOSError;
 
+typedef UINT16 TOSMutex;
 typedef UINT16 TOSThread;
 typedef UINT16 TOSProcess;
 
@@ -61,6 +63,51 @@ void OS_Terminate(void);
  * \brief Sets RTOS on panic status.
  */
 void OS_Panic(void);
+
+/**
+ * \fn TOSError OS_ThreadMutexInitialize(TOSMutex* mutex)
+ * \brief
+ * \param mutex
+ * \return
+ * \see pthread_mutex_init
+ */
+TOSError OS_ThreadMutexInitialize(TOSMutex* mutex);
+
+/**
+ * \fn TOSError OS_ThreadMutexDestroy(TOSMutex* mutex)
+ * \brief
+ * \param mutex
+ * \return
+ * \see pthread_mutex_destroy
+ */
+TOSError OS_ThreadMutexDestroy(TOSMutex* mutex);
+
+/**
+ * \fn TOSError OS_ThreadMutexLock(TOSMutex* mutex)
+ * \brief
+ * \param mutex
+ * \return
+ * \see pthread_mutex_lock
+ */
+TOSError OS_ThreadMutexLock(TOSMutex* mutex);
+
+/**
+ * \fn TOSError OS_ThreadMutexTryLock(TOSMutex* mutex)
+ * \brief
+ * \param mutex
+ * \return
+ * \see pthread_mutex_trylock
+ */
+TOSError OS_ThreadMutexTryLock(TOSMutex* mutex);
+
+/**
+ * \fn TOSError OS_ThreadMutexUnlock(TOSMutex* mutex)
+ * \brief
+ * \param mutex
+ * \return
+ * \see pthread_mutex_unlock
+ */
+TOSError OS_ThreadMutexUnlock(TOSMutex* mutex);
 
 /**
  * \fn TOSThread OS_ThreadSelf(void)

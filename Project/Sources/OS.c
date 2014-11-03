@@ -26,12 +26,26 @@ typedef struct
   TOSProcessRoutine processRoutine;
 } TOSProcessContext;
 
+typedef enum 
+{
+  OS_THREAD_STATE_UNKNOW,
+  OS_THREAD_STATE_WAITING,
+  OS_THREAD_STATE_READY,
+  OS_THREAD_STATE_RUNNING,
+  OS_THREAD_STATE_INTERRUPTED,
+  OS_THREAD_STATE_ZOMBIE  
+} TOSThreadState;
+
 typedef struct
 {
   BOOL isValid;
   BOOL isRunning;
   TOSProcess  process;
+  TOSThreadState state;
   TOSThreadRoutine threadRoutine;
+  
+  void* stackPtr;
+  UINT8 stack[OS_LIMIT_THREAD_STACK_SIZE];
 } TOSThreadContext;
 
 TOSEnvironment OSEnvironment = {0};
@@ -54,7 +68,7 @@ TOSThread OSGetThread(void)
   return (TOSThread)0x0000;
 }
 
-void OSScheduleRoutine(void)
+void OSThreadScheduleRoutine(void)
 {
   CRG_ResetCOP();
 }
@@ -107,7 +121,7 @@ TOSError OS_Execute(void)
   OSRuntimeContext.isPanic = bFALSE;
   OSRuntimeContext.isRunning = bTRUE;
   
-  Timer_AttachPeriodicTimerRoutine(&OSScheduleRoutine);
+  Timer_AttachPeriodicTimerRoutine(&OSThreadScheduleRoutine);
   
   EnableInterrupts;
   
@@ -160,6 +174,51 @@ void OS_Panic(void)
   (void)CRG_SetupCOP(COP_DISABLED);
   
   Timer_DetachPeriodicTimerRoutine();
+}
+
+TOSError OS_ThreadMutexInitialize(TOSMutex* mutex)
+{
+  if (mutex)
+  {
+    return OSERROR_NO_ERROR;
+  }
+  return OSERROR_INVALID_ARGUMENT;
+}
+
+TOSError OS_ThreadMutexDestroy(TOSMutex* mutex)
+{
+  if (mutex)
+  {
+    return OSERROR_NO_ERROR;
+  }
+  return OSERROR_INVALID_ARGUMENT;
+}
+
+TOSError OS_ThreadMutexLock(TOSMutex* mutex)
+{
+  if (mutex)
+  {
+    return OSERROR_NO_ERROR;
+  }
+  return OSERROR_INVALID_ARGUMENT;
+}
+
+TOSError OS_ThreadMutexTryLock(TOSMutex* mutex)
+{
+  if (mutex)
+  {
+    return OSERROR_NO_ERROR;
+  }
+  return OSERROR_INVALID_ARGUMENT;
+}
+
+TOSError OS_ThreadMutexUnlock(TOSMutex* mutex)
+{
+  if (mutex)
+  {
+    return OSERROR_NO_ERROR;
+  }
+  return OSERROR_INVALID_ARGUMENT;
 }
 
 TOSThread OS_ThreadSelf(void)
