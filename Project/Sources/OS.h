@@ -9,7 +9,8 @@
 
 #include "global.h"
 
-#define OS_LIMIT_THREAD_SIZE 1024
+#define OS_LIMIT_PROCESS_SIZE 2
+#define OS_LIMIT_THREAD_SIZE 16
 
 typedef struct 
 {
@@ -32,6 +33,7 @@ typedef UINT16 TOSThread;
 typedef UINT16 TOSProcess;
 
 typedef void*(*TOSThreadRoutine)(void*);
+typedef void(*TOSProcessRoutine)(void);
 
 /**
  * \fn TOSError OS_SetEnvironment(TOSEnvironment* aOSEnvironment)

@@ -23,11 +23,20 @@ typedef struct
 {
   BOOL isValid;
   BOOL isRunning;
+  TOSProcessRoutine processRoutine;
+} TOSProcessContext;
+
+typedef struct
+{
+  BOOL isValid;
+  BOOL isRunning;
+  TOSProcess  process;
   TOSThreadRoutine threadRoutine;
 } TOSThreadContext;
 
 TOSEnvironment OSEnvironment = {0};
 TOSRuntimeContext OSRuntimeContext = {0};
+TOSProcessContext OSProcessContextArray[OS_LIMIT_PROCESS_SIZE];
 TOSThreadContext OSThreadContextArray[OS_LIMIT_THREAD_SIZE];
 
 /**
@@ -73,6 +82,10 @@ TOSError OS_SetEnvironment(TOSEnvironment* aOSEnvironment)
     Analog_Setup(OSEnvironment.busClk);
 
     Timer_SetupPeriodicTimer(OS_SCHEDULE_PERIOD, OSEnvironment.busClk);
+    
+    OSProcessContextArray[0].isRunning = bFALSE;
+    OSProcessContextArray[0].isValid = bTRUE;
+    OSProcessContextArray[0].processRoutine = (TOSProcessRoutine)0x0000;
     
     thread = OSGetThread();
         
