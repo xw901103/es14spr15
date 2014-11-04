@@ -9,9 +9,20 @@
 
 #include "global.h"
 
+#ifdef __HC12__
+#define OS_CPU_MOTOROLA_68HC11 /* for Motorola 68HC11 family */
+#elif defined(__arm__) || defined(_M_ARM)
+#define OS_CPU_ARM             /* for ARM family */
+#error "ARM is not supported yet."
+#elif defined(__i386) || defined(_M_I86) || defined(__X86__)
+#define OS_CPU_INTEL_X86       /* for intel x86 and AMD compatibles */
+#error "x86 is not supported yet."
+#else
+#error "Unsupported CPU family/type."
+#endif
+
 #define OS_LIMIT_PROCESS_SIZE 2
 #define OS_LIMIT_THREAD_SIZE 16
-#define OS_LIMIT_THREAD_STACK_SIZE 128
 
 typedef struct 
 {
@@ -26,7 +37,7 @@ typedef enum
   OSERROR_NO_ERROR,
   OSERROR_INVALID_ENVIRONMENT,
   OSERROR_INVALID_ARGUMENT,
-  OSERROR_NO_RESOURCE,
+  OSERROR_OUT_OF_RESOURCE,
   OSERROR_NOT_EXISTS
 } TOSError;
 

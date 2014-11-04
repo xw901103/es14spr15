@@ -64,7 +64,7 @@ Note: C++ destructors of global objects are NOT yet supported in the HIWARE Obje
 #define __EXTERN_C
 #endif
 
-__EXTERN_C void main(void); /* prototype of main function */
+__EXTERN_C void bootstrap(void); /* prototype of bootstrap function */
 
 #ifndef __ONLY_INIT_SP
 #pragma DATA_SEG __NEAR_SEG STARTUP_DATA /* _startupData can be accessed using 16 bit accesses. */
@@ -458,5 +458,5 @@ __EXTERN_C void _Startup(void) {
 
 
    /* call main() */
-   main();
+   bootstrap();
 }

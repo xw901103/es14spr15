@@ -9,6 +9,7 @@
 #ifndef NO_INTERRUPT
 #include "timer.h"
 #endif
+#include "OS.h"
 #include <mc9s12a512.h>
 
 static TFIFO RxFIFO, TxFIFO; /* no one can touch them except SCI_ calls */
@@ -34,12 +35,15 @@ void SCI0TxISR(const TTimerChannel channelNb);
 
 void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
 {
+  
   /* handle receive interrupts */
   if (SCI0CR2_RIE)
   {
     /* check and clear receive data register full flag */
     if (SCI0SR1_RDRF)
     { 
+      //OS_ISREnter();
+    
       /* put it to receive buffer for later use */
       if (!FIFO_Put(&RxFIFO, SCI0DRL))
       { 
@@ -47,8 +51,10 @@ void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
         /* generally, it should not be full. if it does, there is a design issue. */
         DEBUG(__LINE__, ERR_FIFO_PUT);
 #endif
-      }                                    
-    }    
+      }
+      
+      //OS_ISRExit();                                          
+    }        
   }
 }
 

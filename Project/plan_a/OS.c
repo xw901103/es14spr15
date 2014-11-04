@@ -10,6 +10,7 @@
 
 #define OS_WATCHDOG_RATE     COP_RATE_2_24
 #define OS_SCHEDULE_PERIOD   1000
+#define OS_LIMIT_THREAD_STACK_SIZE 0x100
 
 typedef struct
 {
@@ -43,6 +44,16 @@ typedef struct
   TOSProcess  process;
   TOSThreadState state;
   TOSThreadRoutine threadRoutine;
+
+#if defined(OS_CPU_MOTOROLA_68HC11)
+  volatile TUINT16 accumulator;
+  volatile UINT16  indexRegisterX;
+  volatile UINT16  indexRegisterY;  
+  volatile UINT16  programCounter;
+  volatile UINT8   conditionCodeRegister;
+#else
+#error "Unsupported CPU family/type."
+#endif
   
   void* stackPtr;
   UINT8 stack[OS_LIMIT_THREAD_STACK_SIZE];
@@ -70,7 +81,22 @@ TOSThread OSGetThread(void)
 
 void OSThreadScheduleRoutine(void)
 {
+  UINT16 savedSP, accD, irX, irY, PC;
+  UINT8 savedCCR;
+  
   CRG_ResetCOP();
+  
+  asm std accD;
+  
+  //asm tfr pc, d;
+  //asm std PC;
+
+  asm tfr ccr, a;
+  asm staa savedCCR;
+  
+  asm stx irX;
+  asm sty irY;
+  asm sts savedSP;
 }
 
 void OSPanicRoutine(void)
@@ -112,6 +138,9 @@ TOSError OS_SetEnvironment(TOSEnvironment* aOSEnvironment)
 
 TOSError OS_Execute(void)
 {
+  UINT16 stackPtr;
+  UINT16 routinePtr;
+
   if (!OSRuntimeContext.isInitialized)
   {
     return OSERROR_INVALID_ENVIRONMENT;
@@ -122,11 +151,21 @@ TOSError OS_Execute(void)
   OSRuntimeContext.isRunning = bTRUE;
   
   Timer_AttachPeriodicTimerRoutine(&OSThreadScheduleRoutine);
+  Timer_PeriodicTimerEnable(bTRUE);
   
   EnableInterrupts;
   
   if (OSEnvironment.startupProcessRoutine)
   {
+    OSThreadContextArray[1].isValid = bTRUE;
+    OSThreadContextArray[1].stackPtr = &OSThreadContextArray[1].stack[OS_LIMIT_THREAD_STACK_SIZE - 1];
+    
+    stackPtr = (UINT16)OSThreadContextArray[1].stackPtr;
+    routinePtr = (UINT16)OSEnvironment.startupProcessRoutine;
+    
+    asm lds stackPtr;
+    //asm jsr OSEnvironment.startupProcessRoutine;
+    
     OSEnvironment.startupProcessRoutine();
   }
     
@@ -235,7 +274,7 @@ TOSError OS_ThreadCreate(TOSThread* threadPtr, TOSThreadRoutine threadRoutinePtr
     thread = OSGetThread();
     if (thread == 0)
     {
-      return OSERROR_NO_RESOURCE;
+      return OSERROR_OUT_OF_RESOURCE;
     }
     *threadPtr = thread;
     OSThreadContextArray[thread].isRunning = bFALSE;
