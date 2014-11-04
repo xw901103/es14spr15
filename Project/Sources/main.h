@@ -1,8 +1,8 @@
 /**
- * \mainpage Xu's Embedded Software Lab 5
+ * \mainpage Xu's Embedded Software Project
  *
  * \section intro_sec Introduction
- * Lab 5 is based on Lab 4 to implement a human machine interface.
+ * Project is based on all previous works to implement a AWG.
  *
  * * 0x04 ModCon Startup
  * <br>This will send program settings including ModCon number and version.
@@ -32,6 +32,7 @@
 #define MAIN_H
 
 #include "global.h"
+#include "timer.h"
 #include "analog.h"
 #include "HMI.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
@@ -46,6 +47,8 @@ const UINT8 MODCON_COMMAND_TIME                = 0x0C; /* ModCon protocol time c
 const UINT8 MODCON_COMMAND_MODE                = 0x0D; /* ModCon protocol mode command */
 const UINT8 MODCON_COMMAND_ANALOG_INPUT_VALUE  = 0x50; /* ModCon protocol analog input command */
 const UINT8 MODCON_COMMAND_ANALOG_OUTPUT_VALUE = 0x51; /* ModCon protocol analog output command */
+const UINT8 MODCON_COMMAND_WAVE                = 0x60;
+const UINT8 MODCON_COMMAND_ARBITRARY_WAVE      = 0x61;
 
 const UINT8 MODCON_DEBUG_INITIAL = 'd';
 const UINT8 MODCON_DEBUG_TOKEN   = 'j';
@@ -67,6 +70,15 @@ const UINT8 MODCON_TIME_INITIAL = 'i';
 
 const UINT8 MODCON_MODE_GET = 1;
 const UINT8 MODCON_MODE_SET = 2;
+
+const UINT8 MODCON_WAVE_STATUS     = 0;
+const UINT8 MODCON_WAVE_WAVEFORM   = 1;
+const UINT8 MODCON_WAVE_FREQUENCY  = 2;
+const UINT8 MODCON_WAVE_AMPLITUDE  = 3;
+const UINT8 MODCON_WAVE_OFFSET     = 4;
+const UINT8 MODCON_WAVE_ON             = 5;
+const UINT8 MODCON_WAVE_OFF            = 6;
+const UINT8 MODCON_WAVE_ACTIVE_CHANNEL = 7;
 
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
@@ -1030,6 +1042,50 @@ THMISetup MODCON_HMI_SETUP =
   &StoreHMIContrastSetting
 };
 
+#define AWG_ANALOG_SAMPLING_RATE 24000
+#define AWG_ARBITRARY_WAVE_SIZE  256
+
+typedef enum
+{
+  AWG_WAVEFORM_DC,
+  AWG_WAVEFORM_SINE,
+  AWG_WAVEFORM_SQUARE,
+  AWG_WAVEFORM_TRIANGLE,
+  AWG_WAVEFORM_SAWTOOTH,
+  AWG_WAVEFORM_NOISE,
+  AWG_WAVEFORM_ARBITRARY
+} TAWGWaveformType;
+
+typedef struct
+{
+  TAWGWaveformType waveformType;
+
+  UINT16 sample;  
+  
+  BOOL isActive;
+  BOOL isEnabled;
+  
+  TUINT16 frequency;
+  TUINT16 amplitude;
+  TUINT16 offset;
+    
+} TAWGChannel;
+
+TAWGChannel AWG_Channel[NB_OUTPUT_CHANNELS];
+
+const UINT16 AWG_SINE[10] =
+{
+  0x0800,0x0d24,
+  0x0fe0,0x0eed,
+  0x0abc,0x0543,
+  0x0112,0x001f,
+  0x02db,0x0800
+};
+
+static TUINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
+
+void SampleAnalogOutputChannels(TTimerChannel channelNb);
+
 /**
  * \fn BOOL HandleModConStartup(void)
  * \brief Builds packets that are necessary for startup information and places them into transmit buffer. 
@@ -1093,6 +1149,20 @@ BOOL HandleModConEEPROMProgram(void);
  * \return TRUE if address is validated and the packet was queued for transmission successfully.
  */
 BOOL HandleModConEEPROMGet(void);
+
+/**
+ * \fn BOOL HandleModConWave(void)
+ * \brief
+ * \return
+ */
+BOOL HandleModConWave(void);
+
+/**
+ * \fn BOOL HandleModConArbitraryWave(void)
+ * \brief
+ * \return
+ */
+BOOL HandleModConArbitraryWave(void);
 
 /**
  * \fn void Initialize(void)

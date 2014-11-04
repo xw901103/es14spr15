@@ -39,11 +39,13 @@ void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
   /* handle receive interrupts */
   if (SCI0CR2_RIE)
   {
+    SCI0CR2_RIE = 0;
+  
+    OS_ISREnter();
+    
     /* check and clear receive data register full flag */
     if (SCI0SR1_RDRF)
-    { 
-      //OS_ISREnter();
-    
+    {     
       /* put it to receive buffer for later use */
       if (!FIFO_Put(&RxFIFO, SCI0DRL))
       { 
@@ -51,10 +53,12 @@ void interrupt VectorNumber_Vsci0 SCI0RxISR(void)
         /* generally, it should not be full. if it does, there is a design issue. */
         DEBUG(__LINE__, ERR_FIFO_PUT);
 #endif
-      }
-      
-      //OS_ISRExit();                                          
-    }        
+      }      
+    }
+    
+    OS_ISRExit();                                                      
+
+    SCI0CR2_RIE = 1;
   }
 }
 

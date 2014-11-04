@@ -119,13 +119,13 @@ BOOL Analog_Get(const TAnalogChannel channelNb) {
 }
 
 /**
- * \fn void Analog_Set(const TAnalogChannel channelNb, INT16 value)
+ * \fn void Analog_Put(const TAnalogChannel channelNb, INT16 value)
  * \brief Sets an analog output channel's value
  * \param channelNb the number of the analog output channel to write
  * \param value the value of the analog output to write
  * \warning Assumes that the DAC has been set up   
  */
-void Analog_Set(const TAnalogChannel channelNb, INT16 value) {
+void Analog_Put(const TAnalogChannel channelNb, INT16 value) {
   UINT8 index = 0xFF, cache1 = 0, cache2 = 0;
   TINT16 cache;
   

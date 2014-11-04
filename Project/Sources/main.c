@@ -8,7 +8,6 @@
 #include "main.h"
 #include "CRG.h"
 #include "clock.h"
-#include "timer.h"
 #include "EEPROM.h"
 #include "packet.h"
 #include "utils.h"
@@ -86,21 +85,6 @@ void TurnOnStartupIndicator(void);
  * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
 void SampleAnalogInputChannels(void);
-
-#ifndef NO_DEBUG
-/**
- * \fn void LogDebug(const UINT16 lineNumber, const UINT16 err)
- * \brief Logs debug information including line number and error number.
- * \param lineNumber line number of source file
- * \param err error number refers to predefined errors
- */
-void LogDebug(const UINT16 lineNumber, const UINT16 err)
-{
-    /* break point here */
-    UNUSED(lineNumber);
-    UNUSED(err);
-}
-#endif
 
 /**
  * \fn BOOL HandleModConStartup(void)
@@ -501,6 +485,237 @@ BOOL HandleModConEEPROMGet(void)
   return bFALSE;
 }
 
+BOOL HandleModConWaveGetStatus(void);
+BOOL HandleModConWaveSetWaveform(void);
+BOOL HandleModConWaveSetFrequency(void);
+BOOL HandleModConWaveSetAmplitude(void);
+BOOL HandleModConWaveSetOffset(void);
+BOOL HandleModConWaveEnable(BOOL enable);
+BOOL HandleModConWaveActiveChannel(void);
+
+BOOL HandleModConWave(void)
+{
+  switch(Packet_Parameter1)
+  {
+    case MODCON_WAVE_STATUS:
+      if (Packet_Parameter23 == 0)
+      {
+        return HandleModConWaveGetStatus();
+      }
+      break;
+    case MODCON_WAVE_WAVEFORM:
+      if (Packet_Parameter2 < 5 && Packet_Parameter3 == 0)
+      {
+        return HandleModConWaveSetWaveform();
+      }
+      break;
+    case MODCON_WAVE_FREQUENCY:
+      return HandleModConWaveSetFrequency();
+      break;
+    case MODCON_WAVE_AMPLITUDE:
+      return HandleModConWaveSetAmplitude();
+      break;
+    case MODCON_WAVE_OFFSET:
+      return HandleModConWaveSetOffset();
+      break;
+    case MODCON_WAVE_ON:
+      if (Packet_Parameter23 == 0)
+      {
+        return HandleModConWaveEnable(bTRUE);
+      }
+      break;
+    case MODCON_WAVE_OFF:
+      if (Packet_Parameter23 == 0)
+      {
+        return HandleModConWaveEnable(bFALSE);
+      }
+      break;
+    case MODCON_WAVE_ACTIVE_CHANNEL:
+      if (Packet_Parameter3 == 0)
+      {
+        return HandleModConWaveActiveChannel();
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+UINT8 GetWaveform(TAWGWaveformType type)
+{
+  UINT8 waveform = 0xFF;
+  
+  switch(type)
+  {
+    case AWG_WAVEFORM_SINE:
+      waveform = 0;
+      break;
+    case AWG_WAVEFORM_SQUARE:
+      waveform = 1;
+      break;
+    case AWG_WAVEFORM_TRIANGLE:
+      waveform = 2;
+      break;
+    case AWG_WAVEFORM_SAWTOOTH:
+      waveform = 3;
+      break;
+    case AWG_WAVEFORM_NOISE:
+      waveform = 4;
+      break;
+    case AWG_WAVEFORM_ARBITRARY:
+      waveform = 5;
+      break;
+    default:
+      waveform = 0xFF;
+      break;
+  }
+  return waveform;
+}
+
+BOOL HandleModConWaveGetStatus(void)
+{
+
+  UINT8 index, channelNb, enable, waveform;
+  TUINT16 frequency, amplitude, offset;
+  BOOL success = bFALSE;
+  
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    channelNb = index;
+    enable = (UINT8)AWG_Channel[index].isEnabled;
+    waveform = GetWaveform(AWG_Channel[index].waveformType);
+    frequency.l = AWG_Channel[index].frequency.l;
+    amplitude.l = AWG_Channel[index].amplitude.l;
+    offset.l = AWG_Channel[index].offset.l;
+    
+    success = Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_STATUS, channelNb, enable) &&
+              Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_WAVEFORM, waveform, 0) &&
+              Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_FREQUENCY, frequency.s.Lo, frequency.s.Hi) &&
+              Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_AMPLITUDE, amplitude.s.Lo, amplitude.s.Hi) &&
+              Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_OFFSET, offset.s.Lo, offset.s.Hi);    
+  }
+  return success;              
+}
+
+BOOL HandleModConWaveSetWaveform(void)
+{
+  static waveformTypeLookupTable[6] =
+  {
+    AWG_WAVEFORM_SINE,
+    AWG_WAVEFORM_SQUARE,
+    AWG_WAVEFORM_TRIANGLE,
+    AWG_WAVEFORM_SAWTOOTH,
+    AWG_WAVEFORM_NOISE,
+    AWG_WAVEFORM_ARBITRARY
+  };
+  
+  UINT8 index = 0;
+  
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (AWG_Channel[index].isActive)
+    {
+      AWG_Channel[index].waveformType = waveformTypeLookupTable[Packet_Parameter2];
+    }
+  }
+  
+  return bTRUE;  
+}
+
+BOOL HandleModConWaveSetFrequency(void)
+{
+  UINT8 index = 0;
+  
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (AWG_Channel[index].isActive)
+    {
+      AWG_Channel[index].frequency.l = Packet_Parameter23;
+    }
+  }
+
+  return bTRUE;  
+}
+
+BOOL HandleModConWaveSetAmplitude(void)
+{
+  UINT8 index = 0;
+
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (AWG_Channel[index].isActive)
+    {
+      AWG_Channel[index].amplitude.l = Packet_Parameter23;
+    }
+  }
+
+  return bTRUE;
+}
+
+BOOL HandleModConWaveSetOffset(void)
+{
+  UINT8 index = 0;
+
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (AWG_Channel[index].isActive)
+    {
+      AWG_Channel[0].offset.l = Packet_Parameter23;
+    }
+  }
+
+  return bTRUE;
+}
+
+BOOL HandleModConWaveEnable(BOOL enable)
+{
+  UINT8 index = 0;
+
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (AWG_Channel[index].isActive)
+    {
+      AWG_Channel[0].isEnabled = enable;
+    }
+  }
+
+  return bTRUE;
+}
+
+BOOL HandleModConWaveActiveChannel(void)
+{
+  if (Packet_Parameter2 == 0)
+  {
+    AWG_Channel[0].isActive = bTRUE;
+    AWG_Channel[1].isActive = bFALSE;
+    AWG_Channel[2].isActive = bFALSE;
+    AWG_Channel[3].isActive = bFALSE;    
+  
+    return bTRUE;
+  }
+  else if (Packet_Parameter2 == 1)
+  {
+    AWG_Channel[0].isActive = bFALSE;
+    AWG_Channel[1].isActive = bTRUE;
+    AWG_Channel[2].isActive = bFALSE;
+    AWG_Channel[3].isActive = bFALSE;    
+
+    return bTRUE;
+  }
+  
+  return bFALSE;
+}
+
+BOOL HandleModConArbitraryWave(void)
+{
+  if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
+  {
+    AWG_ARBITRARY_WAVE[Packet_Parameter1].l = Packet_Parameter23;
+    return bTRUE;
+  }
+  return bFALSE;
+}
+
 /**
  * \fn void TurnOnStartupIndicator(void)
  * \brief turn on the Port E pin 7 connected LED.
@@ -557,6 +772,78 @@ void SampleAnalogInputChannels(void)
       }
     }
   }
+}
+
+void SampleAnalogOutputChannels(TTimerChannel channelNb)
+{
+  UINT8 index = 0;
+  UINT16 value = 0;
+
+  /* lookup tables for input analog channel enums and switch mask mapping */
+  static const UINT8
+  /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
+  outputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1,
+                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2, 
+                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3, 
+                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4 },
+  /* NOTE: channel enums might not be in numeric order */
+  outputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
+                                                        ANALOG_OUTPUT_Ch2,
+                                                        ANALOG_OUTPUT_Ch3,
+                                                        ANALOG_OUTPUT_Ch4 };
+
+  Timer_ScheduleRoutine(channelNb, AWG_ANALOG_SAMPLING_RATE);
+  
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index) 
+  {
+    if (ModConAnalogOutputChannelSwitch & outputChannelSwitchMaskLookupTable[index])
+    {
+      switch(AWG_Channel[index].waveformType)
+      {
+        case AWG_WAVEFORM_SINE:
+          value = AWG_SINE[AWG_Channel[index].sample];
+          break;
+        case AWG_WAVEFORM_SQUARE:
+          if (AWG_Channel[index].sample <= 5)
+          {
+            value = 4095;
+          }
+          else
+          {
+            value = 0;
+          }
+          break;
+        case AWG_WAVEFORM_TRIANGLE:
+          break;
+        case AWG_WAVEFORM_SAWTOOTH:
+          if (AWG_Channel[index].sample == 9)
+          {
+            value = 4095;
+          }
+          else
+          {
+            value = (Analog_Output[index].Value.l + 4096/10);
+          }
+          break;
+        case AWG_WAVEFORM_NOISE:
+          break;
+        case AWG_WAVEFORM_ARBITRARY:
+          break;
+        case AWG_WAVEFORM_DC:
+        default:
+          value = 2047;
+          break;
+      }
+      
+      if (++AWG_Channel[index].sample >= 10)
+      {
+        AWG_Channel[index].sample = 0;
+      }
+      
+      Analog_Put(outputChannelNumberLookupTable[index], value);
+    }
+  }
+
 }
 
 /**
@@ -1159,7 +1446,17 @@ BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
  * \return TRUE if initialization routines executed successfully.
  */
 BOOL Initialize(void) /* TODO: check following statements */
-{ 
+{
+  TTimerSetup timerCh5;
+  
+  timerCh5.outputCompare    = bTRUE;
+  timerCh5.outputAction     = TIMER_OUTPUT_DISCONNECT;
+  timerCh5.inputDetection   = TIMER_INPUT_OFF;
+  timerCh5.toggleOnOverflow = bFALSE;
+  timerCh5.interruptEnable  = bFALSE;
+  timerCh5.pulseAccumulator = bFALSE;
+  timerCh5.routine          = &SampleAnalogOutputChannels;
+   
   DisableInterrupts;
  
   if (!CRG_SetupPLL(CONFIG_BUSCLK, CONFIG_OSCCLK, CONFIG_REFCLK))
@@ -1299,6 +1596,11 @@ BOOL Initialize(void) /* TODO: check following statements */
   Timer_SetupPeriodicTimer(ModConAnalogSamplingRate, CONFIG_BUSCLK);
   Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
 
+  Timer_Init(TIMER_Ch5, &timerCh5);
+  /* kick start our hitchhiker here */
+  Timer_Set(TIMER_Ch5, AWG_ANALOG_SAMPLING_RATE);
+  Timer_Enable(TIMER_Ch5, bTRUE);
+
   Analog_Setup(CONFIG_BUSCLK);
 
   MODCON_HMI_SETUP.backlight = (BOOL)ModConHMIBacklight;
@@ -1335,12 +1637,12 @@ void Routine(void)
   UINT8 ack = 0;
   BOOL bad = bFALSE;
     
-  if (Clock_Update())
-  {
+  //if (Clock_Update())
+  //{
     /* hours from 0 to 23; minutes from 0 to 59; seconds from 0 to 59 */
     HMI_SetTime((Clock_Minutes / 60) % 24, Clock_Minutes % 60, Clock_Seconds);    
-    bad = !HandleModConUptime();
-  }
+  //  bad = !HandleModConUptime();
+  //}
       
   if (Packet_Get())
   { 

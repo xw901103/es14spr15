@@ -5,6 +5,7 @@
  * \date 8-September-2014 
  */
 #include "timer.h"
+#include "OS.h"
 #include <mc9s12a512.h>
 
 #ifdef NO_INTERRUPT
@@ -97,6 +98,8 @@ void interrupt VectorNumber_Vtimmdcu TimerPeriodicTimerISR(void)
   /* clear modulus down counter underflow flag */
   MCFLG_MCZF = 1;
   
+  OS_ISREnter();
+
   /* check if debug is on */
   if (ModulusDownCounterDebugEnable)
   {
@@ -110,6 +113,8 @@ void interrupt VectorNumber_Vtimmdcu TimerPeriodicTimerISR(void)
   {    
     timerPeriodicTimerRoutinePtr();
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch0 TimerCh0ISR(void) 
@@ -117,12 +122,16 @@ void interrupt VectorNumber_Vtimch0 TimerCh0ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C0F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh0RoutinePtr)
   {
     /* execute attached function */
     timerCh0RoutinePtr(TIMER_Ch0);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch1 TimerCh1ISR(void) 
@@ -130,12 +139,16 @@ void interrupt VectorNumber_Vtimch1 TimerCh1ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C1F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh1RoutinePtr)
   {
     /* execute attached function */
     timerCh1RoutinePtr(TIMER_Ch1);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch2 TimerCh2ISR(void) 
@@ -143,12 +156,16 @@ void interrupt VectorNumber_Vtimch2 TimerCh2ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C2F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh2RoutinePtr)
   {
     /* execute attached function */
     timerCh2RoutinePtr(TIMER_Ch2);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch3 TimerCh3ISR(void) 
@@ -156,12 +173,16 @@ void interrupt VectorNumber_Vtimch3 TimerCh3ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C3F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh3RoutinePtr)
   {
     /* execute attached function */
     timerCh3RoutinePtr(TIMER_Ch3);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch4 TimerCh4ISR(void) 
@@ -169,12 +190,16 @@ void interrupt VectorNumber_Vtimch4 TimerCh4ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C4F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh4RoutinePtr)
   {
     /* execute attached function */
     timerCh4RoutinePtr(TIMER_Ch4);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch5 TimerCh5ISR(void) 
@@ -182,12 +207,16 @@ void interrupt VectorNumber_Vtimch5 TimerCh5ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C5F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh5RoutinePtr)
   {
     /* execute attached function */
     timerCh5RoutinePtr(TIMER_Ch5);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch6 TimerCh6ISR(void) 
@@ -195,12 +224,16 @@ void interrupt VectorNumber_Vtimch6 TimerCh6ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C6F = 1;
 
+  OS_ISREnter();
+
   /* check if there is associated function to execute */
   if (timerCh6RoutinePtr)
   {
     /* execute attached function */
     timerCh6RoutinePtr(TIMER_Ch6);
   }
+
+  OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch7 TimerCh7ISR(void) 
@@ -208,6 +241,8 @@ void interrupt VectorNumber_Vtimch7 TimerCh7ISR(void)
   /* clear channel 7 interrupt flag */
   TFLG1_C7F = 1;
   
+  OS_ISREnter();
+
   /* check channel 7 debug enable */
   if (TimerCh7DebugEnable)
   { 
@@ -223,6 +258,8 @@ void interrupt VectorNumber_Vtimch7 TimerCh7ISR(void)
     /* execute attached function */
     timerCh7RoutinePtr(TIMER_Ch7);
   }
+
+  OS_ISRExit();
 }
 
 /**
