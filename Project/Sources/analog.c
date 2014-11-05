@@ -140,7 +140,7 @@ void Analog_Put(const TAnalogChannel channelNb, INT16 value) {
       break;
     case ANALOG_OUTPUT_Ch2:
       index = 1;
-      cache1 = 0b00100000; /* A1 | A0 | /PD | /LDAC | D11 | D10 | D9 | D8 */
+      cache1 = 0b01100000; /* A1 | A0 | /PD | /LDAC | D11 | D10 | D9 | D8 */
       cache2 = 0b00000000; /* D7 | D6 | D5  | D4    | D3  | D2  | D1 | D0 */
       break;
     case ANALOG_OUTPUT_Ch3:
