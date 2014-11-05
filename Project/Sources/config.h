@@ -110,10 +110,10 @@
 #warning "ModCon analog output channel switch EEPROM address override detected!"
 #endif
 
-#ifndef CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_SAMPLING_RATE
-#define CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_SAMPLING_RATE 0x0410 /* 16-bits Analog period EEPROM address */
+#ifndef CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_INPUT_SAMPLING_RATE
+#define CONFIG_EEPROM_ADDRESS_MODCON_ANALOG_INPUT_SAMPLING_RATE 0x0410 /* 16-bits Analog period EEPROM address */
 #else
-#warning "ModCon analog sampling rate EEPROM address override detected!"
+#warning "ModCon analog input sampling rate EEPROM address override detected!"
 #endif
 
 /* RESERVED BEGIN */

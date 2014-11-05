@@ -10,8 +10,12 @@
 //#include "clock.h"
 #include "EEPROM.h"
 #include "packet.h"
+#include "AWG.h"
+#include "OS.h"
 #include "utils.h"
 #include <mc9s12a512.h>
+
+static UINT8 RoutineStack[THREAD_STACK_SIZE];
 
 /**
  * HMI confirm dialog callback
@@ -541,37 +545,6 @@ BOOL HandleModConWave(void)
   }
 }
 
-UINT8 GetWaveform(TAWGWaveformType type)
-{
-  UINT8 waveform = 0xFF;
-  
-  switch(type)
-  {
-    case AWG_WAVEFORM_SINE:
-      waveform = 0;
-      break;
-    case AWG_WAVEFORM_SQUARE:
-      waveform = 1;
-      break;
-    case AWG_WAVEFORM_TRIANGLE:
-      waveform = 2;
-      break;
-    case AWG_WAVEFORM_SAWTOOTH:
-      waveform = 3;
-      break;
-    case AWG_WAVEFORM_NOISE:
-      waveform = 4;
-      break;
-    case AWG_WAVEFORM_ARBITRARY:
-      waveform = 5;
-      break;
-    default:
-      waveform = 0xFF;
-      break;
-  }
-  return waveform;
-}
-
 BOOL HandleModConWaveGetStatus(void)
 {
 
@@ -585,7 +558,32 @@ BOOL HandleModConWaveGetStatus(void)
     {      
       channelNb = index;
       enable = (UINT8)AWG_Channel[index].isEnabled;
-      waveform = GetWaveform(AWG_Channel[index].waveformType);
+
+      switch(AWG_Channel[index].waveformType)
+      {
+        case AWG_WAVEFORM_SINE:
+          waveform = 0;
+          break;
+        case AWG_WAVEFORM_SQUARE:
+          waveform = 1;
+          break;
+        case AWG_WAVEFORM_TRIANGLE:
+          waveform = 2;
+          break;
+        case AWG_WAVEFORM_SAWTOOTH:
+          waveform = 3;
+          break;
+        case AWG_WAVEFORM_NOISE:
+          waveform = 4;
+          break;
+        case AWG_WAVEFORM_ARBITRARY:
+          waveform = 5;
+          break;
+        default:
+          waveform = 0xFF;
+          break;
+      }
+
       frequency.l = AWG_Channel[index].frequency;
       amplitude.l = AWG_Channel[index].amplitude;
       offset.l = AWG_Channel[index].offset;
@@ -602,7 +600,7 @@ BOOL HandleModConWaveGetStatus(void)
 
 BOOL HandleModConWaveSetWaveform(void)
 {
-  static waveformTypeLookupTable[6] =
+  static UINT8 waveformTypeLookupTable[6] =
   {
     AWG_WAVEFORM_SINE,
     AWG_WAVEFORM_SQUARE,
@@ -691,8 +689,8 @@ BOOL HandleModConWaveActiveChannel(void)
   {
     AWG_Channel[0].isActive = bTRUE;
     AWG_Channel[1].isActive = bFALSE;
-    AWG_Channel[2].isActive = bFALSE;
-    AWG_Channel[3].isActive = bFALSE;    
+    //AWG_Channel[2].isActive = bFALSE;
+    //AWG_Channel[3].isActive = bFALSE;    
   
     return bTRUE;
   }
@@ -700,8 +698,8 @@ BOOL HandleModConWaveActiveChannel(void)
   {
     AWG_Channel[0].isActive = bFALSE;
     AWG_Channel[1].isActive = bTRUE;
-    AWG_Channel[2].isActive = bFALSE;
-    AWG_Channel[3].isActive = bFALSE;    
+    //AWG_Channel[2].isActive = bFALSE;
+    //AWG_Channel[3].isActive = bFALSE;    
 
     return bTRUE;
   }
@@ -713,7 +711,7 @@ BOOL HandleModConArbitraryWave(void)
 {
   if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
   {
-    AWG_ARBITRARY_WAVE[Packet_Parameter1].l = Packet_Parameter23;
+    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23;
     return bTRUE;
   }
   return bFALSE;
@@ -777,737 +775,6 @@ void SampleAnalogInputChannels(void)
   }
 }
 
-void SampleAnalogOutputChannels(TTimerChannel channelNb)
-{
-  static const UINT32 max = 256000;
-  UINT8 index = 0;
-  UINT16 value = 0;
-  static volatile UINT32 cycles = 0;
-  UINT32 sampleIndex = 0;
-  //static BOOL toggle = bFALSE;
-
-  /* lookup tables for input analog channel enums and switch mask mapping */
-  static const UINT8
-  /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
-  outputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1,
-                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2, 
-                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3, 
-                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4 },
-  /* NOTE: channel enums might not be in numeric order */
-  outputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
-                                                        ANALOG_OUTPUT_Ch2,
-                                                        ANALOG_OUTPUT_Ch3,
-                                                        ANALOG_OUTPUT_Ch4 };
-      
-  Timer_ScheduleRoutine(channelNb, AWG_ANALOG_SAMPLING_RATE);
-
-  //if (toggle)
-  //{    
-  //  Analog_Put(ANALOG_OUTPUT_Ch1, 4095);
-  //  toggle = bFALSE;
-  //}
-  //else
-  //{
-  //  Analog_Put(ANALOG_OUTPUT_Ch1, 0);
-  //  toggle = bTRUE;
-  //}
-  
-  
-  for (index = 0; index < NB_AWG_CHANNELS; ++index) 
-  {
-    if (AWG_Channel[index].isEnabled)
-    {
-      cycles =  max / AWG_Channel[index].frequency;
-      sampleIndex = (UINT32)AWG_Channel[index].sample * 1000;
-      sampleIndex = sampleIndex / cycles;
-      switch(AWG_Channel[index].waveformType)
-      {
-        case AWG_WAVEFORM_SINE:          
-          value = AWG_SINE_WAVE[sampleIndex];          
-          break;
-        case AWG_WAVEFORM_SQUARE:
-          if (AWG_Channel[index].sample < 5)
-          {
-            value = 4095;
-          }
-          else
-          {
-            value = 0;
-          }
-          break;
-        case AWG_WAVEFORM_TRIANGLE:
-          if (AWG_Channel[index].sample < 5)
-          {
-            value = 2047 + 512 * AWG_Channel[index].sample; 
-          }
-          else
-          {
-            value = 2047 - 512 * AWG_Channel[index].sample;
-          }
-          break;
-        case AWG_WAVEFORM_SAWTOOTH:
-          if (AWG_Channel[index].sample == 9)
-          {
-            value = 4095;
-          }
-          else
-          {
-            value = (Analog_Output[index].Value.l - 4096/10);
-          }
-          break;
-        case AWG_WAVEFORM_NOISE:
-          break;
-        case AWG_WAVEFORM_ARBITRARY:
-          break;
-        case AWG_WAVEFORM_DC:
-        default:
-          value = 2047;
-          break;
-      }
-      //AWG_Channel[index].sample ++;
-      if (++AWG_Channel[index].sample >= cycles)
-      {
-        AWG_Channel[index].sample = 0;
-      }
-      
-      Analog_Put(outputChannelNumberLookupTable[index], value);
-    }
-  }
-  
-}
-
-/**
- * \fn BOOL IdlePanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
- * \brief Handles idle panel inputs.
- * \param panelPtr A pointer of THMIPanel
- * \param key Key that has been pressed
- * \return TRUE if input has been processed or FALSE if it is not acceptable.
- */
-/*
-BOOL IdlePanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
-{
-  UNUSED(panelPtr);
-  switch(key)
-  {
-    case HMI_KEY_SET:
-      HMI_ShowPanel(1);
-      return bTRUE;
-      break;
-    case HMI_KEY_DATA:
-      HMI_ShowPanel(2);
-      return bTRUE;
-      break;
-    default:
-      break;
-  };
-  return bFALSE;
-}
-*/
-
-/**
- * \fn void UpdateMenuItemVersion(THMIMenuItem* itemPtr)
- * \brief Updates version menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemVersion(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {    
-    itemPtr->value.v.Major = MODCON_VERSION_MAJOR;
-    itemPtr->value.v.Minor = MODCON_VERSION_MINOR;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemNumber(THMIMenuItem* itemPtr)
- * \brief Updates number menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemNumber(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {    
-    itemPtr->value.l = ModConNumber;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemDebug(THMIMenuItem* itemPtr)
- * \brief Updates debug menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemDebug(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {      
-    itemPtr->value.b.Boolean = (UINT8)ModConDebug; 
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemProtocol(THMIMenuItem* itemPtr)
- * \brief Updates protocol menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemProtocol(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {      
-    itemPtr->value.b.Boolean =(UINT8)ModConProtocolMode;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemBacklight(THMIMenuItem* itemPtr)
- * \brief Updates backlight menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemBacklight(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {      
-    itemPtr->value.b.Boolean = (UINT8)ModConHMIBacklight;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemContrast(THMIMenuItem* itemPtr)
- * \brief Updates contrast menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemContrast(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {      
-    itemPtr->value.l = ModConHMIContrast;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemAnalogInputChannelValue(THMIMenuItem* itemPtr)
- * \brief Updates given input channel menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemAnalogInputChannelValue(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {
-    itemPtr->value.f.Float = (Analog_Input[itemPtr->attribute].Value.l * 49 + 7) / 100;
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemAnalogOutputChannelValue(THMIMenuItem* itemPtr)
- * \brief Updates given output channel menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-//void UpdateMenuItemAnalogOutputChannelValue(THMIMenuItem* itemPtr)
-//{
-//  if (itemPtr)
-//  {
-    /* TODO: replace this placeholder with real implementation */
-//    itemPtr->value.f.Float = Analog_Output[itemPtr->attribute].Value.l;
-//  }
-//  else
-//  {
-//#ifndef NO_DEBUG
-//    DEBUG(__LINE__, ERR_INVALID_POINTER);
-//#endif
-//  }
-//}
-
-/**
- * \fn void UpdateMenuItemAnalogInputChannelSwitch(THMIMenuItem* itemPtr)
- * \brief Updates given input channel switch menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemAnalogInputChannelSwitch(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {
-    if (ModConAnalogInputChannelSwitch & itemPtr->attribute)
-    {    
-      itemPtr->value.b.Boolean = bTRUE;
-    }
-    else
-    {
-      itemPtr->value.b.Boolean = bFALSE;
-    }
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif
-  }
-}
-*/
-
-/**
- * \fn void UpdateMenuItemAnalogOutputChannelSwitch(THMIMenuItem* itemPtr)
- * \brief Updates given output channel switch menu item value.
- * \param itemPtr A pointer of THMIMenuItem
- */
-/*
-void UpdateMenuItemAnalogOutputChannelSwitch(THMIMenuItem* itemPtr)
-{
-  if (itemPtr)
-  {
-    if (ModConAnalogOutputChannelSwitch & itemPtr->attribute)
-    {    
-      itemPtr->value.b.Boolean = bTRUE;
-    }
-    else
-    {
-      itemPtr->value.b.Boolean = bFALSE;
-    }
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif
-  }
-}
-*/
-
-/**
- * \fn void ApplyModConSettings(void)
- * \brief Writes all related ModCon setting menu values to EEPROM.
- */
-//void ApplyModConSettings(void)
-//{
-//    if (!EEPROM_Write16(&ModConProtocolMode, (UINT16)MODCON_HMI_MENU_ITEM_PROTOCOL.mutatedValue.b.Boolean))
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-//#endif
-//    }
-    
-    /* send back current protocol mode to confirm */
-//    UNUSED(HandleModConProtocolModeGet());  
-    
-//    if (!EEPROM_Write16(&ModConNumber, (UINT16)MODCON_HMI_MENU_ITEM_NUMBER.mutatedValue.l))
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-//#endif
-//    }
-
-//    if (!EEPROM_Write16(&ModConDebug, (UINT16)MODCON_HMI_MENU_ITEM_DEBUG.mutatedValue.b.Boolean))
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-//#endif
-//    }
-    
-//    if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)MODCON_HMI_MENU_ITEM_LCD_BACKLIGHT.mutatedValue.b.Boolean))
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-//#endif
-//    }
-
-//    if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)MODCON_HMI_MENU_ITEM_LCD_CONTRAST.mutatedValue.l))
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-//#endif
-//    }
-    
-//    HMI_SetBacklight(ModConHMIBacklight);
-//    HMI_SetContrast((UINT8)ModConHMIContrast);
-//}
-
-/**
- * \fn void ApplyModConSwitchs(void)
- * \brief Writes all related ModCon IO switch menu values to EEPROM.
- */
-/*
-void ApplyModConSwitchs(void)
-{
-  UINT16 analogInputChannelSwitch = 0, analogOutputChannelSwitch = 0;
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH1_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH1;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH2_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH2;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH3_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH3;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH4_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH4;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH5_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH5;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH6_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH7_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_INPUT_CH8_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogInputChannelSwitch = analogInputChannelSwitch | MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH1_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1;
-  }
-
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH2_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH3_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3;
-  }
-  
-  if (MODCON_HMI_MENU_ITEM_ANALOG_OUTPUT_CH4_SWITCH.mutatedValue.b.Boolean)
-  {
-    analogOutputChannelSwitch = analogOutputChannelSwitch | MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4;
-  }
-  
-  if (!EEPROM_Write16(&ModConAnalogInputChannelSwitch, analogInputChannelSwitch))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-  
-  if (!EEPROM_Write16(&ModConAnalogOutputChannelSwitch, analogOutputChannelSwitch))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-}
-*/
-
-/**
- * \fn void StoreHMIBacklightSetting(BOOL backlight)
- * \brief Stores given HMI display backlight setting to EEPROM
- * \param backlight Boolean state of HMI display backlight on or off
- */
-/*
-void StoreHMIBacklightSetting(BOOL backlight)
-{
-  if (!EEPROM_Write16(&ModConHMIBacklight, (UINT16)backlight))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-
-}
-*/
-
-/**
- * \fn void StoreHMIContrastSetting(UINT8 contrast)
- * \brief Stores given HMI display contrast setting to EEPROM
- * \param contrast a value from 0 to 63 of HMI display contrast level
- */
-/*
-void StoreHMIContrastSetting(UINT8 contrast)
-{
-  if (!EEPROM_Write16(&ModConHMIContrast, (UINT16)contrast))
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_EEPROM_WRITE);          
-#endif
-  }
-}
-*/
-
-/**
- * \fn void EraseModConSettings(THMIMenuItem* itemPtr)
- * \brief Erases EEPROM and force MCU reset.
- * \param itemPtr A pointer of THMIMenuItem
- */
-//void EraseModConSettings(THMIMenuItem* itemPtr)
-//{
-//    UNUSED(itemPtr);
-    
-    /* TODO: add dialog to confirm erase */
-//    if (!EEPROM_Erase())
-//    {
-//#ifndef NO_DEBUG
-//      DEBUG(__LINE__, ERR_EEPROM_ERASE);
-//#endif
-//    }
-    /* let the watchdog reset the MCU */
-//    for(;;);
-//}
-
-/**
- * \fn BOOL SettingPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
- * \brief Handles setting panel inputs.
- * \param panelPtr A pointer of THMIPanel
- * \param key Key that has been pressed
- * \return TRUE if input has been processed or FALSE if it is not acceptable.
- */
-//BOOL SettingPanelInputProcessRoutine(THMIPanel* panelPtr,THMIKey key)
-//{
-//  UINT8 focusedMenuItemIndex = HMI_GetFocusedMenuItemIndex();
-//  UINT8 selectedMenuItemIndex = HMI_GetSelectedMenuItemIndex();
-
-//  UNUSED(panelPtr);
-    
-//  switch(key)
-//  {
-//    case HMI_KEY_SET:
-//    case HMI_KEY_DATA:
-//      if (selectedMenuItemIndex == 0xFF) /* no item selected */
-//      {
-//        ConfirmDialogCallback = &ApplyModConSettings;        
-//        HMI_ShowPanel(15);
-//      }
-//      return bTRUE;      
-//      break;
-//    default:
-//      break;
-//  }
-//  return bFALSE;
-//}
-
-/**
- * \fn void SettingPanelUpdateRoutine(THMIPanel* panelPtr)
- * \brief Updates related setting panel parameters once it has been exposed.
- * \param panelPtr A pointer of THMIPanel
- */
-/*
-void SettingPanelUpdateRoutine(THMIPanel* panelPtr)
-{
-  if (panelPtr)
-  {    
-    if (panelPtr->menuPtr)
-    {
-      panelPtr->menuPtr->startingMenuItemIndex = 0;
-    }
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn BOOL AnalogPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
- * \brief Handles analog panel inputs.
- * \param panelPtr A pointer of THMIPanel
- * \param key Key that has been pressed
- * \return TRUE if input has been processed or FALSE if it is not acceptable.
- */
-/*
-BOOL AnalogPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
-{
-  UNUSED(panelPtr);
-    
-  switch(key)
-  {
-    case HMI_KEY_SET:
-      HMI_ShowPanel(3);
-      return bTRUE;
-      break;
-    case HMI_KEY_DATA:
-      HMI_ClosePanel();
-      return bTRUE;      
-      break;
-    default:
-      break;
-  }
-  return bFALSE;
-}
-*/
-
-/**
- * \fn void AnalogPanelUpdateRoutine(THMIPanel* panelPtr)
- * \brief Updates related analog panel parameters once it has been exposed.
- * \param panelPtr A pointer of THMIPanel
- */
-/*
-void AnalogPanelUpdateRoutine(THMIPanel* panelPtr)
-{
-  if (panelPtr)
-  {    
-    if (panelPtr->menuPtr)
-    {
-      panelPtr->menuPtr->startingMenuItemIndex = 0;
-    }
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif  
-  }
-}
-*/
-
-/**
- * \fn BOOL SwitchPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
- * \brief Handles switch panel inputs.
- * \param panelPtr A pointer of THMIPanel
- * \param key Key that has been pressed
- * \return TRUE if input has been processed or FALSE if it is not acceptable.
- */
-/*
-BOOL SwitchPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
-{
-  UNUSED(panelPtr); 
-   
-  switch(key)
-  {
-    case HMI_KEY_SET:
-    case HMI_KEY_DATA:
-      ConfirmDialogCallback = &ApplyModConSwitchs;
-      HMI_ShowPanel(15);
-      return bTRUE;
-      break;
-    default:
-      break;
-  }
-  return bFALSE;
-}
-*/
-
-/**
- * \fn void SwitchPanelUpdateRoutine(THMIPanel* panelPtr)
- * \brief Updates related switch panel parameters once it has been exposed.
- * \param panelPtr A pointer of THMIPanel
- */
-/*
-void SwitchPanelUpdateRoutine(THMIPanel* panelPtr)
-{
-  if (panelPtr)
-  {    
-    if (panelPtr->menuPtr)
-    {
-      panelPtr->menuPtr->startingMenuItemIndex = 0;
-    }
-  }
-  else
-  {
-#ifndef NO_DEBUG
-    DEBUG(__LINE__, ERR_INVALID_POINTER);
-#endif
-  }
-}
-*/
-
-/**
- * \fn BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
- * \brief Handles confirm panel inputs.
- * \param panelPtr A pointer of THMIPanel
- * \param key Key that has been pressed
- * \return TRUE if input has been processed or FALSE if it is not acceptable.
- */
-/*
-BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
-{
-  UNUSED(panelPtr);
-  
-  switch(key)
-  {
-    case HMI_KEY_SET:
-      if (ConfirmDialogCallback)
-      {
-        ConfirmDialogCallback();
-      }
-      HMI_ClosePanel();
-      return bTRUE;
-      break;
-    case HMI_KEY_DATA:
-      HMI_ClosePanel();
-      return bTRUE;
-      break;
-    default:
-      break;
-  }
-  return bFALSE;
-}
-*/
-
 /**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
@@ -1515,15 +782,6 @@ BOOL ConfirmPanelInputProcessRoutine(THMIPanel* panelPtr, THMIKey key)
  */
 BOOL Initialize(void) /* TODO: check following statements */
 {
-  TTimerSetup timerCh5;
-  
-  timerCh5.outputCompare    = bTRUE;
-  timerCh5.outputAction     = TIMER_OUTPUT_DISCONNECT;
-  timerCh5.inputDetection   = TIMER_INPUT_OFF;
-  timerCh5.toggleOnOverflow = bFALSE;
-  timerCh5.interruptEnable  = bFALSE;
-  timerCh5.pulseAccumulator = bFALSE;
-  timerCh5.routine          = &SampleAnalogOutputChannels;
    
   DisableInterrupts;
  
@@ -1614,9 +872,9 @@ BOOL Initialize(void) /* TODO: check following statements */
     }
   }
 
-  if (ModConAnalogSamplingRate == 0xFFFF)
+  if (ModConAnalogInputSamplingRate == 0xFFFF)
   {
-    if (!EEPROM_Write16(&ModConAnalogSamplingRate, DEFAULT_MODCON_ANALOG_SAMPLING_RATE))
+    if (!EEPROM_Write16(&ModConAnalogInputSamplingRate, DEFAULT_MODCON_ANALOG_INPUT_SAMPLING_RATE))
     {
 #ifndef NO_DEBUG
       DEBUG(__LINE__, ERR_EEPROM_WRITE);          
@@ -1661,33 +919,17 @@ BOOL Initialize(void) /* TODO: check following statements */
 //  Clock_Setup(CONFIG_RTI_PRESCALERATE, CONFIG_RTI_MODULUSCOUNT);
     
   Timer_Setup();
-  Timer_SetupPeriodicTimer(ModConAnalogSamplingRate, CONFIG_BUSCLK);
-  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
-
-  Timer_Init(TIMER_Ch5, &timerCh5);
-  /* kick start our hitchhiker here */
-  Timer_Set(TIMER_Ch5, AWG_ANALOG_SAMPLING_RATE);
-  Timer_Enable(TIMER_Ch5, bTRUE);
-
+  
   Analog_Setup(CONFIG_BUSCLK);
+  
+  AWG_Setup(CONFIG_BUSCLK);
+  
+//  Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
+//  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
+  /* enable ModCon analog input sampling */
+//  Timer_PeriodicTimerEnable(bTRUE);
 
-//  MODCON_HMI_SETUP.backlight = (BOOL)ModConHMIBacklight;
-//  MODCON_HMI_SETUP.contrast = (UINT8)ModConHMIContrast;
-//  if (!HMI_Setup(&MODCON_HMI_SETUP))
-//  {
-//#ifndef NO_DEBUG
-//    DEBUG(__LINE__, ERR_HMI_SETUP);
-//#endif
-//    return bFALSE;
-//  }  
-  
-  //HMI_AppendPanel(&MODCON_HMI_IDLE_PANEL);  
-  //HMI_AppendPanel(&MODCON_HMI_SETTING_PANEL);
-  //HMI_AppendPanel(&MODCON_HMI_ANALOG_PANEL);
-  //HMI_AppendPanel(&MODCON_HMI_SWITCH_PANEL);
-  //HMI_AppendPanel(&MODCON_HMI_CONFIRM_PANEL);  
-  
-  //Timer_PeriodicTimerEnable(bTRUE);
+  OS_Init();
   
 #ifndef NO_INTERRUPT 
   EnableInterrupts;
@@ -1697,82 +939,89 @@ BOOL Initialize(void) /* TODO: check following statements */
 }
 
 /**
- * \fn void Routine(void)
+ * \fn void Routine(void*)
  * \brief Retrieves ModCon packets and sends back packets if it is necessary.
  */
-void Routine(void)
+void Routine(void* dataPtr)
 {
   UINT8 ack = 0;
-  BOOL bad = bFALSE;
+  BOOL bad = bTRUE;
+  
+  UNUSED(dataPtr);
     
-//  if (Clock_Update())
-//  {
-    /* hours from 0 to 23; minutes from 0 to 59; seconds from 0 to 59 */
-//    HMI_SetTime((Clock_Minutes / 60) % 24, Clock_Minutes % 60, Clock_Seconds);    
-//    bad = !HandleModConUptime();
-//  }
-      
-  if (Packet_Get())
-  { 
-    ack = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
-    Packet_Command &= ~MODCON_COMMAND_ACK_MASK;     /* clear ACK mask from command */
+  for (;;)
+  {
+    CRG_ArmCOP();
         
-    switch(Packet_Command)
-    {     
-      case MODCON_COMMAND_STARTUP:
-        bad = !HandleModConStartup(); 
-        break;			
-			case MODCON_COMMNAD_EEPROM_PROGRAM:
-        bad = !HandleModConEEPROMProgram();
-				break;			
-			case MODCON_COMMAND_EEPROM_GET:
-			  bad = !HandleModConEEPROMGet();
-				break;      
-      case MODCON_COMMAND_SPECIAL:
-        bad = !HandleModConSpecial();
-        break;
-      case MODCON_COMMAND_PROTOCOL_MODE:
-        bad = !HandleModConProtocolMode();
-        break;
-      case MODCON_COMMAND_NUMBER:
-        bad = !HandleModConNumber();
-        break;		  
-		  case MODCON_COMMAND_MODE:
-		    bad = !HandleModConMode();
-				break;
-      case MODCON_COMMAND_WAVE:
-        bad = !HandleModConWave();
-        break;
-      case MODCON_COMMAND_ARBITRARY_WAVE:
-        bad = !HandleModConArbitraryWave();
-        break;
-      default:
-        bad = bTRUE;
-        break;
-    }
+//    if (Clock_Update())
+//    {
+//      /* hours from 0 to 23; minutes from 0 to 59; seconds from 0 to 59 */
+//      bad = !HandleModConUptime();
+//    }
+
+    if (Packet_Get())
+    { 
+      ack = Packet_Command & MODCON_COMMAND_ACK_MASK; /* detect ACK mask from command */
+      Packet_Command &= ~MODCON_COMMAND_ACK_MASK;     /* clear ACK mask from command */
         
-    if (ack)
-    {
-      if (!bad)
-      {                
-        if (!Packet_Put(Packet_Command | MODCON_COMMAND_ACK_MASK, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3))
-        {
+      switch(Packet_Command)
+      {     
+        case MODCON_COMMAND_STARTUP:
+          bad = !HandleModConStartup(); 
+          break;			
+			  case MODCON_COMMNAD_EEPROM_PROGRAM:
+          bad = !HandleModConEEPROMProgram();
+				  break;			
+			  case MODCON_COMMAND_EEPROM_GET:
+			    bad = !HandleModConEEPROMGet();
+				  break;      
+        case MODCON_COMMAND_SPECIAL:
+          bad = !HandleModConSpecial();
+          break;
+        case MODCON_COMMAND_PROTOCOL_MODE:
+          bad = !HandleModConProtocolMode();
+          break;
+        case MODCON_COMMAND_NUMBER:
+          bad = !HandleModConNumber();
+          break;		  
+		    case MODCON_COMMAND_MODE:
+		      bad = !HandleModConMode();
+				  break;
+        case MODCON_COMMAND_WAVE:
+          bad = !HandleModConWave();
+          break;
+        case MODCON_COMMAND_ARBITRARY_WAVE:
+          bad = !HandleModConArbitraryWave();
+          break;
+        default:
+          bad = bTRUE;
+          break;
+      }
+        
+      if (ack)
+      {
+        if (!bad)
+        {                
+          if (!Packet_Put(Packet_Command | MODCON_COMMAND_ACK_MASK, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3))
+          {
 #ifndef NO_DEBUG
-          DEBUG(__LINE__, ERR_PACKET_PUT);
+            DEBUG(__LINE__, ERR_PACKET_PUT);
 #endif
+          }
+        }
+        else
+        { /* NOTE: ACK mask has been cleared already */
+          if (!Packet_Put(Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3))
+          {
+#ifndef NO_DEBUG
+            DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+          }                
         }
       }
-      else
-      { /* NOTE: ACK mask has been cleared already */
-        if (!Packet_Put(Packet_Command, Packet_Parameter1, Packet_Parameter2, Packet_Parameter3))
-        {
-#ifndef NO_DEBUG
-          DEBUG(__LINE__, ERR_PACKET_PUT);
-#endif
-        }                
-      }
     }
-  }
+    CRG_DisarmCOP();
+  }  
 }
 
 /**
@@ -1790,11 +1039,8 @@ void main(void)
   
   /* queue startup packets for transmission */
   UNUSED(HandleModConStartup());
+  
+  UNUSED(OS_ThreadCreate(Routine, 0x0000, &RoutineStack[THREAD_STACK_SIZE - 1], 1));
 
-  for (;;)
-  {
-    CRG_ArmCOP();
-    Routine();
-    CRG_DisarmCOP();
-  }
+  OS_Start();
 }
