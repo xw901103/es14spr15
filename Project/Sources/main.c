@@ -586,9 +586,9 @@ BOOL HandleModConWaveGetStatus(void)
       channelNb = index;
       enable = (UINT8)AWG_Channel[index].isEnabled;
       waveform = GetWaveform(AWG_Channel[index].waveformType);
-      frequency.l = AWG_Channel[index].frequency.l;
-      amplitude.l = AWG_Channel[index].amplitude.l;
-      offset.l = AWG_Channel[index].offset.l;
+      frequency.l = AWG_Channel[index].frequency;
+      amplitude.l = AWG_Channel[index].amplitude;
+      offset.l = AWG_Channel[index].offset;
     
       success = Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_STATUS, channelNb, enable) &&
                 Packet_Put(MODCON_COMMAND_WAVE, MODCON_WAVE_WAVEFORM, waveform, 0) &&
@@ -633,7 +633,7 @@ BOOL HandleModConWaveSetFrequency(void)
   {
     if (AWG_Channel[index].isActive)
     {
-      AWG_Channel[index].frequency.l = Packet_Parameter23;
+      AWG_Channel[index].frequency = Packet_Parameter23;
     }
   }
 
@@ -648,7 +648,7 @@ BOOL HandleModConWaveSetAmplitude(void)
   {
     if (AWG_Channel[index].isActive)
     {
-      AWG_Channel[index].amplitude.l = Packet_Parameter23;
+      AWG_Channel[index].amplitude = Packet_Parameter23;
     }
   }
 
@@ -663,7 +663,7 @@ BOOL HandleModConWaveSetOffset(void)
   {
     if (AWG_Channel[index].isActive)
     {
-      AWG_Channel[0].offset.l = Packet_Parameter23;
+      AWG_Channel[0].offset = Packet_Parameter23;
     }
   }
 
@@ -779,8 +779,12 @@ void SampleAnalogInputChannels(void)
 
 void SampleAnalogOutputChannels(TTimerChannel channelNb)
 {
+  static const UINT32 max = 256000;
   UINT8 index = 0;
   UINT16 value = 0;
+  static volatile UINT32 cycles = 0;
+  UINT32 sampleIndex = 0;
+  //static BOOL toggle = bFALSE;
 
   /* lookup tables for input analog channel enums and switch mask mapping */
   static const UINT8
@@ -794,18 +798,32 @@ void SampleAnalogOutputChannels(TTimerChannel channelNb)
                                                         ANALOG_OUTPUT_Ch2,
                                                         ANALOG_OUTPUT_Ch3,
                                                         ANALOG_OUTPUT_Ch4 };
-
+      
   Timer_ScheduleRoutine(channelNb, AWG_ANALOG_SAMPLING_RATE);
+
+  //if (toggle)
+  //{    
+  //  Analog_Put(ANALOG_OUTPUT_Ch1, 4095);
+  //  toggle = bFALSE;
+  //}
+  //else
+  //{
+  //  Analog_Put(ANALOG_OUTPUT_Ch1, 0);
+  //  toggle = bTRUE;
+  //}
+  
   
   for (index = 0; index < NB_AWG_CHANNELS; ++index) 
   {
-    //if (AWG_Channel[index].isEnabled & (ModConAnalogOutputChannelSwitch & outputChannelSwitchMaskLookupTable[index]))
     if (AWG_Channel[index].isEnabled)
     {
+      cycles =  max / AWG_Channel[index].frequency;
+      sampleIndex = (UINT32)AWG_Channel[index].sample * 1000;
+      sampleIndex = sampleIndex / cycles;
       switch(AWG_Channel[index].waveformType)
       {
-        case AWG_WAVEFORM_SINE:
-          value = AWG_SINE[AWG_Channel[index].sample];
+        case AWG_WAVEFORM_SINE:          
+          value = AWG_SINE_WAVE[sampleIndex];          
           break;
         case AWG_WAVEFORM_SQUARE:
           if (AWG_Channel[index].sample < 5)
@@ -846,25 +864,16 @@ void SampleAnalogOutputChannels(TTimerChannel channelNb)
           value = 2047;
           break;
       }
-      
-      if (++AWG_Channel[index].sample >= 10)
+      //AWG_Channel[index].sample ++;
+      if (++AWG_Channel[index].sample >= cycles)
       {
         AWG_Channel[index].sample = 0;
       }
       
-      //if (value < 0)
-      //{
-      //  value = 0;
-      //}
-      //if (value > 4095)
-      //{
-      //  value = 4095;
-      //}
-      
       Analog_Put(outputChannelNumberLookupTable[index], value);
     }
   }
-
+  
 }
 
 /**

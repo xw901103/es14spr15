@@ -207,7 +207,7 @@ void interrupt VectorNumber_Vtimch5 TimerCh5ISR(void)
   /* clear channel 0 interrupt flag */
   TFLG1_C5F = 1;
 
-  OS_ISREnter();
+  //OS_ISREnter();
 
   /* check if there is associated function to execute */
   if (timerCh5RoutinePtr)
@@ -216,7 +216,7 @@ void interrupt VectorNumber_Vtimch5 TimerCh5ISR(void)
     timerCh5RoutinePtr(TIMER_Ch5);
   }
 
-  OS_ISRExit();
+  //OS_ISRExit();
 }
 
 void interrupt VectorNumber_Vtimch6 TimerCh6ISR(void) 
