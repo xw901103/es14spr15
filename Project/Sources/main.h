@@ -34,6 +34,7 @@
 #include "global.h"
 #include "timer.h"
 #include "analog.h"
+//#include "AWG.h"
 //#include "HMI.h"
 #pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
@@ -221,6 +222,8 @@ BOOL HandleModConMode(void);
  * \return TRUE if the command has been executed successfully.
  */
 BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb);
+
+BOOL HandleModConAnalogOutputValue(const TAnalogChannel channelNb);
 
 /**
  * \fn BOOL HandleModConEEPROMProgram(void)

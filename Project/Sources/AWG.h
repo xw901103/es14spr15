@@ -22,12 +22,24 @@ typedef enum
   AWG_WAVEFORM_ARBITRARY
 } TAWGWaveformType;
 
+typedef enum
+{
+  AWG_Ch1 = 0x00,
+  AWG_Ch2 = 0x01,
+  AWG_Ch3 = 0x02,
+  AWG_Ch4 = 0x03
+} TAWGChannel;
+
+typedef void(*TAWGPostProcessRoutine)(TAWGChannel);
+
 typedef struct
 {
   TAWGWaveformType waveformType;
 
   UINT16 sample;  
   
+  UINT16 value;
+      
   BOOL isActive;
   BOOL isEnabled;
   
@@ -35,12 +47,16 @@ typedef struct
   UINT16 amplitude;
   INT16 offset;
     
-} TAWGChannel;
+} TAWGEntry;
 
-extern TAWGChannel AWG_Channel[NB_AWG_CHANNELS];
+extern TAWGEntry AWG_Channel[NB_AWG_CHANNELS];
 
 extern UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
 
 void AWG_Setup(const UINT32 busClk);
+
+void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine);
+
+void AWG_DetachPostProcessRoutine(void);
 
 #endif

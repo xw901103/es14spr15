@@ -171,8 +171,8 @@ void Analog_Put(const TAnalogChannel channelNb, INT16 value) {
   SPI_ExchangeChar(cache2, &cache2); /* D7 | D6 | D5  | D4    | D3  | D2  | D1 | D0 */
   SPI0CS = SPI0CS_NULL;    /* deselect any chip */
         
-  Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;
-      
+  /* push in our new value */
+  Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;      
   Analog_Output[index].Value.l = value;
 }
 

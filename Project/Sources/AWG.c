@@ -8,11 +8,12 @@
 
 #define DAC_ZERO_VOLTAGE 2047
 
-TAWGChannel AWG_Channel[NB_AWG_CHANNELS] = {0};
+TAWGEntry AWG_Channel[NB_AWG_CHANNELS] = {0};
 
 UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 
 static UINT16 AWGRoutinePeriod = 0; /* delay period of signal generating process */
+static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
 const UINT16 AWG_SINE_WAVE[1000] =
 {
@@ -123,25 +124,28 @@ void AWGRoutine(TTimerChannel channelNb);
 void AWGRoutine(TTimerChannel channelNb)
 {
 //  static const UINT32 max = 256000;
-  UINT16 index = 0;
-  UINT16 analogValue = DAC_ZERO_VOLTAGE;
-//  static volatile UINT32 cycles = 0;
+    static UINT16 cycles = 1000;
 //  UINT32 sampleIndex = 0;
   //static BOOL toggle = bFALSE;
 
   /* lookup tables for input analog channel enums and switch mask mapping */
-  static const UINT8
+//  static const UINT8
   /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
 //  outputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1,
 //                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2, 
 //                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3, 
 //                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4 },
   /* NOTE: channel enums might not be in numeric order */
-  outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
-                                                        ANALOG_OUTPUT_Ch2,
-                                                        ANALOG_OUTPUT_Ch3,
-                                                        ANALOG_OUTPUT_Ch4 };
-      
+  static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
+                                                                               ANALOG_OUTPUT_Ch2,
+                                                                               ANALOG_OUTPUT_Ch3,
+                                                                               ANALOG_OUTPUT_Ch4 };
+  static TAWGChannel channelNumberLookupTable[NB_AWG_CHANNELS] = { AWG_Ch1,
+                                                                   AWG_Ch2 };
+  
+  UINT16 index = 0;
+  INT16 analogValue = AWG_Channel[index].value;
+
   Timer_ScheduleRoutine(channelNb, AWGRoutinePeriod);
 
 //  if (toggle)
@@ -168,14 +172,14 @@ void AWGRoutine(TTimerChannel channelNb)
 //          value = AWG_SINE_WAVE[sampleIndex];          
           break;
         case AWG_WAVEFORM_SQUARE:
-//          if (AWG_Channel[index].sample < 5)
-//          {
-//            value = 4095;
-//          }
-//          else
-//          {
-//            value = 0;
-//          }
+          if (AWG_Channel[index].sample < 500)
+          {
+            analogValue = DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude;
+          }
+          else
+          {
+            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
+          }
           break;
         case AWG_WAVEFORM_TRIANGLE:
 //          if (AWG_Channel[index].sample < 5)
@@ -203,16 +207,31 @@ void AWGRoutine(TTimerChannel channelNb)
           break;
         case AWG_WAVEFORM_DC:
         default:
-          analogValue += AWG_Channel[index].offset;
           break;
       }
-//      AWG_Channel[index].sample ++;
-//      if (++AWG_Channel[index].sample >= cycles)
-//      {
-//        AWG_Channel[index].sample = 0;
-//      }
+      //AWG_Channel[index].sample ++;
+      if (++AWG_Channel[index].sample == cycles)
+      {
+        AWG_Channel[index].sample = 0;
+      }
+      
+      analogValue -= AWG_Channel[index].offset;
+      
+      if (analogValue > 4095)
+      {
+        analogValue = 4095;
+      }
+      else if (analogValue < 0)
+      {
+        analogValue = 0;
+      }
       
       Analog_Put(outputChannelNumberLookupTable[index], analogValue);
+      AWG_Channel[index].value = analogValue;
+    }
+    if (channelPostProcessRoutinePtr)
+    {
+      channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
     }
   }
 }
@@ -236,4 +255,14 @@ void AWG_Setup(const UINT32 busClk)
   /* kick start our hitchhiker here */
   Timer_Set(TIMER_Ch5, AWGRoutinePeriod);
   Timer_Enable(TIMER_Ch5, bTRUE);  
+}
+
+void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)
+{
+  channelPostProcessRoutinePtr = routine;
+}
+
+void AWG_DetachPostProcessRoutine(void)
+{
+  channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 }

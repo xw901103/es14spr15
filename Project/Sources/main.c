@@ -15,7 +15,12 @@
 #include "utils.h"
 #include <mc9s12a512.h>
 
+#define OS_VENDOR_PETER_MCLEAN 1;
+
 static UINT8 RoutineStack[THREAD_STACK_SIZE];
+static UINT8 RuntimeIndictorRoutineStack[THREAD_STACK_SIZE];
+
+void RuntimeIndictorRoutine(void* dataPtr);
 
 /**
  * HMI confirm dialog callback
@@ -89,6 +94,8 @@ void TurnOnStartupIndicator(void);
  * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
 void SampleAnalogInputChannels(void);
+
+void AWGPostProcessRoutine(TAWGChannel channelNb);
 
 /**
  * \fn BOOL HandleModConStartup(void)
@@ -423,6 +430,43 @@ BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
   }
   
   if (!Packet_Put(MODCON_COMMAND_ANALOG_INPUT_VALUE, index, Analog_Input[index].Value.s.Lo, Analog_Input[index].Value.s.Hi))
+  {
+#ifndef NO_DEBUG
+    DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+    return bFALSE;
+  }
+  return bTRUE;
+}
+
+BOOL HandleModConAnalogOutputValue(const TAnalogChannel channelNb)
+{
+  UINT8 index = 0xFF;
+  
+  /* NOTE: channel enums might not be in numberic order */
+  switch(channelNb)
+  {
+    case ANALOG_OUTPUT_Ch1:
+      index = 0;
+      break;
+    case ANALOG_OUTPUT_Ch2:
+      index = 1;
+      break;
+    case ANALOG_OUTPUT_Ch3:
+      index = 2;
+      break;
+    case ANALOG_OUTPUT_Ch4:
+      index = 3;
+      break;
+    default:
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_INVALID_ARGUMENT);
+#endif
+      return bFALSE;
+      break;
+  }
+  
+  if (!Packet_Put(MODCON_COMMAND_ANALOG_OUTPUT_VALUE, index, Analog_Output[index].Value.s.Lo, Analog_Output[index].Value.s.Hi))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -775,6 +819,38 @@ void SampleAnalogInputChannels(void)
   }
 }
 
+void AWGPostProcessRoutine(TAWGChannel channelNb)
+{
+  UINT8 index = 0xFF;                      
+  TAnalogChannel analogChannelNb;
+  switch(channelNb)
+  {
+    case AWG_Ch1:
+      analogChannelNb = ANALOG_OUTPUT_Ch1;
+      index = 0;
+      break;
+    case AWG_Ch2:
+      analogChannelNb = ANALOG_OUTPUT_Ch2;
+      index = 1;
+      break;
+    case AWG_Ch3:
+      analogChannelNb = ANALOG_OUTPUT_Ch3;
+      index = 2;
+      break;
+    case AWG_Ch4:
+      analogChannelNb = ANALOG_OUTPUT_Ch4;
+      index = 3;
+      break;
+    default:
+      return;
+      break;
+  }
+  if (Analog_Output[index].Value.l != Analog_Output[index].OldValue.l)
+  {    
+    UNUSED(HandleModConAnalogOutputValue(analogChannelNb));
+  }
+}
+
 /**
  * \fn void Initialize(void)
  * \brief Initializes hardware and software parameters that required for this program.
@@ -923,19 +999,33 @@ BOOL Initialize(void) /* TODO: check following statements */
   Analog_Setup(CONFIG_BUSCLK);
   
   AWG_Setup(CONFIG_BUSCLK);
+  //AWG_AttachPostProcessRoutine(&AWGPostProcessRoutine);
   
-//  Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
-//  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
+  Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
+  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
   /* enable ModCon analog input sampling */
-//  Timer_PeriodicTimerEnable(bTRUE);
+  Timer_PeriodicTimerEnable(bTRUE);
 
   OS_Init();
   
-#ifndef NO_INTERRUPT 
+#if !defined(NO_INTERRUPT) && !defined(OS_VENDOR_PETER_MCLEAN) 
   EnableInterrupts;
 #endif
   
   return bTRUE;
+}
+
+void RuntimeIndictorRoutine(void* dataPtr)
+{
+  static BOOL toggle = bFALSE;
+  
+  for(;;)
+  {
+    PORTE_BIT7 = (byte)toggle;
+    toggle = !toggle;
+    
+    OS_TimeDelay(10); /* about half a second */
+  }
 }
 
 /**
@@ -1040,7 +1130,8 @@ void main(void)
   /* queue startup packets for transmission */
   UNUSED(HandleModConStartup());
   
-  UNUSED(OS_ThreadCreate(Routine, 0x0000, &RoutineStack[THREAD_STACK_SIZE - 1], 1));
+  UNUSED(OS_ThreadCreate(&RuntimeIndictorRoutine, 0x0000, &RuntimeIndictorRoutineStack[THREAD_STACK_SIZE - 1], 0));
+  UNUSED(OS_ThreadCreate(&Routine, 0x0000, &RoutineStack[THREAD_STACK_SIZE - 1], 1));
 
   OS_Start();
 }
