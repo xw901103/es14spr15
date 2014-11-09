@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "CRG.h"
-//#include "clock.h"
+#include "clock.h"
 #include "EEPROM.h"
 #include "packet.h"
 #include "AWG.h"
@@ -93,9 +93,9 @@ void TurnOnStartupIndicator(void);
  * \fn void SampleAnalogInputChannels(void)
  * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
-void SampleAnalogInputChannels(void);
+void SampleAnalogChannels(void);
 
-void AWGPostProcessRoutine(TAWGChannel channelNb);
+//void AWGPostProcessRoutine(TAWGChannel channelNb);
 
 /**
  * \fn BOOL HandleModConStartup(void)
@@ -313,13 +313,19 @@ BOOL HandleModConNumberSet(void)
  */
 BOOL HandleModConUptime(void)
 {
-//  if (!Packet_Put(MODCON_COMMAND_TIME, MODCON_TIME_INITIAL, Clock_Seconds, Clock_Minutes)) 
-//  {
-//#ifndef NO_DEBUG
-//    DEBUG(__LINE__, ERR_PACKET_PUT);
-//#endif
-//    return bFALSE;
-//  }
+  static UINT8 seconds = 0;
+
+  if (seconds != Clock_Seconds)
+  {    
+    if (!Packet_Put(MODCON_COMMAND_TIME, MODCON_TIME_INITIAL, Clock_Seconds, Clock_Minutes)) 
+    {
+#ifndef NO_DEBUG
+      DEBUG(__LINE__, ERR_PACKET_PUT);
+#endif
+      return bFALSE;
+    }
+    seconds = Clock_Seconds;
+  }
   return bTRUE;
 }
 
@@ -385,6 +391,32 @@ BOOL HandleModConModeSet(void)
   return bTRUE;
 }
 
+BOOL HandleModConAnalogValue(const TAnalogChannel channelNb)
+{
+  switch(channelNb)
+  {
+    case ANALOG_INPUT_Ch1:
+    case ANALOG_INPUT_Ch2:
+    case ANALOG_INPUT_Ch3:
+    case ANALOG_INPUT_Ch4:
+    case ANALOG_INPUT_Ch5:
+    case ANALOG_INPUT_Ch6:
+    case ANALOG_INPUT_Ch7:
+    case ANALOG_INPUT_Ch8:
+      return HandleModConAnalogInputValue(channelNb);
+      break;
+    case ANALOG_OUTPUT_Ch1:
+    case ANALOG_OUTPUT_Ch2:
+    case ANALOG_OUTPUT_Ch3:
+    case ANALOG_OUTPUT_Ch4:
+      return HandleModConAnalogOutputValue(channelNb);
+      break;
+    default:
+      break;
+  }
+  return bFALSE;
+}
+
 /**
  * \fn BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
  * \brief Builds a packet that contains current ModCon analog input value of selected channel and places it into transmit buffer. 
@@ -442,6 +474,7 @@ BOOL HandleModConAnalogInputValue(const TAnalogChannel channelNb)
 BOOL HandleModConAnalogOutputValue(const TAnalogChannel channelNb)
 {
   UINT8 index = 0xFF;
+  TINT16 value;
   
   /* NOTE: channel enums might not be in numberic order */
   switch(channelNb)
@@ -466,7 +499,9 @@ BOOL HandleModConAnalogOutputValue(const TAnalogChannel channelNb)
       break;
   }
   
-  if (!Packet_Put(MODCON_COMMAND_ANALOG_OUTPUT_VALUE, index, Analog_Output[index].Value.s.Lo, Analog_Output[index].Value.s.Hi))
+  value.l = 0x07FF - Analog_Output[index].Value.l;
+  
+  if (!Packet_Put(MODCON_COMMAND_ANALOG_OUTPUT_VALUE, index, value.s.Lo, value.s.Hi))
   {
 #ifndef NO_DEBUG
     DEBUG(__LINE__, ERR_PACKET_PUT);
@@ -661,6 +696,7 @@ BOOL HandleModConWaveSetWaveform(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].waveformType = waveformTypeLookupTable[Packet_Parameter2];
+      AWG_Update();
     }
   }
   
@@ -670,12 +706,51 @@ BOOL HandleModConWaveSetWaveform(void)
 BOOL HandleModConWaveSetFrequency(void)
 {
   UINT8 index = 0;
+  UINT16 frequency = 0;
+  
+  frequency = (UINT16)(Packet_Parameter23 % 256); /* XX.F*/
+  switch(frequency)
+  {
+    case 25:  /* 0.1 */
+      frequency = 1;
+      break;
+    case 51:  /* 0.2 */
+      frequency = 2;
+      break;
+    case 76:  /* 0.3 */
+      frequency = 3;
+      break;
+    case 102: /* 0.4 */
+      frequency = 4;
+      break;
+    case 128: /* 0.5 */
+      frequency = 5;
+      break;
+    case 153: /* 0.6 */
+      frequency = 6;
+      break;
+    case 179: /* 0.7 */
+      frequency = 7;
+      break;
+    case 204: /* 0.8 */
+      frequency = 8;
+      break;
+    case 230: /* 0.9 */
+      frequency = 9;
+      break;
+    default:
+      break;
+  };
+  
+  frequency += (Packet_Parameter23 / 256) * 10;
+  
   
   for (index = 0; index < NB_AWG_CHANNELS; ++index)
   {
     if (AWG_Channel[index].isActive)
     {
-      AWG_Channel[index].frequency = Packet_Parameter23;
+      AWG_Channel[index].frequency = frequency;
+      AWG_Update();
     }
   }
 
@@ -691,6 +766,7 @@ BOOL HandleModConWaveSetAmplitude(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].amplitude = Packet_Parameter23;
+      AWG_Update();
     }
   }
 
@@ -705,7 +781,8 @@ BOOL HandleModConWaveSetOffset(void)
   {
     if (AWG_Channel[index].isActive)
     {
-      AWG_Channel[0].offset = Packet_Parameter23;
+      AWG_Channel[index].offset = Packet_Parameter23;
+      AWG_Update();
     }
   }
 
@@ -721,6 +798,7 @@ BOOL HandleModConWaveEnable(BOOL enable)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].isEnabled = enable;
+      AWG_Update();
     }
   }
 
@@ -775,8 +853,8 @@ void TurnOnStartupIndicator(void)
  * \fn void SampleAnalogInputChannels(void)
  * \brief Samples analog input values from enabled channels and send packets based on protocol mode asynchronous/synchronous.
  */
-void SampleAnalogInputChannels(void) 
-{
+void SampleAnalogChannels(void) 
+{  
   /* lookup tables for input analog channel enums and switch mask mapping */
   static const UINT8
   /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
@@ -788,6 +866,11 @@ void SampleAnalogInputChannels(void)
                                                            MODCON_ANALOG_INPUT_CHANNEL_MASK_CH6, 
                                                            MODCON_ANALOG_INPUT_CHANNEL_MASK_CH7,
                                                            MODCON_ANALOG_INPUT_CHANNEL_MASK_CH8 },
+  outputChannelSwitchMaskLookupTable[NB_OUTPUT_CHANNELS] = { MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1,
+                                                             MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2,
+                                                             MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3,
+                                                             MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4 };
+  static const TAnalogChannel
   /* NOTE: channel enums might not be in numeric order */
   inputChannelNumberLookupTable[NB_INPUT_CHANNELS] = { ANALOG_INPUT_Ch1,
                                                        ANALOG_INPUT_Ch2,
@@ -796,9 +879,22 @@ void SampleAnalogInputChannels(void)
                                                        ANALOG_INPUT_Ch5,
                                                        ANALOG_INPUT_Ch6,
                                                        ANALOG_INPUT_Ch7,
-                                                       ANALOG_INPUT_Ch8 };
+                                                       ANALOG_INPUT_Ch8 },
+  outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
+                                                         ANALOG_OUTPUT_Ch2,
+                                                         ANALOG_OUTPUT_Ch3,
+                                                         ANALOG_OUTPUT_Ch4 };
+  
   BOOL mutated = bFALSE;
   UINT8 index = 0;
+
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (ModConAnalogOutputChannelSwitch & outputChannelSwitchMaskLookupTable[index])
+    {
+      UNUSED(HandleModConAnalogOutputValue(outputChannelNumberLookupTable[index]));
+    }
+  }
   
   for (index = 0; index < NB_INPUT_CHANNELS; ++index) 
   {
@@ -816,7 +912,7 @@ void SampleAnalogInputChannels(void)
   	    UNUSED(HandleModConAnalogInputValue(inputChannelNumberLookupTable[index]));    
       }
     }
-  }
+  }  
 }
 
 void AWGPostProcessRoutine(TAWGChannel channelNb)
@@ -845,10 +941,10 @@ void AWGPostProcessRoutine(TAWGChannel channelNb)
       return;
       break;
   }
-  if (Analog_Output[index].Value.l != Analog_Output[index].OldValue.l)
-  {    
+  //if (Analog_Output[index].Value.l != Analog_Output[index].OldValue.l)
+  //{    
     UNUSED(HandleModConAnalogOutputValue(analogChannelNb));
-  }
+  //}
 }
 
 /**
@@ -1002,7 +1098,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   //AWG_AttachPostProcessRoutine(&AWGPostProcessRoutine);
   
   Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
-  Timer_AttachPeriodicTimerRoutine(&SampleAnalogInputChannels);
+  Timer_AttachPeriodicTimerRoutine(&SampleAnalogChannels);
   /* enable ModCon analog input sampling */
   Timer_PeriodicTimerEnable(bTRUE);
 
@@ -1021,10 +1117,11 @@ void RuntimeIndictorRoutine(void* dataPtr)
   
   for(;;)
   {
-    PORTE_BIT7 = (byte)toggle;
+    PORTE_BIT7 = (byte)toggle;        
     toggle = !toggle;
+    UNUSED(HandleModConUptime());
     
-    OS_TimeDelay(10); /* about half a second */
+    OS_TimeDelay(7); /* about half a second */
   }
 }
 

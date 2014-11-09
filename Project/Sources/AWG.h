@@ -9,7 +9,7 @@
 
 #define NB_AWG_CHANNELS                 2
 #define AWG_ARBITRARY_WAVE_SIZE         256
-#define AWG_ANALOG_OUTPUT_SAMPLING_RATE 1000 /* 1ms in micromseconds */
+#define AWG_ANALOG_OUTPUT_SAMPLING_RATE 1000 /* 1000 micromseconds */
 
 typedef enum
 {
@@ -35,15 +35,11 @@ typedef void(*TAWGPostProcessRoutine)(TAWGChannel);
 typedef struct
 {
   TAWGWaveformType waveformType;
-
-  UINT16 sample;  
-  
-  UINT16 value;
-      
+        
   BOOL isActive;
   BOOL isEnabled;
   
-  UINT16 frequency;
+  UINT16 frequency; /* 1 will be 0.1hz and 1000 will be 100hz */
   UINT16 amplitude;
   INT16 offset;
     
@@ -54,6 +50,8 @@ extern TAWGEntry AWG_Channel[NB_AWG_CHANNELS];
 extern UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
 
 void AWG_Setup(const UINT32 busClk);
+
+void AWG_Update(void);
 
 void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine);
 

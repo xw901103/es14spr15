@@ -13,6 +13,7 @@ TAnalogInput Analog_Input[NB_INPUT_CHANNELS] = { 0 };
 TAnalogOutput Analog_Output[NB_OUTPUT_CHANNELS] = { 0 };
 
 #define ADC_OFFSET 0x0800
+#define DAC_OFFSET 0x1000
 
 /**
  * \fn void Analog_Setup(const UINT32 busClk)

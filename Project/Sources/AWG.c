@@ -8,171 +8,75 @@
 
 #define DAC_ZERO_VOLTAGE 2047
 
+typedef struct
+{
+  UINT16 cycles;
+  UINT16 halfCycles;
+  UINT16 count;
+  UINT16 step;
+  INT16 value;
+} TAWGEntryContext;
+
 TAWGEntry AWG_Channel[NB_AWG_CHANNELS] = {0};
+TAWGEntryContext AWGChannelContext[NB_AWG_CHANNELS] = {0};
 
 UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 
 static UINT16 AWGRoutinePeriod = 0; /* delay period of signal generating process */
 static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
-const UINT16 AWG_SINE_WAVE[1000] =
+/* url: http://www.meraman.com/htmls/en/sinTableOld.html */
+const INT16 AWG_SINE_WAVE[1000] =
 {
-  0x800,0x80c,0x819,0x826,0x833,0x840,0x84d,0x85a,0x866,0x873,
-  0x880,0x88d,0x89a,0x8a7,0x8b3,0x8c0,0x8cd,0x8da,0x8e7,0x8f3,
-  0x900,0x90d,0x91a,0x926,0x933,0x940,0x94c,0x959,0x966,0x973,
-  0x97f,0x98c,0x998,0x9a5,0x9b2,0x9be,0x9cb,0x9d7,0x9e4,0x9f0,
-  0x9fd,0xa09,0xa16,0xa22,0xa2e,0xa3b,0xa47,0xa53,0xa60,0xa6c,
-  0xa78,0xa84,0xa91,0xa9d,0xaa9,0xab5,0xac1,0xacd,0xad9,0xae5,
-  0xaf1,0xafd,0xb09,0xb15,0xb21,0xb2d,0xb38,0xb44,0xb50,0xb5c,
-  0xb67,0xb73,0xb7e,0xb8a,0xb96,0xba1,0xbac,0xbb8,0xbc3,0xbcf,
-  0xbda,0xbe5,0xbf0,0xbfc,0xc07,0xc12,0xc1d,0xc28,0xc33,0xc3e,
-  0xc49,0xc53,0xc5e,0xc69,0xc74,0xc7e,0xc89,0xc94,0xc9e,0xca9,
-  0xcb3,0xcbd,0xcc8,0xcd2,0xcdc,0xce6,0xcf1,0xcfb,0xd05,0xd0f,
-  0xd19,0xd23,0xd2c,0xd36,0xd40,0xd4a,0xd53,0xd5d,0xd66,0xd70,
-  0xd79,0xd82,0xd8c,0xd95,0xd9e,0xda7,0xdb0,0xdb9,0xdc2,0xdcb,
-  0xdd4,0xddd,0xde6,0xdee,0xdf7,0xdff,0xe08,0xe10,0xe19,0xe21,
-  0xe29,0xe31,0xe39,0xe41,0xe49,0xe51,0xe59,0xe61,0xe69,0xe70,
-  0xe78,0xe7f,0xe87,0xe8e,0xe96,0xe9d,0xea4,0xeab,0xeb2,0xeb9,
-  0xec0,0xec7,0xece,0xed5,0xedb,0xee2,0xee8,0xeef,0xef5,0xefc,
-  0xf02,0xf08,0xf0e,0xf14,0xf1a,0xf20,0xf26,0xf2b,0xf31,0xf37,
-  0xf3c,0xf42,0xf47,0xf4c,0xf51,0xf57,0xf5c,0xf61,0xf66,0xf6a,
-  0xf6f,0xf74,0xf79,0xf7d,0xf82,0xf86,0xf8a,0xf8f,0xf93,0xf97,
-  0xf9b,0xf9f,0xfa3,0xfa6,0xfaa,0xfae,0xfb1,0xfb5,0xfb8,0xfbb,
-  0xfbf,0xfc2,0xfc5,0xfc8,0xfcb,0xfce,0xfd0,0xfd3,0xfd6,0xfd8,
-  0xfdb,0xfdd,0xfdf,0xfe2,0xfe4,0xfe6,0xfe8,0xfea,0xfeb,0xfed,
-  0xfef,0xff0,0xff2,0xff3,0xff5,0xff6,0xff7,0xff8,0xff9,0xffa,
-  0xffb,0xffc,0xffc,0xffd,0xffe,0xffe,0xffe,0xfff,0xfff,0xfff,
-  0xfff,0xfff,0xfff,0xfff,0xffe,0xffe,0xffe,0xffd,0xffc,0xffc,
-  0xffb,0xffa,0xff9,0xff8,0xff7,0xff6,0xff5,0xff3,0xff2,0xff0,
-  0xfef,0xfed,0xfeb,0xfea,0xfe8,0xfe6,0xfe4,0xfe2,0xfdf,0xfdd,
-  0xfdb,0xfd8,0xfd6,0xfd3,0xfd0,0xfce,0xfcb,0xfc8,0xfc5,0xfc2,
-  0xfbf,0xfbb,0xfb8,0xfb5,0xfb1,0xfae,0xfaa,0xfa6,0xfa3,0xf9f,
-  0xf9b,0xf97,0xf93,0xf8f,0xf8a,0xf86,0xf82,0xf7d,0xf79,0xf74,
-  0xf6f,0xf6a,0xf66,0xf61,0xf5c,0xf57,0xf51,0xf4c,0xf47,0xf42,
-  0xf3c,0xf37,0xf31,0xf2b,0xf26,0xf20,0xf1a,0xf14,0xf0e,0xf08,
-  0xf02,0xefc,0xef5,0xeef,0xee8,0xee2,0xedb,0xed5,0xece,0xec7,
-  0xec0,0xeb9,0xeb2,0xeab,0xea4,0xe9d,0xe96,0xe8e,0xe87,0xe7f,
-  0xe78,0xe70,0xe69,0xe61,0xe59,0xe51,0xe49,0xe41,0xe39,0xe31,
-  0xe29,0xe21,0xe19,0xe10,0xe08,0xdff,0xdf7,0xdee,0xde6,0xddd,
-  0xdd4,0xdcb,0xdc2,0xdb9,0xdb0,0xda7,0xd9e,0xd95,0xd8c,0xd82,
-  0xd79,0xd70,0xd66,0xd5d,0xd53,0xd4a,0xd40,0xd36,0xd2c,0xd23,
-  0xd19,0xd0f,0xd05,0xcfb,0xcf1,0xce6,0xcdc,0xcd2,0xcc8,0xcbd,
-  0xcb3,0xca9,0xc9e,0xc94,0xc89,0xc7e,0xc74,0xc69,0xc5e,0xc53,
-  0xc49,0xc3e,0xc33,0xc28,0xc1d,0xc12,0xc07,0xbfc,0xbf0,0xbe5,
-  0xbda,0xbcf,0xbc3,0xbb8,0xbac,0xba1,0xb96,0xb8a,0xb7e,0xb73,
-  0xb67,0xb5c,0xb50,0xb44,0xb38,0xb2d,0xb21,0xb15,0xb09,0xafd,
-  0xaf1,0xae5,0xad9,0xacd,0xac1,0xab5,0xaa9,0xa9d,0xa91,0xa84,
-  0xa78,0xa6c,0xa60,0xa53,0xa47,0xa3b,0xa2e,0xa22,0xa16,0xa09,
-  0x9fd,0x9f0,0x9e4,0x9d7,0x9cb,0x9be,0x9b2,0x9a5,0x998,0x98c,
-  0x97f,0x973,0x966,0x959,0x94c,0x940,0x933,0x926,0x91a,0x90d,
-  0x900,0x8f3,0x8e7,0x8da,0x8cd,0x8c0,0x8b3,0x8a7,0x89a,0x88d,
-  0x880,0x873,0x866,0x85a,0x84d,0x840,0x833,0x826,0x819,0x80c,
-  0x800,0x7f3,0x7e6,0x7d9,0x7cc,0x7bf,0x7b2,0x7a5,0x799,0x78c,
-  0x77f,0x772,0x765,0x758,0x74c,0x73f,0x732,0x725,0x718,0x70c,
-  0x6ff,0x6f2,0x6e5,0x6d9,0x6cc,0x6bf,0x6b3,0x6a6,0x699,0x68c,
-  0x680,0x673,0x667,0x65a,0x64d,0x641,0x634,0x628,0x61b,0x60f,
-  0x602,0x5f6,0x5e9,0x5dd,0x5d1,0x5c4,0x5b8,0x5ac,0x59f,0x593,
-  0x587,0x57b,0x56e,0x562,0x556,0x54a,0x53e,0x532,0x526,0x51a,
-  0x50e,0x502,0x4f6,0x4ea,0x4de,0x4d2,0x4c7,0x4bb,0x4af,0x4a3,
-  0x498,0x48c,0x481,0x475,0x469,0x45e,0x453,0x447,0x43c,0x430,
-  0x425,0x41a,0x40f,0x403,0x3f8,0x3ed,0x3e2,0x3d7,0x3cc,0x3c1,
-  0x3b6,0x3ac,0x3a1,0x396,0x38b,0x381,0x376,0x36b,0x361,0x356,
-  0x34c,0x342,0x337,0x32d,0x323,0x319,0x30e,0x304,0x2fa,0x2f0,
-  0x2e6,0x2dc,0x2d3,0x2c9,0x2bf,0x2b5,0x2ac,0x2a2,0x299,0x28f,
-  0x286,0x27d,0x273,0x26a,0x261,0x258,0x24f,0x246,0x23d,0x234,
-  0x22b,0x222,0x219,0x211,0x208,0x200,0x1f7,0x1ef,0x1e6,0x1de,
-  0x1d6,0x1ce,0x1c6,0x1be,0x1b6,0x1ae,0x1a6,0x19e,0x196,0x18f,
-  0x187,0x180,0x178,0x171,0x169,0x162,0x15b,0x154,0x14d,0x146,
-  0x13f,0x138,0x131,0x12a,0x124,0x11d,0x117,0x110,0x10a,0x103,
-  0xfd,0xf7,0xf1,0xeb,0xe5,0xdf,0xd9,0xd4,0xce,0xc8,
-  0xc3,0xbd,0xb8,0xb3,0xae,0xa8,0xa3,0x9e,0x99,0x95,
-  0x90,0x8b,0x86,0x82,0x7d,0x79,0x75,0x70,0x6c,0x68,
-  0x64,0x60,0x5c,0x59,0x55,0x51,0x4e,0x4a,0x47,0x44,
-  0x40,0x3d,0x3a,0x37,0x34,0x31,0x2f,0x2c,0x29,0x27,
-  0x24,0x22,0x20,0x1d,0x1b,0x19,0x17,0x15,0x14,0x12,
-  0x10,0xf,0xd,0xc,0xa,0x9,0x8,0x7,0x6,0x5,
-  0x4,0x3,0x3,0x2,0x1,0x1,0x1,0x0,0x0,0x0,
-  0x0,0x0,0x0,0x0,0x1,0x1,0x1,0x2,0x3,0x3,
-  0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xc,0xd,0xf,
-  0x10,0x12,0x14,0x15,0x17,0x19,0x1b,0x1d,0x20,0x22,
-  0x24,0x27,0x29,0x2c,0x2f,0x31,0x34,0x37,0x3a,0x3d,
-  0x40,0x44,0x47,0x4a,0x4e,0x51,0x55,0x59,0x5c,0x60,
-  0x64,0x68,0x6c,0x70,0x75,0x79,0x7d,0x82,0x86,0x8b,
-  0x90,0x95,0x99,0x9e,0xa3,0xa8,0xae,0xb3,0xb8,0xbd,
-  0xc3,0xc8,0xce,0xd4,0xd9,0xdf,0xe5,0xeb,0xf1,0xf7,
-  0xfd,0x103,0x10a,0x110,0x117,0x11d,0x124,0x12a,0x131,0x138,
-  0x13f,0x146,0x14d,0x154,0x15b,0x162,0x169,0x171,0x178,0x180,
-  0x187,0x18f,0x196,0x19e,0x1a6,0x1ae,0x1b6,0x1be,0x1c6,0x1ce,
-  0x1d6,0x1de,0x1e6,0x1ef,0x1f7,0x200,0x208,0x211,0x219,0x222,
-  0x22b,0x234,0x23d,0x246,0x24f,0x258,0x261,0x26a,0x273,0x27d,
-  0x286,0x28f,0x299,0x2a2,0x2ac,0x2b5,0x2bf,0x2c9,0x2d3,0x2dc,
-  0x2e6,0x2f0,0x2fa,0x304,0x30e,0x319,0x323,0x32d,0x337,0x342,
-  0x34c,0x356,0x361,0x36b,0x376,0x381,0x38b,0x396,0x3a1,0x3ac,
-  0x3b6,0x3c1,0x3cc,0x3d7,0x3e2,0x3ed,0x3f8,0x403,0x40f,0x41a,
-  0x425,0x430,0x43c,0x447,0x453,0x45e,0x469,0x475,0x481,0x48c,
-  0x498,0x4a3,0x4af,0x4bb,0x4c7,0x4d2,0x4de,0x4ea,0x4f6,0x502,
-  0x50e,0x51a,0x526,0x532,0x53e,0x54a,0x556,0x562,0x56e,0x57b,
-  0x587,0x593,0x59f,0x5ac,0x5b8,0x5c4,0x5d1,0x5dd,0x5e9,0x5f6,
-  0x602,0x60f,0x61b,0x628,0x634,0x641,0x64d,0x65a,0x667,0x673,
-  0x680,0x68c,0x699,0x6a6,0x6b3,0x6bf,0x6cc,0x6d9,0x6e5,0x6f2,
-  0x6ff,0x70c,0x718,0x725,0x732,0x73f,0x74c,0x758,0x765,0x772,
-  0x77f,0x78c,0x799,0x7a5,0x7b2,0x7bf,0x7cc,0x7d9,0x7e6,0x7f3
+  0, 129, 257, 386, 515, 643, 772, 900, 1029, 1157, 1286, 1414, 1543, 1671, 1799, 1927, 2055, 2183, 2311, 2439, 2567, 2694, 2822, 2949, 3077, 3204, 3331, 3458, 3584, 3711, 3838, 3964, 4090, 4216, 4342, 4468, 4593, 4718, 4843, 4968, 5093, 5218, 5342, 5466, 5590, 5714, 5837, 5960, 6083, 6206, 6329, 6451, 6573, 6695, 6816, 6937, 7058, 7179, 7299, 7419, 7539, 7659, 7778, 7897, 8015, 8134, 8252, 8369, 8486, 8603, 8720, 8836, 8952, 9068, 9183, 9298, 9412, 9526, 9640, 9753, 9866, 9979, 10091, 10203, 10314, 10425, 10536, 10646, 10756, 10865, 10974, 11082, 11190, 11298, 11405, 11511, 11618, 11723, 11829, 11934, 12038, 12142, 12245, 12348, 12450, 12552, 12654, 12755, 12855, 12955, 13054, 13153, 13252, 13350, 13447, 13544, 13640, 13736, 13831, 13925, 14020, 14113, 14206, 14298, 14390, 14482, 14572, 14662, 14752, 14841, 14929, 15017, 15104, 15191, 15277, 15362, 15447, 15531, 15615, 15698, 15780, 15862, 15943, 16023, 16103, 16182, 16261, 16339, 16416, 16493, 16569, 16644, 16719, 16793, 16866, 16939, 17011, 17082, 17153, 17223, 17292, 17360, 17428, 17496, 17562, 17628, 17693, 17758, 17821, 17884, 17947, 18008, 18069, 18130, 18189, 18248, 18306, 18363, 18420, 18476, 18531, 18585, 18639, 18692, 18744, 18796, 18846, 18896, 18946, 18994, 19042, 19089, 19135, 19181, 19225, 19269, 19312, 19355, 19397, 19437, 19478, 19517, 19556, 19593, 19631, 19667, 19702, 19737, 19771, 19804, 19837, 19868, 19899, 19929, 19958, 19987, 20014, 20041, 20067, 20093, 20117, 20141, 20164, 20186, 20207, 20228, 20248, 20267, 20285, 20302, 20319, 20334, 20349, 20363, 20377, 20389, 20401, 20412, 20422, 20431, 20440, 20447, 20454, 20460, 20465, 20470, 20474, 20476, 20478, 20480, 20480, 20480, 20478, 20476, 20474, 20470, 20465, 20460, 20454, 20447, 20440, 20431, 20422, 20412, 20401, 20389, 20377, 20363, 20349, 20334, 20319, 20302, 20285, 20267, 20248, 20228, 20207, 20186, 20164, 20141, 20117, 20093, 20067, 20041, 20014, 19987, 19958, 19929, 19899, 19868, 19837, 19804, 19771, 19737, 19702, 19667, 19631, 19593, 19556, 19517, 19478, 19437, 19397, 19355, 19312, 19269, 19225, 19181, 19135, 19089, 19042, 18994, 18946, 18896, 18846, 18796, 18744, 18692, 18639, 18585, 18531, 18476, 18420, 18363, 18306, 18248, 18189, 18130, 18069, 18008, 17947, 17884, 17821, 17758, 17693, 17628, 17562, 17496, 17428, 17360, 17292, 17223, 17153, 17082, 17011, 16939, 16866, 16793, 16719, 16644, 16569, 16493, 16416, 16339, 16261, 16182, 16103, 16023, 15943, 15862, 15780, 15698, 15615, 15531, 15447, 15362, 15277, 15191, 15104, 15017, 14929, 14841, 14752, 14662, 14572, 14482, 14390, 14298, 14206, 14113, 14020, 13925, 13831, 13736, 13640, 13544, 13447, 13350, 13252, 13153, 13054, 12955, 12855, 12755, 12654, 12552, 12450, 12348, 12245, 12142, 12038, 11934, 11829, 11723, 11618, 11511, 11405, 11298, 11190, 11082, 10974, 10865, 10756, 10646, 10536, 10425, 10314, 10203, 10091, 9979, 9866, 9753, 9640, 9526, 9412, 9298, 9183, 9068, 8952, 8836, 8720, 8603, 8486, 8369, 8252, 8134, 8015, 7897, 7778, 7659, 7539, 7419, 7299, 7179, 7058, 6937, 6816, 6695, 6573, 6451, 6329, 6206, 6083, 5960, 5837, 5714, 5590, 5466, 5342, 5218, 5093, 4968, 4843, 4718, 4593, 4468, 4342, 4216, 4090, 3964, 3838, 3711, 3584, 3458, 3331, 3204, 3077, 2949, 2822, 2694, 2567, 2439, 2311, 2183, 2055, 1927, 1799, 1671, 1543, 1414, 1286, 1157, 1029, 900, 772, 643, 515, 386, 257, 129, 0, -129, -257, -386, -515, -643, -772, -900, -1029, -1157, -1286, -1414, -1543, -1671, -1799, -1927, -2055, -2183, -2311, -2439, -2567, -2694, -2822, -2949, -3077, -3204, -3331, -3458, -3584, -3711, -3838, -3964, -4090, -4216, -4342, -4468, -4593, -4718, -4843, -4968, -5093, -5218, -5342, -5466, -5590, -5714, -5837, -5960, -6083, -6206, -6329, -6451, -6573, -6695, -6816, -6937, -7058, -7179, -7299, -7419, -7539, -7659, -7778, -7897, -8015, -8134, -8252, -8369, -8486, -8603, -8720, -8836, -8952, -9068, -9183, -9298, -9412, -9526, -9640, -9753, -9866, -9979, -10091, -10203, -10314, -10425, -10536, -10646, -10756, -10865, -10974, -11082, -11190, -11298, -11405, -11511, -11618, -11723, -11829, -11934, -12038, -12142, -12245, -12348, -12450, -12552, -12654, -12755, -12855, -12955, -13054, -13153, -13252, -13350, -13447, -13544, -13640, -13736, -13831, -13925, -14020, -14113, -14206, -14298, -14390, -14482, -14572, -14662, -14752, -14841, -14929, -15017, -15104, -15191, -15277, -15362, -15447, -15531, -15615, -15698, -15780, -15862, -15943, -16023, -16103, -16182, -16261, -16339, -16416, -16493, -16569, -16644, -16719, -16793, -16866, -16939, -17011, -17082, -17153, -17223, -17292, -17360, -17428, -17496, -17562, -17628, -17693, -17758, -17821, -17884, -17947, -18008, -18069, -18130, -18189, -18248, -18306, -18363, -18420, -18476, -18531, -18585, -18639, -18692, -18744, -18796, -18846, -18896, -18946, -18994, -19042, -19089, -19135, -19181, -19225, -19269, -19312, -19355, -19397, -19437, -19478, -19517, -19556, -19593, -19631, -19667, -19702, -19737, -19771, -19804, -19837, -19868, -19899, -19929, -19958, -19987, -20014, -20041, -20067, -20093, -20117, -20141, -20164, -20186, -20207, -20228, -20248, -20267, -20285, -20302, -20319, -20334, -20349, -20363, -20377, -20389, -20401, -20412, -20422, -20431, -20440, -20447, -20454, -20460, -20465, -20470, -20474, -20476, -20478, -20480, -20480, -20480, -20478, -20476, -20474, -20470, -20465, -20460, -20454, -20447, -20440, -20431, -20422, -20412, -20401, -20389, -20377, -20363, -20349, -20334, -20319, -20302, -20285, -20267, -20248, -20228, -20207, -20186, -20164, -20141, -20117, -20093, -20067, -20041, -20014, -19987, -19958, -19929, -19899, -19868, -19837, -19804, -19771, -19737, -19702, -19667, -19631, -19593, -19556, -19517, -19478, -19437, -19397, -19355, -19312, -19269, -19225, -19181, -19135, -19089, -19042, -18994, -18946, -18896, -18846, -18796, -18744, -18692, -18639, -18585, -18531, -18476, -18420, -18363, -18306, -18248, -18189, -18130, -18069, -18008, -17947, -17884, -17821, -17758, -17693, -17628, -17562, -17496, -17428, -17360, -17292, -17223, -17153, -17082, -17011, -16939, -16866, -16793, -16719, -16644, -16569, -16493, -16416, -16339, -16261, -16182, -16103, -16023, -15943, -15862, -15780, -15698, -15615, -15531, -15447, -15362, -15277, -15191, -15104, -15017, -14929, -14841, -14752, -14662, -14572, -14482, -14390, -14298, -14206, -14113, -14020, -13925, -13831, -13736, -13640, -13544, -13447, -13350, -13252, -13153, -13054, -12955, -12855, -12755, -12654, -12552, -12450, -12348, -12245, -12142, -12038, -11934, -11829, -11723, -11618, -11511, -11405, -11298, -11190, -11082, -10974, -10865, -10756, -10646, -10536, -10425, -10314, -10203, -10091, -9979, -9866, -9753, -9640, -9526, -9412, -9298, -9183, -9068, -8952, -8836, -8720, -8603, -8486, -8369, -8252, -8134, -8015, -7897, -7778, -7659, -7539, -7419, -7299, -7179, -7058, -6937, -6816, -6695, -6573, -6451, -6329, -6206, -6083, -5960, -5837, -5714, -5590, -5466, -5342, -5218, -5093, -4968, -4843, -4718, -4593, -4468, -4342, -4216, -4090, -3964, -3838, -3711, -3584, -3458, -3331, -3204, -3077, -2949, -2822, -2694, -2567, -2439, -2311, -2183, -2055, -1927, -1799, -1671, -1543, -1414, -1286, -1157, -1029, -900, -772, -643, -515, -386, -257, -129
 };
+
+static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
+                                                                             ANALOG_OUTPUT_Ch2,
+                                                                             ANALOG_OUTPUT_Ch3,
+                                                                             ANALOG_OUTPUT_Ch4 };
 
 void AWGRoutine(TTimerChannel channelNb);
 
 void AWGRoutine(TTimerChannel channelNb)
 {
-//  static const UINT32 max = 256000;
-    static UINT16 cycles = 1000;
-//  UINT32 sampleIndex = 0;
-  //static BOOL toggle = bFALSE;
+  static UINT16 cycles = 1000;
 
-  /* lookup tables for input analog channel enums and switch mask mapping */
-//  static const UINT8
-  /* mask byte | Ch8 | Ch7 | Ch6 | Ch5 | Ch4 | Ch3 | Ch2 | Ch1 | */
-//  outputChannelSwitchMaskLookupTable[NB_INPUT_CHANNELS] = { MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH1,
-//                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH2, 
-//                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH3, 
-//                                                            MODCON_ANALOG_OUTPUT_CHANNEL_MASK_CH4 },
   /* NOTE: channel enums might not be in numeric order */
-  static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
-                                                                               ANALOG_OUTPUT_Ch2,
-                                                                               ANALOG_OUTPUT_Ch3,
-                                                                               ANALOG_OUTPUT_Ch4 };
   static TAWGChannel channelNumberLookupTable[NB_AWG_CHANNELS] = { AWG_Ch1,
                                                                    AWG_Ch2 };
   
+  /* TODO: use modulus count for small voltage */
+  
   UINT16 index = 0;
-  INT16 analogValue = AWG_Channel[index].value;
+  INT16 analogValue = 0, factor = 1, scale = 1;
 
   Timer_ScheduleRoutine(channelNb, AWGRoutinePeriod);
 
-//  if (toggle)
-//  {    
-//    Analog_Put(ANALOG_OUTPUT_Ch1, 4095);
-//    toggle = bFALSE;
-//  }
-//  else
-//  {
-//    Analog_Put(ANALOG_OUTPUT_Ch1, 0);
-//    toggle = bTRUE;
-//  }
     
   for (index = 0; index < NB_AWG_CHANNELS; ++index) 
   {
     if (AWG_Channel[index].isEnabled)
     {
-//      cycles =  max / AWG_Channel[index].frequency;
-//      sampleIndex = (UINT32)AWG_Channel[index].sample * 1000;
-//      sampleIndex = sampleIndex / cycles;
       switch(AWG_Channel[index].waveformType)
       {
-        case AWG_WAVEFORM_SINE:          
-//          value = AWG_SINE_WAVE[sampleIndex];          
+        case AWG_WAVEFORM_SINE:
+          /* TODO: replace fixed value table with fators and replace this implementation */          
+          
+          scale = 20480 / (AWG_Channel[index].amplitude);
+          if (AWGChannelContext[index].cycles < 1000)
+          {
+            factor = 1000 / AWGChannelContext[index].cycles;
+            analogValue = DAC_ZERO_VOLTAGE + (AWG_SINE_WAVE[AWGChannelContext[index].count * factor - 1] / scale);          
+          }
+          else
+          {
+            factor = AWGChannelContext[index].cycles / 1000;
+            analogValue = DAC_ZERO_VOLTAGE + (AWG_SINE_WAVE[AWGChannelContext[index].count / factor] / scale);          
+          }
           break;
         case AWG_WAVEFORM_SQUARE:
-          if (AWG_Channel[index].sample < 500)
+          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
           {
             analogValue = DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude;
           }
@@ -182,24 +86,38 @@ void AWGRoutine(TTimerChannel channelNb)
           }
           break;
         case AWG_WAVEFORM_TRIANGLE:
-//          if (AWG_Channel[index].sample < 5)
-//          {
-//            value = 2047 + 512 * AWG_Channel[index].sample; 
-//          }
-//          else
-//          {
-//            value = 2047 - 512 * AWG_Channel[index].sample;
-//          }
+          AWGChannelContext[index].value += (AWGChannelContext[index].step * 2);
+          
+          if (AWGChannelContext[index].count == 0 || AWGChannelContext[index].count == AWGChannelContext[index].halfCycles)
+          {
+            AWGChannelContext[index].value = 0;
+          }
+          
+          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
+          {            
+            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
+          }
+          else
+          {
+            analogValue = (DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude) + AWGChannelContext[index].value;
+          }
           break;
         case AWG_WAVEFORM_SAWTOOTH:
-//          if (AWG_Channel[index].sample == 9)
-//          {
-//            value = 4095;
-//          }
-//          else
-//          {
-//            value = (Analog_Output[index].Value.l - 4096/10);
-//          }
+          AWGChannelContext[index].value += AWGChannelContext[index].step;
+          
+          if (AWGChannelContext[index].count == 0)
+          {
+            AWGChannelContext[index].value = 0;
+          }
+          
+          if (AWGChannelContext[index].count == (AWGChannelContext[index].cycles - 1))
+          {
+            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
+          }
+          else
+          {            
+            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
+          }
           break;
         case AWG_WAVEFORM_NOISE:
           break;
@@ -210,9 +128,9 @@ void AWGRoutine(TTimerChannel channelNb)
           break;
       }
       //AWG_Channel[index].sample ++;
-      if (++AWG_Channel[index].sample == cycles)
+      if (++AWGChannelContext[index].count == AWGChannelContext[index].cycles)
       {
-        AWG_Channel[index].sample = 0;
+        AWGChannelContext[index].count = 0;
       }
       
       analogValue -= AWG_Channel[index].offset;
@@ -227,18 +145,36 @@ void AWGRoutine(TTimerChannel channelNb)
       }
       
       Analog_Put(outputChannelNumberLookupTable[index], analogValue);
-      AWG_Channel[index].value = analogValue;
+      
+      if (channelPostProcessRoutinePtr)
+      {
+        channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
+      }
+      
     }
-    if (channelPostProcessRoutinePtr)
-    {
-      channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
-    }
+  }
+}
+
+void AWG_Update(void)
+{
+  UINT16 index = 0;
+  for (index = 0; index < NB_AWG_CHANNELS; ++index)
+  {
+    AWGChannelContext[index].cycles = 10000 / AWG_Channel[index].frequency;
+    AWGChannelContext[index].halfCycles = AWGChannelContext[index].cycles / 2;
+      
+    AWGChannelContext[index].step = AWG_Channel[index].amplitude / AWGChannelContext[index].halfCycles;  
+      
+    AWGChannelContext[index].value = 0;
+    
+    AWGChannelContext[index].count = 0;
   }
 }
 
 void AWG_Setup(const UINT32 busClk)
 {
   TTimerSetup timerCh5;
+  UINT16 index = 0xFF;
   
   timerCh5.outputCompare    = bTRUE;
   timerCh5.outputAction     = TIMER_OUTPUT_DISCONNECT;
@@ -251,6 +187,13 @@ void AWG_Setup(const UINT32 busClk)
   Timer_Init(TIMER_Ch5, &timerCh5);
   
   AWGRoutinePeriod = (UINT16)((busClk / MATH_1_MEGA) * AWG_ANALOG_OUTPUT_SAMPLING_RATE);
+
+  for (index = 0; index < NB_AWG_CHANNELS; ++index)
+  {    
+    Analog_Put(outputChannelNumberLookupTable[index], DAC_ZERO_VOLTAGE);
+    /* hot fix for analog sampling issue */
+    Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;  
+  }
   
   /* kick start our hitchhiker here */
   Timer_Set(TIMER_Ch5, AWGRoutinePeriod);
