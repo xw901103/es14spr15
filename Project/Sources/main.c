@@ -663,7 +663,8 @@ BOOL HandleModConWaveGetStatus(void)
           break;
       }
 
-      frequency.l = AWG_Channel[index].frequency;
+      frequency.l = (AWG_Channel[index].frequency * 256) / 10;
+      //frequency.l = AWG_Channel[index].frequency;
       amplitude.l = AWG_Channel[index].amplitude;
       offset.l = AWG_Channel[index].offset;
     
@@ -750,6 +751,7 @@ BOOL HandleModConWaveSetFrequency(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].frequency = frequency;
+      //AWG_Channel[index].frequency = Packet_Parameter23;
       AWG_Update();
     }
   }
@@ -833,7 +835,7 @@ BOOL HandleModConArbitraryWave(void)
 {
   if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
   {
-    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23;
+    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23 * 10;
     return bTRUE;
   }
   return bFALSE;
@@ -887,14 +889,6 @@ void SampleAnalogChannels(void)
   
   BOOL mutated = bFALSE;
   UINT8 index = 0;
-
-  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
-  {
-    if (ModConAnalogOutputChannelSwitch & outputChannelSwitchMaskLookupTable[index])
-    {
-      UNUSED(HandleModConAnalogOutputValue(outputChannelNumberLookupTable[index]));
-    }
-  }
   
   for (index = 0; index < NB_INPUT_CHANNELS; ++index) 
   {
@@ -913,6 +907,15 @@ void SampleAnalogChannels(void)
       }
     }
   }  
+    
+  for (index = 0; index < NB_OUTPUT_CHANNELS; ++index)
+  {
+    if (ModConAnalogOutputChannelSwitch & outputChannelSwitchMaskLookupTable[index])
+    {
+      UNUSED(HandleModConAnalogOutputValue(outputChannelNumberLookupTable[index]));
+    }
+  }
+  
 }
 
 void AWGPostProcessRoutine(TAWGChannel channelNb)
