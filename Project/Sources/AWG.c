@@ -8,24 +8,62 @@
 
 #define DAC_ZERO_VOLTAGE 2047
 
+//typedef struct
+//{
+//  UINT32 cycles;
+//  UINT32 halfCycles;
+//  UINT32 harmonyCycles;
+//  UINT32 count;
+//  UINT16 step;
+//  INT16 voltageScale;
+//  INT16 sampleFactor;
+//  INT16 value;
+//} TAWGEntryContext;
+
 typedef struct
 {
-  UINT32 cycles;
-  UINT32 halfCycles;
-  UINT32 harmonyCycles;
-  UINT32 count;
-  UINT16 step;
+  BOOL isRunning;
+
+  UINT32 frequency; /* frequency period in microseconds */
+  TAWGWaveformType waveformType;
+  UINT16 amplitude;
+  INT16 offset;
+
+  UINT32 period2;
+  UINT32 period10;
+  UINT32 period100;
+  UINT32 period1000;
+  
+  UINT16 cyclePeriod;
+  UINT16 cycleBoundary;
+  UINT16 halfCycleBoundary;
+  
+  UINT16 cycleCount;
+  
+  UINT16 sampleFactor;  
+  
   INT16 voltageScale;
-  INT16 sampleFactor;
-  INT16 value;
+  INT16 voltageStep;
+  
+  INT16 voltageValue;
+    
 } TAWGEntryContext;
+
+typedef struct
+{
+  UINT32 busClk;
+  
+  UINT32 scale;
+  
+} TAWGRuntimeContext;
 
 TAWGEntry AWG_Channel[NB_AWG_CHANNELS] = {0};
 TAWGEntryContext AWGChannelContext[NB_AWG_CHANNELS] = {0};
+TAWGRuntimeContext AWGRuntimeContext = {0};
 
 UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 
-static UINT16 AWGRoutinePeriod = 0; /* delay period of signal generating process */
+//static UINT16 AWGRoutinePeriod = 0; /* delay period of signal generating process */
 static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
 /* url: http://www.meraman.com/htmls/en/sinTableOld.html */
@@ -141,207 +179,517 @@ static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANA
 
 void AWGRoutine(TTimerChannel channelNb);
 
+void AWGUpdateContext(TAWGEntry* const, TAWGEntryContext* const);
+
 void AWGRoutine(TTimerChannel channelNb)
 {
-  //static UINT16 cycles = 1000;
-
-  /* NOTE: channel enums might not be in numeric order */
   static TAWGChannel channelNumberLookupTable[NB_AWG_CHANNELS] = { AWG_Ch1,
                                                                    AWG_Ch2 };
+  UINT16 index = 0xFFFF, sampleIndex = 0xFFFF;
+  INT16 analogValue = 0;
+  TAnalogChannel analogChannel;
+  
+  switch(channelNb)
+  {
+    case TIMER_Ch0:
+      index = 0; /* analog output channel 1 */
+      analogChannel = ANALOG_OUTPUT_Ch1;
+      break;
+    case TIMER_Ch1:
+      index = 1; /* analog output channel 2 */
+      analogChannel = ANALOG_OUTPUT_Ch2;
+      break;
+    case TIMER_Ch2:
+      index = 2; /* analog output channel 3 */
+      analogChannel = ANALOG_OUTPUT_Ch3;
+      break;
+    case TIMER_Ch3:
+      index = 3; /* analog output channel 4 */
+      analogChannel = ANALOG_OUTPUT_Ch4;
+      break;
+    default:
+      return;
+      break;
+  }
+  
+  if (AWGChannelContext[index].isRunning)
+  {    
+    Timer_ScheduleRoutine(channelNb, AWGChannelContext[index].cyclePeriod);  
+  }
+  else
+  {
+    Timer_Enable(channelNb, bFALSE);
+    return;
+  }
+  
+  switch(AWGChannelContext[index].waveformType)
+  {
+    case AWG_WAVEFORM_SINE:
+      if (AWGChannelContext[index].cycleBoundary < 1000)
+      {
+        sampleIndex = AWGChannelContext[index].cycleCount * AWGChannelContext[index].sampleFactor;
+      }
+      else
+      {
+        sampleIndex = AWGChannelContext[index].cycleCount / AWGChannelContext[index].sampleFactor;
+      }
+      sampleIndex = sampleIndex % 1000;
+      analogValue = DAC_ZERO_VOLTAGE + AWG_SINE_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
+      break;
+    case AWG_WAVEFORM_SQUARE:
+      if (AWGChannelContext[index].cycleCount < AWGChannelContext[index].halfCycleBoundary)
+      {
+        analogValue = DAC_ZERO_VOLTAGE - AWGChannelContext[index].amplitude;
+      }
+      else
+      {
+        analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude;
+      }
+      break;
+    case AWG_WAVEFORM_TRIANGLE:
+      AWGChannelContext[index].voltageValue += (AWGChannelContext[index].voltageStep * 2);
+       
+      if (AWGChannelContext[index].cycleCount == 0 || AWGChannelContext[index].cycleCount == AWGChannelContext[index].halfCycleBoundary)
+      {
+        AWGChannelContext[index].voltageValue = 0;
+      }
+      if (AWGChannelContext[index].cycleCount < AWGChannelContext[index].halfCycleBoundary)
+      {            
+        analogValue = (DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude) - AWGChannelContext[index].voltageValue;
+      }
+      else
+      {
+        analogValue = (DAC_ZERO_VOLTAGE - AWGChannelContext[index].amplitude) + AWGChannelContext[index].voltageValue;
+      }      
+      break;
+    case AWG_WAVEFORM_SAWTOOTH:
+      AWGChannelContext[index].voltageValue += AWGChannelContext[index].voltageStep;
+          
+      if (AWGChannelContext[index].cycleCount == 0)
+      {
+        AWGChannelContext[index].voltageValue = 0;
+      }
+
+      if (AWGChannelContext[index].cycleCount == (AWGChannelContext[index].cycleBoundary - 1))
+      {
+        analogValue = DAC_ZERO_VOLTAGE - AWGChannelContext[index].amplitude;
+      }
+      else
+      {            
+        analogValue = (DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude) - AWGChannelContext[index].voltageValue;
+      }
+      break;
+    case AWG_WAVEFORM_NOISE:
+      break;
+    case AWG_WAVEFORM_ARBITRARY:
+      break;
+    case AWG_WAVEFORM_DC:
+    default:
+      break;
+  }
+  
+  analogValue -= AWG_Channel[index].offset;
+      
+  if (analogValue > 4095)
+  {
+    analogValue = 4095;
+  }
+  else if (analogValue < 0)
+  {
+    analogValue = 0;
+  }
+      
+  Analog_Put(outputChannelNumberLookupTable[index], analogValue);
+
+  if (++AWGChannelContext[index].cycleCount == AWGChannelContext[index].cycleBoundary)
+  {
+    AWGChannelContext[index].cycleCount = 0;
+  }
+      
+  if (channelPostProcessRoutinePtr)
+  {
+    channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
+  }  
+};
+
+void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const contextPtr)
+{
+  if (contextPtr)
+  {    
+    contextPtr->frequency = MATH_1_MEGA * 10 / entryPtr->frequency;
+    contextPtr->period2 = (UINT32)(AWGRuntimeContext.scale * contextPtr->frequency / 2);
+    contextPtr->period10 = (UINT32)(AWGRuntimeContext.scale * contextPtr->frequency / 10);
+    contextPtr->period100 = (UINT32)(AWGRuntimeContext.scale * contextPtr->frequency / 100);
+    contextPtr->period1000 = (UINT32)(AWGRuntimeContext.scale * contextPtr->frequency / 1000);     
+   
+    contextPtr->waveformType = entryPtr->waveformType;
+    contextPtr->amplitude = entryPtr->amplitude;
+    contextPtr->offset = entryPtr->offset;
+    
+    contextPtr->cycleCount = 0;
+    contextPtr->voltageValue = 0;
+    
+    if (contextPtr->period2 < 0xFFFF)
+    {          
+      contextPtr->cycleBoundary = 2;
+      contextPtr->cyclePeriod = (UINT16)contextPtr->period2;
+    }
+    else if (contextPtr->period10 < 0xFFFF)
+    {
+      contextPtr->cycleBoundary = 10;
+      contextPtr->cyclePeriod = (UINT16)contextPtr->period10;
+    }
+    else if (contextPtr->period100 < 0xFFFF)
+    {
+      contextPtr->cycleBoundary = 100;
+      contextPtr->cyclePeriod = (UINT16)contextPtr->period100;
+    }
+    else if (contextPtr->period1000 < 0xFFFF)
+    {
+      contextPtr->cycleBoundary = 1000;
+      contextPtr->cyclePeriod = (UINT16)contextPtr->period1000;
+    }
+    else
+    {
+      contextPtr->cycleBoundary = 10000;
+      contextPtr->cyclePeriod = (UINT16)(contextPtr->period1000 / 10);
+    }
+    
+    contextPtr->halfCycleBoundary = contextPtr->cycleBoundary / 2;        
+
+    if (contextPtr->cycleBoundary < 1000)
+    {
+      contextPtr->sampleFactor = (UINT16)(1000 / contextPtr->cycleBoundary);
+    }
+    else
+    {
+      contextPtr->sampleFactor = (UINT16)(contextPtr->cycleBoundary / 1000);
+    }
+
+    contextPtr->voltageStep = contextPtr->amplitude / contextPtr->halfCycleBoundary;  
+    
+    if (contextPtr->amplitude > 0)
+    {      
+      contextPtr->voltageScale = 20480 / contextPtr->amplitude;
+    }
+    else
+    {
+      contextPtr->voltageScale = 0;
+    }
+        
+  }  
+}
+
+void AWG_Update(TAWGChannel channelNb)
+{
+  UINT16 index = 0xFFFF;
+  TTimerChannel timerChannel;
+ 
+  switch(channelNb)
+  {
+    case AWG_Ch1:
+      index = 0;
+      timerChannel = TIMER_Ch0;
+      break;
+    case AWG_Ch2:
+      index = 1;
+      timerChannel = TIMER_Ch1;
+      break;
+    case AWG_Ch3:
+      index = 2;
+      timerChannel = TIMER_Ch2;
+      break;
+    case AWG_Ch4:
+      index = 3;
+      timerChannel = TIMER_Ch3;
+      break;      
+    default:
+      return;
+      break;
+  }
+  
+  if (AWGChannelContext[index].isRunning)
+  {
+    Timer_Enable(timerChannel, bFALSE);
+    AWGUpdateContext(&AWG_Channel[index], &AWGChannelContext[index]);  
+    Timer_Set(timerChannel, AWGChannelContext[index].cyclePeriod);
+    Timer_Enable(timerChannel, bTRUE);  
+  }
+}
+
+void AWG_Enable(TAWGChannel channelNb, BOOL enable)
+{
+  UINT16 index = 0xFFFF;
+  TTimerChannel timerChannel;
+  
+  switch(channelNb)
+  {
+    case AWG_Ch1:
+      index = 0;
+      timerChannel = TIMER_Ch0;
+      break;
+    case AWG_Ch2:
+      index = 1;
+      timerChannel = TIMER_Ch1;
+      break;
+    case AWG_Ch3:
+      index = 2;
+      timerChannel = TIMER_Ch2;
+      break;
+    case AWG_Ch4:
+      index = 3;
+      timerChannel = TIMER_Ch3;
+      break;      
+    default:
+      return;
+      break;
+  }
+  
+  if (AWG_Channel[index].isEnabled && enable)
+  {    
+    AWGUpdateContext(&AWG_Channel[index], &AWGChannelContext[index]);  
+    AWGChannelContext[index].isRunning = bTRUE;  
+    Timer_Set(timerChannel, AWGChannelContext[index].cyclePeriod);
+    Timer_Enable(timerChannel, bTRUE);    
+  }
+  else
+  {
+    AWGChannelContext[index].isRunning = bFALSE;  
+    Timer_Enable(timerChannel, bFALSE);
+  }
+}
+
+//void AWGRoutine(TTimerChannel channelNb)
+//{
+
+  /* NOTE: channel enums might not be in numeric order */
+//  static TAWGChannel channelNumberLookupTable[NB_AWG_CHANNELS] = { AWG_Ch1,
+//                                                                   AWG_Ch2 };
   
   /* TODO: use modulus count for small voltage */
   
-  UINT16 index = 0;
-  UINT16 sampleIndex = 0;
-  INT16 analogValue = 0;
+//  UINT16 index = 0;
+//  UINT16 sampleIndex = 0;
+//  INT16 analogValue = 0;
 
-  Timer_ScheduleRoutine(channelNb, AWGRoutinePeriod);
+//  Timer_ScheduleRoutine(channelNb, AWGRoutinePeriod);
 
     
-  for (index = 0; index < NB_AWG_CHANNELS; ++index) 
-  {
-    if (AWG_Channel[index].isEnabled)
-    {
-      switch(AWG_Channel[index].waveformType)
-      {
-        case AWG_WAVEFORM_SINE:
-          /* TODO: replace fixed value table with fators and replace this implementation */          
-          /* TODO: use half sine wave sample */
-          if (AWGChannelContext[index].cycles < 1000)
-          {
-            sampleIndex = (UINT16)(AWGChannelContext[index].count * AWGChannelContext[index].sampleFactor);            
-          }
-          else
-          {
-            sampleIndex = (UINT16)(AWGChannelContext[index].count / AWGChannelContext[index].sampleFactor);
-          }
-          sampleIndex = sampleIndex % 1000;
-          analogValue = DAC_ZERO_VOLTAGE + AWG_SINE_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
-          break;
-        case AWG_WAVEFORM_SQUARE:
-          /* if I could get square wave percisely in 0.1hz step then reset of them will be no problem */
-          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
-          {
-            analogValue = DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude;
-          }
-          else
-          {
-            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
-          }
-          break;
-        case AWG_WAVEFORM_TRIANGLE:
-          AWGChannelContext[index].value += (AWGChannelContext[index].step * 2);
-          
-          if (AWGChannelContext[index].count == 0 || AWGChannelContext[index].count == AWGChannelContext[index].halfCycles)
-          {
-            AWGChannelContext[index].value = 0;
-          }
-          
-          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
-          {            
-            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
-          }
-          else
-          {
-            analogValue = (DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude) + AWGChannelContext[index].value;
-          }
-          break;
-        case AWG_WAVEFORM_SAWTOOTH:
-          AWGChannelContext[index].value += AWGChannelContext[index].step;
-          
-          if (AWGChannelContext[index].count == 0)
-          {
-            AWGChannelContext[index].value = 0;
-          }
-          
-          if (AWGChannelContext[index].count == (AWGChannelContext[index].cycles - 1))
-          {
-            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
-          }
-          else
-          {            
-            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
-          }
-          break;
-        case AWG_WAVEFORM_NOISE:
-          break;
-        case AWG_WAVEFORM_ARBITRARY:
-          break;
-        case AWG_WAVEFORM_DC:
-        default:
-          break;
-      }
-      
-      if (++AWGChannelContext[index].count >= AWGChannelContext[index].cycles)
-      {
-        AWGChannelContext[index].count = AWGChannelContext[index].count % AWGChannelContext[index].cycles;
-      }
-      
-      //if (++AWGChannelContext[index].count >= AWGChannelContext[index].harmonyCycles)
-      //{
-      //  AWGChannelContext[index].count = AWGChannelContext[index].count % AWGChannelContext[index].harmonyCycles;
-      //}
-      
-      analogValue -= AWG_Channel[index].offset;
-      
-      if (analogValue > 4095)
-      {
-        analogValue = 4095;
-      }
-      else if (analogValue < 0)
-      {
-        analogValue = 0;
-      }
-      
-      Analog_Put(outputChannelNumberLookupTable[index], analogValue);
-      
-      if (channelPostProcessRoutinePtr)
-      {
-        channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
-      }
-      
-    }
-  }
-}
+//  for (index = 0; index < NB_AWG_CHANNELS; ++index) 
+//  {
+//    if (AWG_Channel[index].isEnabled)
+//    {
+//      switch(AWG_Channel[index].waveformType)
+//      {
+//        case AWG_WAVEFORM_SINE:
+//          /* TODO: replace fixed value table with fators and replace this implementation */          
+//          /* TODO: use half sine wave sample */
+//          if (AWGChannelContext[index].cycles < 1000)
+//          {
+//            sampleIndex = (UINT16)(AWGChannelContext[index].count * AWGChannelContext[index].sampleFactor);            
+//          }
+//          else
+//          {
+//            sampleIndex = (UINT16)(AWGChannelContext[index].count / AWGChannelContext[index].sampleFactor);
+//          }
+//          sampleIndex = sampleIndex % 1000;
+//          analogValue = DAC_ZERO_VOLTAGE + AWG_SINE_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
+//          break;
+//        case AWG_WAVEFORM_SQUARE:
+//          /* if I could get square wave percisely in 0.1hz step then reset of them will be no problem */
+//          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
+//          {
+//            analogValue = DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude;
+//          }
+//          else
+//          {
+//            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
+//          }
+//          break;
+//        case AWG_WAVEFORM_TRIANGLE:
+//          AWGChannelContext[index].value += (AWGChannelContext[index].step * 2);
+//          
+//          if (AWGChannelContext[index].count == 0 || AWGChannelContext[index].count == AWGChannelContext[index].halfCycles)
+//          {
+//            AWGChannelContext[index].value = 0;
+//          }
+//          
+//          if (AWGChannelContext[index].count < AWGChannelContext[index].halfCycles)
+//          {            
+//            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
+//          }
+//          else
+//          {
+//            analogValue = (DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude) + AWGChannelContext[index].value;
+//          }
+//          break;
+//        case AWG_WAVEFORM_SAWTOOTH:
+//          AWGChannelContext[index].value += AWGChannelContext[index].step;
+//          
+//          if (AWGChannelContext[index].count == 0)
+//          {
+//            AWGChannelContext[index].value = 0;
+//          }
+//          
+//          if (AWGChannelContext[index].count == (AWGChannelContext[index].cycles - 1))
+//          {
+//            analogValue = DAC_ZERO_VOLTAGE - AWG_Channel[index].amplitude;
+//          }
+//          else
+//          {            
+//            analogValue = (DAC_ZERO_VOLTAGE + AWG_Channel[index].amplitude) - AWGChannelContext[index].value;
+//          }
+//          break;
+//        case AWG_WAVEFORM_NOISE:
+//          break;
+//        case AWG_WAVEFORM_ARBITRARY:
+//          break;
+//        case AWG_WAVEFORM_DC:
+//        default:
+//          break;
+//      }
+//      
+//      if (++AWGChannelContext[index].count >= AWGChannelContext[index].cycles)
+//      {
+//        AWGChannelContext[index].count = AWGChannelContext[index].count % AWGChannelContext[index].cycles;
+//      }
+//            
+//      analogValue -= AWG_Channel[index].offset;
+//      
+//      if (analogValue > 4095)
+//      {
+//        analogValue = 4095;
+//      }
+//      else if (analogValue < 0)
+//      {
+//        analogValue = 0;
+//      }
+//      
+//      Analog_Put(outputChannelNumberLookupTable[index], analogValue);
+//      
+//      if (channelPostProcessRoutinePtr)
+//      {
+//        channelPostProcessRoutinePtr(channelNumberLookupTable[index]);
+//      }
+//      
+//    }
+//  }
+//}
 
-void AWG_Update(void)
-{
-  UINT16 index = 0;
-  for (index = 0; index < NB_AWG_CHANNELS; ++index)
-  {
-    /* TODO: use larger cycles so we could produce 99.9hz in about 10 seconds or 100 seconds*/
-    AWGChannelContext[index].cycles = 10000 / AWG_Channel[index].frequency;
-    AWGChannelContext[index].halfCycles = AWGChannelContext[index].cycles / 2;
-      
-    AWGChannelContext[index].step = (UINT16)(AWG_Channel[index].amplitude / AWGChannelContext[index].halfCycles);  
-    
-    if (AWG_Channel[index].waveformType == AWG_WAVEFORM_SAWTOOTH)
-    {      
-      if (AWG_Channel[index].amplitude % AWGChannelContext[index].halfCycles != 0)
-      {
-        AWGChannelContext[index].step ++;
-      }
-    }
-    
-    /* make sure it is not divided by zero */
-    if (AWG_Channel[index].amplitude > 0)
-    {      
-      AWGChannelContext[index].voltageScale = 20480 / AWG_Channel[index].amplitude;
-    }
-    else
-    {
-      AWGChannelContext[index].voltageScale = 0;
-    }
-    
-    if (AWGChannelContext[index].cycles < 1000)
-    {
-      AWGChannelContext[index].sampleFactor = (UINT16)(1000 / AWGChannelContext[index].cycles);
-    }
-    else
-    {
-      AWGChannelContext[index].sampleFactor = (UINT16)(AWGChannelContext[index].cycles / 1000);
-    }
-    
-    AWGChannelContext[index].harmonyCycles = AWGChannelContext[index].sampleFactor * 1000;
-    
-    if (AWG_Channel[index].waveformType == AWG_WAVEFORM_SINE)
-    {
-      AWGChannelContext[index].cycles = AWGChannelContext[index].harmonyCycles;
-    }
-            
-    AWGChannelContext[index].value = 0;
-    
-    AWGChannelContext[index].count = 0;
-  }
-}
+//void AWG_Update(void)
+//{
+//  UINT16 index = 0;
+//  for (index = 0; index < NB_AWG_CHANNELS; ++index)
+//  {
+//    /* TODO: use larger cycles so we could produce 99.9hz in about 10 seconds or 100 seconds*/
+//    AWGChannelContext[index].cycles = 10000 / AWG_Channel[index].frequency;
+//    AWGChannelContext[index].halfCycles = AWGChannelContext[index].cycles / 2;
+//      
+//    AWGChannelContext[index].step = (UINT16)(AWG_Channel[index].amplitude / AWGChannelContext[index].halfCycles);  
+//    
+//    if (AWG_Channel[index].waveformType == AWG_WAVEFORM_SAWTOOTH)
+//    {      
+//      if (AWG_Channel[index].amplitude % AWGChannelContext[index].halfCycles != 0)
+//      {
+//        AWGChannelContext[index].step ++;
+//      }
+//    }
+//    
+//    /* make sure it is not divided by zero */
+//    if (AWG_Channel[index].amplitude > 0)
+//    {      
+//      AWGChannelContext[index].voltageScale = 20480 / AWG_Channel[index].amplitude;
+//    }
+//    else
+//    {
+//      AWGChannelContext[index].voltageScale = 0;
+//    }
+//    
+//    if (AWGChannelContext[index].cycles < 1000)
+//    {
+//      AWGChannelContext[index].sampleFactor = (UINT16)(1000 / AWGChannelContext[index].cycles);
+//    }
+//    else
+//    {
+//      AWGChannelContext[index].sampleFactor = (UINT16)(AWGChannelContext[index].cycles / 1000);
+//    }
+//    
+//    AWGChannelContext[index].harmonyCycles = AWGChannelContext[index].sampleFactor * 1000;
+//    
+//    if (AWG_Channel[index].waveformType == AWG_WAVEFORM_SINE)
+//    {
+//      AWGChannelContext[index].cycles = AWGChannelContext[index].harmonyCycles;
+//    }
+//            
+//    AWGChannelContext[index].value = 0;
+//    
+//    AWGChannelContext[index].count = 0;
+//  }
+//}
+
+//void AWG_Setup(const UINT32 busClk)
+//{
+//  TTimerSetup timerCh5;
+//  UINT16 index = 0xFF;
+//  
+//  timerCh5.outputCompare    = bTRUE;
+//  timerCh5.outputAction     = TIMER_OUTPUT_DISCONNECT;
+//  timerCh5.inputDetection   = TIMER_INPUT_OFF;
+//  timerCh5.toggleOnOverflow = bFALSE;
+//  timerCh5.interruptEnable  = bFALSE;
+//  timerCh5.pulseAccumulator = bFALSE;
+//  timerCh5.routine          = &AWGRoutine;
+//  
+//  Timer_Init(TIMER_Ch5, &timerCh5);
+//  
+//  AWGRoutinePeriod = (UINT16)((busClk / MATH_1_MEGA) * AWG_ANALOG_OUTPUT_SAMPLING_RATE);
+//
+//  for (index = 0; index < NB_AWG_CHANNELS; ++index)
+//  {    
+//    Analog_Put(outputChannelNumberLookupTable[index], DAC_ZERO_VOLTAGE);
+//    /* hot fix for analog sampling issue */
+//    Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;  
+//  }
+//  
+//  /* kick start our hitchhiker here */
+//  Timer_Set(TIMER_Ch5, AWGRoutinePeriod);
+//  Timer_Enable(TIMER_Ch5, bTRUE);  
+//}
 
 void AWG_Setup(const UINT32 busClk)
 {
-  TTimerSetup timerCh5;
+  TTimerSetup timerCh0 = {
+                           bTRUE,                   /* outputCompare    */
+                           TIMER_OUTPUT_DISCONNECT, /* outputAction     */
+                           TIMER_INPUT_OFF,         /* inputDetection   */
+                           bFALSE,                  /* toggleOnOverflow */
+                           bFALSE,                  /* interruptEnable  */
+                           bFALSE,                  /* pulseAccumulator */
+                           &AWGRoutine              /* routine          */
+                         },
+              timerCh1 = {
+                           bTRUE,                   /* outputCompare    */
+                           TIMER_OUTPUT_DISCONNECT, /* outputAction     */
+                           TIMER_INPUT_OFF,         /* inputDetection   */
+                           bFALSE,                  /* toggleOnOverflow */
+                           bFALSE,                  /* interruptEnable  */
+                           bFALSE,                  /* pulseAccumulator */
+                           &AWGRoutine              /* routine          */
+                         };
   UINT16 index = 0xFF;
-  
-  timerCh5.outputCompare    = bTRUE;
-  timerCh5.outputAction     = TIMER_OUTPUT_DISCONNECT;
-  timerCh5.inputDetection   = TIMER_INPUT_OFF;
-  timerCh5.toggleOnOverflow = bFALSE;
-  timerCh5.interruptEnable  = bFALSE;
-  timerCh5.pulseAccumulator = bFALSE;
-  timerCh5.routine          = &AWGRoutine;
-  
-  Timer_Init(TIMER_Ch5, &timerCh5);
-  
-  AWGRoutinePeriod = (UINT16)((busClk / MATH_1_MEGA) * AWG_ANALOG_OUTPUT_SAMPLING_RATE);
+
+  AWGRuntimeContext.busClk = busClk;
+  AWGRuntimeContext.scale = AWGRuntimeContext.busClk / MATH_1_MEGA;
+    
+  Timer_Init(TIMER_Ch0, &timerCh0);
+  Timer_Init(TIMER_Ch1, &timerCh1);
 
   for (index = 0; index < NB_AWG_CHANNELS; ++index)
   {    
     Analog_Put(outputChannelNumberLookupTable[index], DAC_ZERO_VOLTAGE);
     /* hot fix for analog sampling issue */
     Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;  
-  }
-  
-  /* kick start our hitchhiker here */
-  Timer_Set(TIMER_Ch5, AWGRoutinePeriod);
-  Timer_Enable(TIMER_Ch5, bTRUE);  
+  }  
 }
 
 void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)

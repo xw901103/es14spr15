@@ -20,6 +20,14 @@
 static UINT8 RoutineStack[THREAD_STACK_SIZE];
 static UINT8 RuntimeIndictorRoutineStack[THREAD_STACK_SIZE];
 
+static TAWGChannel AWGChannelLookupTable[4] =
+{
+  AWG_Ch1,
+  AWG_Ch2,
+  AWG_Ch3,
+  AWG_Ch4
+};
+
 void RuntimeIndictorRoutine(void* dataPtr);
 
 /**
@@ -689,7 +697,7 @@ BOOL HandleModConWaveSetWaveform(void)
     AWG_WAVEFORM_NOISE,
     AWG_WAVEFORM_ARBITRARY
   };
-  
+    
   UINT8 index = 0;
   
   for (index = 0; index < NB_AWG_CHANNELS; ++index)
@@ -697,7 +705,7 @@ BOOL HandleModConWaveSetWaveform(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].waveformType = waveformTypeLookupTable[Packet_Parameter2];
-      AWG_Update();
+      AWG_Update(AWGChannelLookupTable[index]);
     }
   }
   
@@ -752,7 +760,7 @@ BOOL HandleModConWaveSetFrequency(void)
     {
       AWG_Channel[index].frequency = frequency;
       //AWG_Channel[index].frequency = Packet_Parameter23;
-      AWG_Update();
+      AWG_Update(AWGChannelLookupTable[index]);
     }
   }
 
@@ -768,7 +776,7 @@ BOOL HandleModConWaveSetAmplitude(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].amplitude = Packet_Parameter23;
-      AWG_Update();
+      AWG_Update(AWGChannelLookupTable[index]);
     }
   }
 
@@ -784,7 +792,7 @@ BOOL HandleModConWaveSetOffset(void)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].offset = Packet_Parameter23;
-      AWG_Update();
+      AWG_Update(AWGChannelLookupTable[index]);
     }
   }
 
@@ -800,7 +808,7 @@ BOOL HandleModConWaveEnable(BOOL enable)
     if (AWG_Channel[index].isActive)
     {
       AWG_Channel[index].isEnabled = enable;
-      AWG_Update();
+      AWG_Enable(AWGChannelLookupTable[index], enable);
     }
   }
 
@@ -1103,7 +1111,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
   Timer_AttachPeriodicTimerRoutine(&SampleAnalogChannels);
   /* enable ModCon analog input sampling */
-  Timer_PeriodicTimerEnable(bTRUE);
+  //Timer_PeriodicTimerEnable(bTRUE);
 
   OS_Init();
   
