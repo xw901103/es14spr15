@@ -9,7 +9,7 @@
 
 #define NB_AWG_CHANNELS                 2
 #define AWG_ARBITRARY_WAVE_SIZE         256
-//#define AWG_ANALOG_OUTPUT_SAMPLING_RATE 1000 /* 1000 micromseconds */
+#define AWG_ANALOG_OUTPUT_SAMPLING_RATE 1000 /* 1000 micromseconds */
 
 typedef enum
 {
