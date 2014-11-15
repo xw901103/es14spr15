@@ -38,10 +38,10 @@ typedef struct
 	UINT32 time;
 	UINT32 timeStep;
 
-  UINT32 cycleBoundary;
-  UINT32 halfCycleBoundary;
+  //UINT32 cycleBoundary;
+  //UINT32 halfCycleBoundary;
   
-  UINT32 cycleCount;
+  //UINT32 cycleCount;
     
   INT16 voltage;
   INT16 voltageScale;
@@ -179,6 +179,20 @@ static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANA
 
 void AWGRoutine(TTimerChannel channelNb);
 
+void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
+{
+  if (analogValue > 4095)
+  {
+  	analogValue = 4095;
+  }
+  else if (analogValue < 0)
+  {
+  	analogValue = 0;
+  }
+      
+  Analog_Put(channelNb, analogValue);  
+}
+
 void AWGUpdateContext(TAWGEntry* const, TAWGEntryContext* const);
 
 void AWGRoutine(TTimerChannel channelNb)
@@ -200,22 +214,22 @@ void AWGRoutine(TTimerChannel channelNb)
     		AWGChannelContext[index].time = AWGChannelContext[index].time % AWGChannelContext[index].frequencyPeriod;
     	}
     	
-    	AWGChannelContext[index].cycleBoundary = AWGChannelContext[index].frequencyPeriod / AWGChannelContext[index].timeStep;
+    	//AWGChannelContext[index].cycleBoundary = AWGChannelContext[index].frequencyPeriod / AWGChannelContext[index].timeStep;
     	
-    	if (AWGChannelContext[index].frequencyPeriod % AWGChannelContext[index].timeStep != 0)
-    	{
-    		++AWGChannelContext[index].cycleBoundary;
-    	}
+    	//if (AWGChannelContext[index].frequencyPeriod % AWGChannelContext[index].timeStep != 0)
+    	//{
+    	//	++AWGChannelContext[index].cycleBoundary;
+    	//}
     	
-    	AWGChannelContext[index].halfCycleBoundary = AWGChannelContext[index].cycleBoundary / 2;
+    	//AWGChannelContext[index].halfCycleBoundary = AWGChannelContext[index].cycleBoundary / 2;
     	
-    	AWGChannelContext[index].cycleCount = AWGChannelContext[index].time / AWGChannelContext[index].timeStep;
+    	//AWGChannelContext[index].cycleCount = AWGChannelContext[index].time / AWGChannelContext[index].timeStep;
     
 		  switch(AWGChannelContext[index].waveformType)
   		{
     		case AWG_WAVEFORM_SINE:
       	  
-      	  sampleIndex = (UINT16)(AWGChannelContext[index].cycleCount * 1000 / AWGChannelContext[index].cycleBoundary);
+      	  sampleIndex = (UINT16)((1000 * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
       		
       		sampleIndex = sampleIndex % 1000;
 				
@@ -234,7 +248,7 @@ void AWGRoutine(TTimerChannel channelNb)
       		
       		break;
     		case AWG_WAVEFORM_SQUARE:
-      		if (AWGChannelContext[index].cycleCount > AWGChannelContext[index].halfCycleBoundary)
+      		if (AWGChannelContext[index].time > AWGChannelContext[index].halfFrequencyPeriod)
       		{
       			analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude;
       		}
@@ -244,9 +258,9 @@ void AWGRoutine(TTimerChannel channelNb)
       		}
       		break;
     		case AWG_WAVEFORM_TRIANGLE:
-					AWGChannelContext[index].voltage = (UINT16)((AWGChannelContext[index].amplitude * 4 * AWGChannelContext[index].cycleCount) / (AWGChannelContext[index].cycleBoundary - 1));
+					AWGChannelContext[index].voltage = (UINT16)((AWGChannelContext[index].amplitude * 4 * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
 					
-      		if (AWGChannelContext[index].cycleCount < AWGChannelContext[index].halfCycleBoundary)
+      		if (AWGChannelContext[index].time < AWGChannelContext[index].halfFrequencyPeriod)
       		{
       			analogValue = DAC_ZERO_VOLTAGE + (AWGChannelContext[index].amplitude - AWGChannelContext[index].voltage);
       		}
@@ -257,15 +271,25 @@ void AWGRoutine(TTimerChannel channelNb)
       		break;
     		case AWG_WAVEFORM_SAWTOOTH:
 					
-					AWGChannelContext[index].voltage = (UINT16)((AWGChannelContext[index].amplitude * 2 * AWGChannelContext[index].cycleCount) / (AWGChannelContext[index].cycleBoundary - 1));      		
+					//AWGChannelContext[index].voltage = (UINT16)((AWGChannelContext[index].amplitude * 2 * AWGChannelContext[index].cycleCount) / (AWGChannelContext[index].cycleBoundary - 1));      		
       		
-      		/*
-      		if (AWGChannelContext[index].cycleCount >= (AWGChannelContext[index].cycleBoundary - 1) || AWGChannelContext[index].voltage > (AWGChannelContext[index].amplitude * 2))
+      		if (AWGChannelContext[index].time == 0)
       		{
-      			AWGChannelContext[index].voltage = AWGChannelContext[index].amplitude * 2;
+      		  /* hotfix: resolve that end frequency period peak */
+        		analogValue = DAC_ZERO_VOLTAGE - AWGChannelContext[index].amplitude;
+        		
+        		analogValue -= AWG_Channel[index].offset;
+        		
+        		AWGOutAnalog(outputChannelNumberLookupTable[index], analogValue);
+      		  
+      		  AWGChannelContext[index].voltage = 0;      		  
+      		  
       		}
-      		 */
-      		      		
+      		else
+      		{      		  
+      		  AWGChannelContext[index].voltage = (UINT16)((AWGChannelContext[index].amplitude * 2 * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
+      		}
+      		      		      		
       		analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - AWGChannelContext[index].voltage;
       		
       		break;
@@ -279,18 +303,9 @@ void AWGRoutine(TTimerChannel channelNb)
   		}
   		
   		analogValue -= AWG_Channel[index].offset;
+  		
+  		AWGOutAnalog(outputChannelNumberLookupTable[index], analogValue);
       
-  		if (analogValue > 4095)
-  		{
-    		analogValue = 4095;
-  		}
-  		else if (analogValue < 0)
-  		{
-    		analogValue = 0;
-  		}
-      
-  		Analog_Put(outputChannelNumberLookupTable[index], analogValue);
-
 			AWGChannelContext[index].time += AWGChannelContext[index].timeStep;
 			
 	  	if (channelPostProcessRoutinePtr)
@@ -305,12 +320,12 @@ void AWGRoutine(TTimerChannel channelNb)
 
 void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const contextPtr)
 {
-  UINT16 frequency = 0;
+  UINT32 frequency = 0;
 
   if (entryPtr && contextPtr)
   {
   
-	  frequency = (UINT16)(entryPtr->frequency % 256); /* XX.F*/
+	  frequency = entryPtr->frequency % 256; /* XX.F*/
 
   	switch(frequency)
   	{
@@ -346,11 +361,18 @@ void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const context
   	};
   
   	frequency += (entryPtr->frequency / 256) * 10;
-      
-    contextPtr->frequencyPeriod = MATH_1_MEGA * 10 / frequency;
+    
+    frequency = MATH_1_MEGA * 10 / frequency; /* in 1us unit */
+    
+    if (contextPtr->frequencyPeriod != frequency)
+    {
+    	contextPtr->time = 0;
+    }
+    
+    contextPtr->frequencyPeriod = frequency;
+    
     contextPtr->halfFrequencyPeriod = contextPtr->frequencyPeriod / 2;
     contextPtr->timeStep = AWG_ANALOG_OUTPUT_SAMPLING_RATE;
-   	//contextPtr->time = 0;
    
     contextPtr->waveformType = entryPtr->waveformType;
     contextPtr->amplitude = entryPtr->amplitude;
