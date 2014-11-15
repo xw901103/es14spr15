@@ -1,3 +1,7 @@
+/**
+ * \file AWG.h
+ * \author Xu Waycell
+ */
 #ifndef AWG_H
 #define AWG_H
 

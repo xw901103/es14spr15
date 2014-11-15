@@ -595,7 +595,7 @@ BOOL HandleModConWave(void)
       }
       break;
     case MODCON_WAVE_WAVEFORM:
-      if (Packet_Parameter2 < 5 && Packet_Parameter3 == 0)
+      if (Packet_Parameter2 < 6 && Packet_Parameter3 == 0)
       {
         return HandleModConWaveSetWaveform();
       }
@@ -714,51 +714,12 @@ BOOL HandleModConWaveSetWaveform(void)
 
 BOOL HandleModConWaveSetFrequency(void)
 {
-  UINT8 index = 0;
-  //UINT16 frequency = 0;
-  
-  //frequency = (UINT16)(Packet_Parameter23 % 256); /* XX.F*/
-  //switch(frequency)
-  //{
-  //  case 25:  /* 0.1 */
-  //    frequency = 1;
-  //    break;
-  //  case 51:  /* 0.2 */
-  //    frequency = 2;
-  //    break;
-  //  case 76:  /* 0.3 */
-  //    frequency = 3;
-  //    break;
-  //  case 102: /* 0.4 */
-  //    frequency = 4;
-  //    break;
-  //  case 128: /* 0.5 */
-  //    frequency = 5;
-  //    break;
-  //  case 153: /* 0.6 */
-  //    frequency = 6;
-  //    break;
-  //  case 179: /* 0.7 */
-  //    frequency = 7;
-  //    break;
-  //  case 204: /* 0.8 */
-  //    frequency = 8;
-  //    break;
-  //  case 230: /* 0.9 */
-  //    frequency = 9;
-  //    break;
-  //  default:
-  //    break;
-  //};
-  
-  //frequency += (Packet_Parameter23 / 256) * 10;
-  
+  UINT8 index = 0;  
   
   for (index = 0; index < NB_AWG_CHANNELS; ++index)
   {
     if (AWG_Channel[index].isActive)
     {
-      //AWG_Channel[index].frequency = frequency;
       AWG_Channel[index].frequency = Packet_Parameter23;
       AWG_Update(AWGChannelLookupTable[index]);
     }

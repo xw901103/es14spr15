@@ -19,7 +19,7 @@
 #define DAC_MAXIMUM      4095
 #define DAC_MINIMUM      0
 
-#define AWG_SAMPLE_SIZE  1000
+#define AWG_SINE_WAVE_SIZE  1000
 
 typedef struct
 {
@@ -58,7 +58,7 @@ UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
 /* url: http://www.meraman.com/htmls/en/sinTableOld.html */
-const INT16 AWG_SINE_WAVE[AWG_SAMPLE_SIZE] =
+const INT16 AWG_SINEWAVE[AWG_SINE_WAVE_SIZE] =
 {
   0, 129, 257, 386, 515, 643, 772, 900, 1029, 1157, 1286,
   1414, 1543, 1671, 1799, 1927, 2055, 2183, 2311, 2439, 2567,
@@ -209,11 +209,11 @@ void AWGRoutine(TTimerChannel channelNb)
   		{
     		case AWG_WAVEFORM_SINE:
       	  
-      	  sampleIndex = (UINT16)((AWG_SAMPLE_SIZE * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
+      	  sampleIndex = (UINT16)((AWG_SINE_WAVE_SIZE * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
       		
-      		sampleIndex = sampleIndex % AWG_SAMPLE_SIZE;
+      		sampleIndex = sampleIndex % AWG_SINE_WAVE_SIZE;
 				
-					AWGChannelContext[index].voltage = AWG_SINE_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
+					AWGChannelContext[index].voltage = AWG_SINEWAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
 
       		analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].voltage;      		
       		      		
@@ -265,6 +265,13 @@ void AWGRoutine(TTimerChannel channelNb)
     		case AWG_WAVEFORM_NOISE:
       		break;
     		case AWG_WAVEFORM_ARBITRARY:
+      	  sampleIndex = (UINT16)((AWG_ARBITRARY_WAVE_SIZE * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
+      		
+      		sampleIndex = sampleIndex % AWG_ARBITRARY_WAVE_SIZE;
+				
+					AWGChannelContext[index].voltage = AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
+
+      		analogValue = AWGChannelContext[index].voltage;
       		break;
     		case AWG_WAVEFORM_DC:
     		default:
