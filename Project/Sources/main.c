@@ -1111,7 +1111,7 @@ BOOL Initialize(void) /* TODO: check following statements */
   Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
   Timer_AttachPeriodicTimerRoutine(&SampleAnalogChannels);
   /* enable ModCon analog input sampling */
-  //Timer_PeriodicTimerEnable(bTRUE);
+  Timer_PeriodicTimerEnable(bTRUE);
 
   OS_Init();
   
