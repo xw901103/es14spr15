@@ -346,7 +346,7 @@ void AWGRoutine(TTimerChannel channelNb)
       		
       		sampleIndex = sampleIndex % AWG_ARBITRARY_WAVE_SIZE;
 				
-					AWGChannelContext[index].voltage = (AWG_ARBITRARY_WAVE[sampleIndex] * AWGChannelContext[index].amplitude) / 2048;
+					AWGChannelContext[index].voltage = AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
 
       		analogValue = AWGChannelContext[index].voltage;
       		break;

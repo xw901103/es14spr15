@@ -804,7 +804,7 @@ BOOL HandleModConArbitraryWave(void)
 {
   if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
   {
-    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23 * 10;
+    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23 * 10; /* match our other AWG waveform sample scale */
     return bTRUE;
   }
   return bFALSE;
