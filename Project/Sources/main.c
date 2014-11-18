@@ -13,7 +13,8 @@
 #include "AWG.h"
 #include "OS.h"
 #include "utils.h"
-#include <mc9s12a512.h>
+//#include <mc9s12a512.h>
+#include "derivative.h"
 
 #define OS_VENDOR_PETER_MCLEAN 1;
 
@@ -584,6 +585,8 @@ BOOL HandleModConWaveSetOffset(void);
 BOOL HandleModConWaveEnable(BOOL enable);
 BOOL HandleModConWaveActiveChannel(void);
 
+BOOL HandleModConWaveArbitraryPhasor(void);
+
 BOOL HandleModConWave(void)
 {
   switch(Packet_Parameter1)
@@ -626,7 +629,7 @@ BOOL HandleModConWave(void)
       {
         return HandleModConWaveActiveChannel();
       }
-      break;
+      break;    
     default:
       break;
   }
@@ -804,10 +807,50 @@ BOOL HandleModConArbitraryWave(void)
 {
   if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
   {
-    AWG_ARBITRARY_WAVE[Packet_Parameter1] = Packet_Parameter23 * 10; /* match our other AWG waveform sample scale */
+    AWG_ARBITRARY_WAVE[Packet_Parameter1] = (2047 - (INT32)Packet_Parameter23) * 10; /* match our other AWG waveform sample scale */
     return bTRUE;
   }
   return bFALSE;
+}
+
+BOOL HandleModConArbitraryPhasor(void)
+{
+  UINT16 index = 0;
+  UINT8 harmonicNb = 0xFF;
+  UINT16 magnitude = 0xFFFF;
+  INT16 angle = 0xFFFF;
+  
+  harmonicNb = Packet_Parameter1 >> 4;
+  angle = ((Packet_Parameter1 & 0x0F) << 6) | ((Packet_Parameter2 & 0xFC) >> 2);
+  magnitude = ((Packet_Parameter2 & 0x03) << 8) | Packet_Parameter3;
+  
+  switch(harmonicNb)
+  {
+    case MODCON_ARBITRARY_PHASOR_RESET:
+      AWG_ResetArbitraryWave();
+      break;
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_1:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_2:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_3:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_4:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_5:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_6:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_7:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_8:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_9:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_A:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_B:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_C:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_D:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_E:
+    case MODCON_ARBITRARY_PHASOR_HARMONIC_F:
+      AWG_ApplyArbitraryPhasor(harmonicNb, magnitude, angle);
+      break;
+    default:
+      return bFALSE;
+      break;
+  }
+  return bTRUE;
 }
 
 /**
@@ -1087,6 +1130,8 @@ void RuntimeIndictorRoutine(void* dataPtr)
 {
   static BOOL toggle = bFALSE;
   
+  UNUSED(dataPtr);
+  
   for(;;)
   {
     PORTE_BIT7 = (byte)toggle;        
@@ -1152,6 +1197,9 @@ void Routine(void* dataPtr)
         case MODCON_COMMAND_ARBITRARY_WAVE:
           bad = !HandleModConArbitraryWave();
           break;
+        case MODCON_COMMAND_ARBITRARY_PHASOR:
+          bad = !HandleModConArbitraryPhasor();
+          break;        
         default:
           bad = bTRUE;
           break;

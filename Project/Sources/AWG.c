@@ -4,6 +4,8 @@
  * \author Xu Waycell
  */
 #include <stdlib.h>
+#include <math.h>
+#include <mc9s12a512.h>
 
 #include "AWG.h"
 #include "timer.h"
@@ -16,6 +18,8 @@
 #define DAC_ZERO_VOLTAGE 2047
 #define DAC_MAXIMUM      4095
 #define DAC_MINIMUM      0
+
+#define AWG_ARBITRARY_WAVE_INITIAL_VOLTAGE 0
 
 #define AWG_SINE_WAVE_SIZE  1000
 
@@ -52,7 +56,7 @@ TAWGEntry AWG_Channel[NB_AWG_CHANNELS] = {0};
 TAWGEntryContext AWGChannelContext[NB_AWG_CHANNELS] = {0};
 TAWGRuntimeContext AWGRuntimeContext = {0};
 
-UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
+INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 
 static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
@@ -237,12 +241,58 @@ const INT16 AWG_SINEWAVE[AWG_SINE_WAVE_SIZE] =
  */
 };
 
+const INT16 AWG_SINE_TABLE[256] = 
+{
+  0, 503, 1005, 1507, 2007, 2507, 3005,
+  3501, 3995, 4487, 4976, 5462, 5945, 6424,
+  6900, 7371, 7837, 8299, 8756, 9208, 9654,
+  10095, 10529, 10957, 11378, 11793, 12200, 12600,
+  12992, 13377, 13754, 14122, 14482, 14833, 15175,
+  15508, 15831, 16145, 16450, 16744, 17028, 17303,
+  17566, 17819, 18062, 18293, 18514, 18723, 18921,
+  19108, 19283, 19446, 19598, 19738, 19866, 19982,
+  20086, 20178, 20258, 20326, 20381, 20425, 20455,
+  20474, 20480, 20474, 20455, 20425, 20381, 20326,
+  20258, 20178, 20086, 19982, 19866, 19738, 19598,
+  19446, 19283, 19108, 18921, 18723, 18514, 18293,
+  18062, 17819, 17566, 17303, 17028, 16744, 16450,
+  16145, 15831, 15508, 15175, 14833, 14482, 14122,
+  13754, 13377, 12992, 12600, 12200, 11793, 11378,
+  10957, 10529, 10095, 9654, 9208, 8756, 8299,
+  7837, 7371, 6900, 6424, 5945, 5462, 4976,
+  4487, 3995, 3501, 3005, 2507, 2007, 1507,
+  1005, 503, 0, -503, -1005, -1507, -2007,
+  -2507, -3005, -3501, -3995, -4487, -4976,
+  -5462, -5945, -6424, -6900, -7371, -7837,
+  -8299, -8756, -9208, -9654, -10095, -10529,
+  -10957, -11378, -11793, -12200, -12600, -12992,
+  -13377, -13754, -14122, -14482, -14833, -15175,
+  -15508, -15831, -16145, -16450, -16744, -17028,
+  -17303, -17566, -17819, -18062, -18293, -18514,
+  -18723, -18921, -19108, -19283, -19446, -19598,
+  -19738, -19866, -19982, -20086, -20178, -20258,
+  -20326, -20381, -20425, -20455, -20474, -20480,
+  -20474, -20455, -20425, -20381, -20326, -20258,
+  -20178, -20086, -19982, -19866, -19738, -19598,
+  -19446, -19283, -19108, -18921, -18723, -18514,
+  -18293, -18062, -17819, -17566, -17303, -17028,
+  -16744, -16450, -16145, -15831, -15508, -15175,
+  -14833, -14482, -14122, -13754, -13377, -12992,
+  -12600, -12200, -11793, -11378, -10957, -10529,
+  -10095, -9654, -9208, -8756, -8299, -7837,
+  -7371, -6900, -6424, -5945, -5462, -4976,
+  -4487, -3995, -3501, -3005, -2507, -2007, 
+  -1507, -1005, -503
+};
+
 static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
                                                                              ANALOG_OUTPUT_Ch2,
                                                                              ANALOG_OUTPUT_Ch3,
                                                                              ANALOG_OUTPUT_Ch4 };
 
 void AWGRoutine(TTimerChannel channelNb);
+
+float AWGGenerateAWGN(void);
 
 void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
 {
@@ -256,6 +306,40 @@ void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
   }
       
   Analog_Put(channelNb, analogValue);  
+}
+
+float AWGGenerateAWGN(void)
+{
+  /* generates additive white gaussian noise samples with zero mean and a standard deviation of 1 */ 
+  float cache1 = 0.0f;
+  float cache2 = 0.0f;
+  float result = 0.0f;
+  INT16 p = 1;
+
+  while( p > 0 )
+  {
+    cache2 = (rand() / (float)RAND_MAX); /*  rand() function generates an
+                                             integer between 0 and  RAND_MAX,
+                                             which is defined in stdlib.h.
+                                          */
+
+    if (cache2 == 0 )
+    {
+      /* cache2 is >= (RAND_MAX / 2) */
+      p = 1;
+    }
+    else
+    {
+      /* cache2 is < (RAND_MAX / 2) */
+      p = -1;
+    }
+
+  }
+
+  cache1 = cosf((2.0f * _M_PI) * rand() / (float)RAND_MAX);
+  result = sqrtf(-2.0 * logf( cache2 ) ) * cache1;
+
+  return result;        // return the generated random sample to the caller  
 }
 
 void AWGUpdateContext(TAWGEntry* const, TAWGEntryContext* const);
@@ -338,17 +422,18 @@ void AWGRoutine(TTimerChannel channelNb)
       		break;
     		case AWG_WAVEFORM_NOISE:
     		  
-    		  analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (rand() % (AWGChannelContext[index].amplitude * 2));
-    		
+    		  //analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (rand() % (AWGChannelContext[index].amplitude * 2));
+    		  //analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (INT16)(AWGGenerateAWGN() * AWGChannelContext[index].amplitude);
+    		  analogValue = DAC_ZERO_VOLTAGE + (INT16)(AWGGenerateAWGN() * AWGChannelContext[index].amplitude);
       		break;
     		case AWG_WAVEFORM_ARBITRARY:
       	  sampleIndex = (UINT16)((AWG_ARBITRARY_WAVE_SIZE * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
       		
       		sampleIndex = sampleIndex % AWG_ARBITRARY_WAVE_SIZE;
 				
-					AWGChannelContext[index].voltage = AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale;
+					AWGChannelContext[index].voltage = (UINT16)(AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale);
 
-      		analogValue = AWGChannelContext[index].voltage;
+      		analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].voltage;
       		break;
     		case AWG_WAVEFORM_DC:
     		default:
@@ -534,6 +619,8 @@ void AWG_Setup(const UINT32 busClk)
     Analog_Output[index].OldValue.l = Analog_Output[index].Value.l;  
   }  
 
+  AWG_ResetArbitraryWave();
+
   Timer_Set(TIMER_Ch5, AWGRuntimeContext.routinePeriod);
   Timer_Enable(TIMER_Ch5, bTRUE);  
 }
@@ -546,4 +633,29 @@ void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)
 void AWG_DetachPostProcessRoutine(void)
 {
   channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
+}
+
+void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle)
+{
+  UINT32 sineIndexOffset = 0, sineIndex = 0;
+  UINT32 index = 0;
+  
+  sineIndexOffset = (angle + 90) * 25 / 9;
+  
+  for (index = 0; index < AWG_ARBITRARY_WAVE_SIZE; ++index)
+  {
+    sineIndex = (sineIndexOffset + (index * harmonicNb * AWG_SINE_WAVE_SIZE / AWG_ARBITRARY_WAVE_SIZE)) % AWG_SINE_WAVE_SIZE;   
+    AWG_ARBITRARY_WAVE[index] = AWG_ARBITRARY_WAVE[index] + (0 - AWG_SINEWAVE[sineIndex] / (INT16)magnitude);
+    __RESET_WATCHDOG();
+  }
+}
+
+void AWG_ResetArbitraryWave(void)
+{
+  UINT16 index = 0;
+  
+  for (index = 0; index < AWG_ARBITRARY_WAVE_SIZE; ++index)
+  {
+    AWG_ARBITRARY_WAVE[index] = AWG_ARBITRARY_WAVE_INITIAL_VOLTAGE; /* match our scale */
+  }
 }

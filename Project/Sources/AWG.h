@@ -51,13 +51,17 @@ typedef struct
 
 extern TAWGEntry AWG_Channel[NB_AWG_CHANNELS];
 
-extern UINT16 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
+extern INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
 
 void AWG_Setup(const UINT32 busClk);
 
 void AWG_Update(TAWGChannel channelNb);
 
 void AWG_Enable(TAWGChannel channelNb, BOOL enable);
+
+void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle);
+
+void AWG_ResetArbitraryWave(void);
 
 void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine);
 

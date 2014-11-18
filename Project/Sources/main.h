@@ -36,7 +36,7 @@
 #include "analog.h"
 //#include "AWG.h"
 //#include "HMI.h"
-#pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
+//#pragma LINK_INFO DERIVATIVE "mc9s12a512" /* link mc9s12a512's library */
 
 #define THREAD_STACK_SIZE 256
 
@@ -52,6 +52,7 @@ const UINT8 MODCON_COMMAND_ANALOG_INPUT_VALUE  = 0x50; /* ModCon protocol analog
 const UINT8 MODCON_COMMAND_ANALOG_OUTPUT_VALUE = 0x51; /* ModCon protocol analog output command */
 const UINT8 MODCON_COMMAND_WAVE                = 0x60;
 const UINT8 MODCON_COMMAND_ARBITRARY_WAVE      = 0x61;
+const UINT8 MODCON_COMMAND_ARBITRARY_PHASOR    = 0x62;
 
 const UINT8 MODCON_DEBUG_INITIAL = 'd';
 const UINT8 MODCON_DEBUG_TOKEN   = 'j';
@@ -82,6 +83,23 @@ const UINT8 MODCON_WAVE_OFFSET         = 4;
 const UINT8 MODCON_WAVE_ON             = 5;
 const UINT8 MODCON_WAVE_OFF            = 6;
 const UINT8 MODCON_WAVE_ACTIVE_CHANNEL = 7;
+
+const UINT8 MODCON_ARBITRARY_PHASOR_RESET      = 0x00;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_1 = 0x01;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_2 = 0x02;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_3 = 0x03;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_4 = 0x04;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_5 = 0x05;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_6 = 0x06;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_7 = 0x07;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_8 = 0x08;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_9 = 0x09;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_A = 0x0A;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_B = 0x0B;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_C = 0x0C;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_D = 0x0D;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_E = 0x0E;
+const UINT8 MODCON_ARBITRARY_PHASOR_HARMONIC_F = 0x0F;
 
 #if !defined(MODCON_COMMAND_ACK_MASK)
 #define MODCON_COMMAND_ACK_MASK 0x80 /* ModCon protocol acknowledgement bitwise mask */
@@ -252,6 +270,13 @@ BOOL HandleModConWave(void);
  * \return
  */
 BOOL HandleModConArbitraryWave(void);
+
+/**
+ * \fn BOOL HandleModConArbitraryPhasor(void)
+ * \brief
+ * \return
+ */
+BOOL HandleModConArbitraryPhasor(void);
 
 /**
  * \fn void Initialize(void)
