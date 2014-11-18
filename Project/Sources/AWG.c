@@ -241,6 +241,7 @@ const INT16 AWG_SINEWAVE[AWG_SINE_WAVE_SIZE] =
  */
 };
 
+/*
 const INT16 AWG_SINE_TABLE[256] = 
 {
   0, 503, 1005, 1507, 2007, 2507, 3005,
@@ -284,7 +285,8 @@ const INT16 AWG_SINE_TABLE[256] =
   -4487, -3995, -3501, -3005, -2507, -2007, 
   -1507, -1005, -503
 };
-
+ */
+ 
 static TAnalogChannel outputChannelNumberLookupTable[NB_OUTPUT_CHANNELS] = { ANALOG_OUTPUT_Ch1,
                                                                              ANALOG_OUTPUT_Ch2,
                                                                              ANALOG_OUTPUT_Ch3,
@@ -308,39 +310,39 @@ void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
   Analog_Put(channelNb, analogValue);  
 }
 
-float AWGGenerateAWGN(void)
-{
+//float AWGGenerateAWGN(void)
+//{
   /* generates additive white gaussian noise samples with zero mean and a standard deviation of 1 */ 
-  float cache1 = 0.0f;
-  float cache2 = 0.0f;
-  float result = 0.0f;
-  INT16 p = 1;
+//  float cache1 = 0.0f;
+//  float cache2 = 0.0f;
+//  float result = 0.0f;
+//  INT16 p = 1;
 
-  while( p > 0 )
-  {
-    cache2 = (rand() / (float)RAND_MAX); /*  rand() function generates an
-                                             integer between 0 and  RAND_MAX,
-                                             which is defined in stdlib.h.
-                                          */
+//  while( p > 0 )
+//  {
+//    cache2 = (rand() / (float)RAND_MAX); /*  rand() function generates an
+//                                             integer between 0 and  RAND_MAX,
+//                                             which is defined in stdlib.h.
+//                                          */
 
-    if (cache2 == 0 )
-    {
+//    if (cache2 == 0 )
+//    {
       /* cache2 is >= (RAND_MAX / 2) */
-      p = 1;
-    }
-    else
-    {
+//      p = 1;
+//    }
+//    else
+//    {
       /* cache2 is < (RAND_MAX / 2) */
-      p = -1;
-    }
+//      p = -1;
+//    }
 
-  }
+//  }
 
-  cache1 = cosf((2.0f * _M_PI) * rand() / (float)RAND_MAX);
-  result = sqrtf(-2.0 * logf( cache2 ) ) * cache1;
+//  cache1 = cosf((2.0f * _M_PI) * rand() / (float)RAND_MAX);
+//  result = sqrtf(-2.0 * logf( cache2 ) ) * cache1;
 
-  return result;        // return the generated random sample to the caller  
-}
+//  return result;        // return the generated random sample to the caller  
+//}
 
 void AWGUpdateContext(TAWGEntry* const, TAWGEntryContext* const);
 
@@ -422,9 +424,9 @@ void AWGRoutine(TTimerChannel channelNb)
       		break;
     		case AWG_WAVEFORM_NOISE:
     		  
-    		  //analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (rand() % (AWGChannelContext[index].amplitude * 2));
+    		  analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (rand() % (AWGChannelContext[index].amplitude * 2));
     		  //analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].amplitude - (INT16)(AWGGenerateAWGN() * AWGChannelContext[index].amplitude);
-    		  analogValue = DAC_ZERO_VOLTAGE + (INT16)(AWGGenerateAWGN() * AWGChannelContext[index].amplitude);
+    		  //analogValue = DAC_ZERO_VOLTAGE + (INT16)(AWGGenerateAWGN() * AWGChannelContext[index].amplitude);
       		break;
     		case AWG_WAVEFORM_ARBITRARY:
       	  sampleIndex = (UINT16)((AWG_ARBITRARY_WAVE_SIZE * (AWGChannelContext[index].time / 10)) / (AWGChannelContext[index].frequencyPeriod / 10));
