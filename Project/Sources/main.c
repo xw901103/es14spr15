@@ -583,10 +583,23 @@ BOOL HandleModConWaveSetFrequency(void);
 BOOL HandleModConWaveSetAmplitude(void);
 BOOL HandleModConWaveSetOffset(void);
 BOOL HandleModConWaveEnable(BOOL enable);
+
+/**
+ * \fn BOOL HandleModConWaveActiveChannel(void)
+ * \brief Activates selected AWG channel to response to incoming settings
+ */
 BOOL HandleModConWaveActiveChannel(void);
 
+/**
+ * \fn BOOL HandleModConWaveArbitraryPhasor(void)
+ * \brief Apply received phasor setting to AWG 
+ */
 BOOL HandleModConWaveArbitraryPhasor(void);
 
+/**
+ * \fn BOOL HandleModConWave(void)
+ * \brief Hub of ModCon wave command 
+ */
 BOOL HandleModConWave(void)
 {
   switch(Packet_Parameter1)
@@ -635,6 +648,10 @@ BOOL HandleModConWave(void)
   }
 }
 
+/**
+ * \fn BOOL HandleModConWaveSetWaveform(void)
+ * \brief Sends status of active AWG channel 
+ */
 BOOL HandleModConWaveGetStatus(void)
 {
 
@@ -689,6 +706,10 @@ BOOL HandleModConWaveGetStatus(void)
   return success;              
 }
 
+/**
+ * \fn BOOL HandleModConWaveSetWaveform(void)
+ * \brief Sets waveform to active AWG channel 
+ */
 BOOL HandleModConWaveSetWaveform(void)
 {
   static UINT8 waveformTypeLookupTable[6] =
@@ -715,6 +736,10 @@ BOOL HandleModConWaveSetWaveform(void)
   return bTRUE;  
 }
 
+/**
+ * \fn BOOL HandleModConWaveSetFrequency(void)
+ * \brief Sets frequency value to active AWG channel 
+ */
 BOOL HandleModConWaveSetFrequency(void)
 {
   UINT8 index = 0;  
@@ -731,6 +756,10 @@ BOOL HandleModConWaveSetFrequency(void)
   return bTRUE;  
 }
 
+/**
+ * \fn BOOL HandleModConWaveSetOffset(void)
+ * \brief Sets offset value to active AWG channel 
+ */
 BOOL HandleModConWaveSetAmplitude(void)
 {
   UINT8 index = 0;
@@ -747,6 +776,10 @@ BOOL HandleModConWaveSetAmplitude(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConWaveSetOffset(void)
+ * \brief Sets offset value to active AWG channel 
+ */
 BOOL HandleModConWaveSetOffset(void)
 {
   UINT8 index = 0;
@@ -763,6 +796,10 @@ BOOL HandleModConWaveSetOffset(void)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConWaveEnable(BOOL enable)
+ * \brief Enables/Disables selected AWG channel
+ */
 BOOL HandleModConWaveEnable(BOOL enable)
 {
   UINT8 index = 0;
@@ -779,6 +816,10 @@ BOOL HandleModConWaveEnable(BOOL enable)
   return bTRUE;
 }
 
+/**
+ * \fn BOOL HandleModConWaveActiveChannel(void)
+ * \brief Activates selected AWG channel to response to incoming settings
+ */
 BOOL HandleModConWaveActiveChannel(void)
 {
   if (Packet_Parameter2 == 0)
@@ -803,16 +844,35 @@ BOOL HandleModConWaveActiveChannel(void)
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConArbitraryWave(void)
+ * \brief Handles arbitrary wave packet
+ */
 BOOL HandleModConArbitraryWave(void)
 {
+  UINT8 index = 0;
+
   if (Packet_Parameter1 < AWG_ARBITRARY_WAVE_SIZE)
   {
-    AWG_ARBITRARY_WAVE[Packet_Parameter1] = (2047 - (INT32)Packet_Parameter23) * 10; /* match our other AWG waveform sample scale */
+
+    for (index = 0; index < NB_AWG_CHANNELS; ++index)
+    {
+      if (AWG_Channel[index].isActive)
+      {
+        CRG_ResetCOP(); /* it gives more time for caculations */
+        AWG_Channel[index].arbitraryWave[Packet_Parameter1] = (2047 - (INT32)Packet_Parameter23) * 10; /* match our other AWG waveform sample scale */
+      }
+    }
+    //AWG_ARBITRARY_WAVE[Packet_Parameter1] = (2047 - (INT32)Packet_Parameter23) * 10; /* match our other AWG waveform sample scale */
     return bTRUE;
   }
   return bFALSE;
 }
 
+/**
+ * \fn BOOL HandleModConArbitraryPhasor(void)
+ * \brief Handles arbitrary phasor packet
+ */
 BOOL HandleModConArbitraryPhasor(void)
 {
   UINT16 index = 0;
@@ -930,6 +990,11 @@ void SampleAnalogChannels(void)
   
 }
 
+/**
+ * \fn void AWGPostProcessRoutine(TAWGChannel channelNb)
+ * \brief Sends out AWG channel value after analog process that is finished
+ * \param channelNb AWG channel number
+ */
 void AWGPostProcessRoutine(TAWGChannel channelNb)
 {
   UINT8 index = 0xFF;                      
@@ -1112,10 +1177,10 @@ BOOL Initialize(void) /* TODO: check following statements */
   AWG_Setup(CONFIG_BUSCLK);
   //AWG_AttachPostProcessRoutine(&AWGPostProcessRoutine);
   
-  Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
-  Timer_AttachPeriodicTimerRoutine(&SampleAnalogChannels);
+  //Timer_SetupPeriodicTimer(ModConAnalogInputSamplingRate, CONFIG_BUSCLK);
+  //Timer_AttachPeriodicTimerRoutine(&SampleAnalogChannels);
   /* enable ModCon analog input sampling */
-  Timer_PeriodicTimerEnable(bTRUE);
+  //Timer_PeriodicTimerEnable(bTRUE);
 
   OS_Init();
   
@@ -1126,6 +1191,11 @@ BOOL Initialize(void) /* TODO: check following statements */
   return bTRUE;
 }
 
+/**
+ * \fn void RuntimeIndictorRoutine(void* dataPtr)
+ * \brief Toggles runtime indicator about every half a second. In addition, it sends out uptime packet.
+ * \param dataPtr not used
+ */
 void RuntimeIndictorRoutine(void* dataPtr)
 {
   static BOOL toggle = bFALSE;

@@ -56,7 +56,7 @@ TAWGEntry AWG_Channel[NB_AWG_CHANNELS] = {0};
 TAWGEntryContext AWGChannelContext[NB_AWG_CHANNELS] = {0};
 TAWGRuntimeContext AWGRuntimeContext = {0};
 
-INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
+//INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE] = {0};
 
 static TAWGPostProcessRoutine channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 
@@ -296,6 +296,12 @@ void AWGRoutine(TTimerChannel channelNb);
 
 float AWGGenerateAWGN(void);
 
+/**
+ * \fn void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
+ * \brief Output given analog value to selected analog output channel
+ * \param channelNb analog output channel number
+ * \param analogValue analog value
+ */
 void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
 {
   if (analogValue > DAC_MAXIMUM)
@@ -346,6 +352,11 @@ void AWGOutAnalog(TAnalogChannel channelNb, INT16 analogValue)
 
 void AWGUpdateContext(TAWGEntry* const, TAWGEntryContext* const);
 
+/**
+ * \fn void AWGRoutine(TTimerChannel channelNb)
+ * \brief Core of AWG implementation.
+ * \param channelNb timer channel number 
+ */
 void AWGRoutine(TTimerChannel channelNb)
 {
   static TAWGChannel channelNumberLookupTable[NB_AWG_CHANNELS] = { AWG_Ch1,
@@ -433,7 +444,8 @@ void AWGRoutine(TTimerChannel channelNb)
       		
       		sampleIndex = sampleIndex % AWG_ARBITRARY_WAVE_SIZE;
 				
-					AWGChannelContext[index].voltage = (UINT16)(AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale);
+					//AWGChannelContext[index].voltage = (UINT16)(AWG_ARBITRARY_WAVE[sampleIndex] / AWGChannelContext[index].voltageScale);
+          AWGChannelContext[index].voltage = (UINT16)(AWG_Channel[index].arbitraryWave[sampleIndex] / AWGChannelContext[index].voltageScale);
 
       		analogValue = DAC_ZERO_VOLTAGE + AWGChannelContext[index].voltage;
       		break;
@@ -458,6 +470,12 @@ void AWGRoutine(TTimerChannel channelNb)
         
 };
 
+/**
+ * \fn void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const contextPtr)
+ * \brief Updates given context base on given entry
+ * \param entryPtr
+ * \param contextPtr
+ */
 void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const contextPtr)
 {
   UINT32 frequency = 0;
@@ -531,6 +549,11 @@ void AWGUpdateContext(TAWGEntry* const entryPtr, TAWGEntryContext* const context
   }  
 }
 
+/**
+ * \fn void AWG_Update(TAWGChannel channelNb)
+ * \brief Update runtime context of given AWG channel
+ * \param channelNb AWG channel number
+ */
 void AWG_Update(TAWGChannel channelNb)
 {
   UINT16 index = 0xFFFF;
@@ -560,6 +583,12 @@ void AWG_Update(TAWGChannel channelNb)
   }
 }
 
+/**
+ * \fn void AWG_Enable(TAWGChannel channelNb, BOOL enable)
+ * \brief Enables/Disables given AWG channel
+ * \param channelNb AWG channel number
+ * \param enable TRUE if channel should be enable or FALSE otherwise
+ */
 void AWG_Enable(TAWGChannel channelNb, BOOL enable)
 {
   UINT16 index = 0xFFFF;
@@ -595,6 +624,11 @@ void AWG_Enable(TAWGChannel channelNb, BOOL enable)
   }
 }
 
+/**
+ * \fn void AWG_Setup(const UINT32 busClk)
+ * \brief Setup arbitrary waveform generator runtime configurations
+ * \param busClk bus clock
+ */
 void AWG_Setup(const UINT32 busClk)
 {
   TTimerSetup timerCh5 = {
@@ -627,37 +661,71 @@ void AWG_Setup(const UINT32 busClk)
   Timer_Enable(TIMER_Ch5, bTRUE);  
 }
 
+/**
+ * \fn void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)
+ * \brief Attaches a routine for post analog process 
+ * \param routine
+ */
 void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)
 {
   channelPostProcessRoutinePtr = routine;
 }
 
+/** 
+ * \fn void AWG_DetachPostProcessRoutine(void)
+ * \brief Removes attached post analog process routine
+ */
 void AWG_DetachPostProcessRoutine(void)
 {
   channelPostProcessRoutinePtr = (TAWGPostProcessRoutine) 0x0000;
 }
 
+/**
+ * \fn void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle)
+ * \brief Apply phasor to arbitrary wave sample buffer
+ * \param harmonicNb it represents nth phasor harmonic
+ * \param magnitude phasor magnitude
+ * \param angle phasor angle 
+ */
 void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle)
 {
+  UINT16 channelIndex = 0;
   UINT32 sineIndexOffset = 0, sineIndex = 0;
-  UINT32 index = 0;
+  UINT32 sampleIndex = 0;
   
   sineIndexOffset = (angle + 90) * 25 / 9;
   
-  for (index = 0; index < AWG_ARBITRARY_WAVE_SIZE; ++index)
+  for (channelIndex = 0; channelIndex < NB_AWG_CHANNELS; ++channelIndex)
   {
-    sineIndex = (sineIndexOffset + (index * harmonicNb * AWG_SINE_WAVE_SIZE / AWG_ARBITRARY_WAVE_SIZE)) % AWG_SINE_WAVE_SIZE;   
-    AWG_ARBITRARY_WAVE[index] = AWG_ARBITRARY_WAVE[index] + (0 - AWG_SINEWAVE[sineIndex] / (INT16)magnitude);
-    __RESET_WATCHDOG();
+    if (AWG_Channel[channelIndex].isActive)
+    {      
+      for (sampleIndex = 0; sampleIndex < AWG_ARBITRARY_WAVE_SIZE; ++sampleIndex)
+      {
+        __RESET_WATCHDOG();
+        sineIndex = (sineIndexOffset + (sampleIndex * harmonicNb * AWG_SINE_WAVE_SIZE / AWG_ARBITRARY_WAVE_SIZE)) % AWG_SINE_WAVE_SIZE;   
+        AWG_Channel[channelIndex].arbitraryWave[sampleIndex] = AWG_Channel[channelIndex].arbitraryWave[sampleIndex] + (0 - AWG_SINEWAVE[sineIndex] / (INT16)magnitude);
+      } 
+    }
   }
 }
 
+/**
+ * \fn void AWG_ResetArbitraryWave(void)
+ * \brief Clear arbitrary wave buffer
+ */
 void AWG_ResetArbitraryWave(void)
 {
-  UINT16 index = 0;
+  UINT16 sampleIndex = 0, channelIndex = 0;
   
-  for (index = 0; index < AWG_ARBITRARY_WAVE_SIZE; ++index)
+  for (channelIndex = 0; channelIndex < NB_AWG_CHANNELS; ++channelIndex)
   {
-    AWG_ARBITRARY_WAVE[index] = AWG_ARBITRARY_WAVE_INITIAL_VOLTAGE; /* match our scale */
+    if (AWG_Channel[channelIndex].isActive)
+    {
+      __RESET_WATCHDOG();      
+      for (sampleIndex = 0; sampleIndex < AWG_ARBITRARY_WAVE_SIZE; ++sampleIndex)
+      {
+        AWG_Channel[channelIndex].arbitraryWave[sampleIndex] = AWG_ARBITRARY_WAVE_INITIAL_VOLTAGE; /* match our scale */
+      }
+    }
   }
 }

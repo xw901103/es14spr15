@@ -46,25 +46,69 @@ typedef struct
   UINT16 frequency; /* 1 will be 0.1hz and 1000 will be 100hz */
   UINT16 amplitude;
   INT16 offset;
+  
+  INT32 arbitraryWave[AWG_ARBITRARY_WAVE_SIZE]; /* arbitrary wave buffer */
     
 } TAWGEntry;
 
+/**
+ * \brief channel setting
+ */
 extern TAWGEntry AWG_Channel[NB_AWG_CHANNELS];
 
-extern INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
+/**
+ * \brief arbitrary wave buffer
+ */
+//extern INT32 AWG_ARBITRARY_WAVE[AWG_ARBITRARY_WAVE_SIZE];
 
+/**
+ * \fn void AWG_Setup(const UINT32 busClk)
+ * \brief Setup arbitrary waveform generator runtime configurations
+ * \param busClk bus clock
+ */
 void AWG_Setup(const UINT32 busClk);
 
+/**
+ * \fn void AWG_Update(TAWGChannel channelNb)
+ * \brief Update runtime context of given AWG channel
+ * \param channelNb AWG channel number
+ */
 void AWG_Update(TAWGChannel channelNb);
 
+/**
+ * \fn void AWG_Enable(TAWGChannel channelNb, BOOL enable)
+ * \brief Enables/Disables given AWG channel
+ * \param channelNb AWG channel number
+ * \param enable TRUE if channel should be enable or FALSE otherwise
+ */
 void AWG_Enable(TAWGChannel channelNb, BOOL enable);
 
+/**
+ * \fn void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle)
+ * \brief Apply phasor to arbitrary wave sample buffer
+ * \param harmonicNb it represents nth phasor harmonic
+ * \param magnitude phasor magnitude
+ * \param angle phasor angle 
+ */
 void AWG_ApplyArbitraryPhasor(UINT8 harmonicNb, UINT16 magnitude, INT16 angle);
 
+/**
+ * \fn void AWG_ResetArbitraryWave(void)
+ * \brief Clear arbitrary wave buffer
+ */
 void AWG_ResetArbitraryWave(void);
 
+/**
+ * \fn void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine)
+ * \brief Attaches a routine for post analog process 
+ * \param routine
+ */
 void AWG_AttachPostProcessRoutine(TAWGPostProcessRoutine routine);
 
+/** 
+ * \fn void AWG_DetachPostProcessRoutine(void)
+ * \brief Removes attached post analog process routine
+ */
 void AWG_DetachPostProcessRoutine(void);
 
 #endif
